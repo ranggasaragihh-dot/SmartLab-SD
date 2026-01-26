@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* resources/css/app.css */
+
+@media (max-width: 768px) {
+    /* Paksa semua tabel bisa di-scroll horizontal */
+    table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        white-space: nowrap; /* Mencegah teks turun baris bikin tabel jelek */
+    }
+
+    /* Kecilkan font di HP agar muat lebih banyak */
+    td, th {
+        font-size: 0.75rem; /* Text XS */
+        padding: 0.5rem;    /* Padding lebih rapat */
+    }
+
+    /* Sembunyikan kolom ID atau Created At secara otomatis (opsional) */
+    /* Asumsi kolom ke-1 adalah ID */
+    th:nth-child(1), td:nth-child(1) {
+        display: none;
+    }
+}
+
+[x-cloak] { 
+    display: none !important; 
+}
