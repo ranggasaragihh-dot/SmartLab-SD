@@ -21,7 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'npm_nip',
+        'nomor_induk',
         // 'role',
         'is_banned'
     ];

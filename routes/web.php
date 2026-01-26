@@ -13,6 +13,7 @@ use App\Livewire\Admin\Inventory as AdminInventory;
 use App\Livewire\Admin\LabManager;
 use App\Livewire\Admin\ClusterManager;
 use App\Livewire\Admin\DenahManager;
+use App\Livewire\Admin\DeleteUser;
 
 /*
 |--------------------------------------------------------------------------
@@ -62,6 +63,7 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     // 2. ROUTE UNTUK MENGELOLA ISI DALAM LAB (YANG SUDAH ADA SEBELUMNYA)
     // Route::get('/lab/{clusterId}', \App\Livewire\Admin\LabManager::class)->name('lab.manage');
     Route::get('/denah-manager', DenahManager::class)->name('denah-manager');
+    Route::get('/manajemen-user', DeleteUser::class)->name('manajemen-user');
 });
 
 // 5. LOGOUT: Wajib Method POST

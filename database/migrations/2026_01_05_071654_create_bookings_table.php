@@ -20,7 +20,7 @@ return new class extends Migration
             $table->dateTime('end_time');
             $table->dateTime('check_in_time')->nullable();
             
-            $table->enum('status', ['booked','completed','cancelled']);
+            $table->enum('status', ['booked','active','completed','cancelled']);
             
             $table->timestamps();
         });

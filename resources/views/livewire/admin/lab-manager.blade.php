@@ -122,19 +122,19 @@
 
     {{-- 2. AREA VISUAL DENAH --}}
     <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100 min-h-[500px]">
-        
-        {{-- Include Denah --}}
-        {{-- Kita kirim 'items' berisi inventory yang sudah diload relasi bookingnya di Controller --}}
-        @include('livewire.booking.layouts.denah', [
-            'items' => $cluster->inventory, // Gunakan relasi inventory dari $cluster
-            'isAdmin' => true,
-            'mode' => $mode
-        ])
-        @include('components.lab-seat', [
-            'items' => $cluster->inventory, // Gunakan relasi inventory dari $cluster
-            'isAdmin' => true,
-            'mode' => $mode
-        ])
+        @if($cluster->name == 'PC-01')
+            {{-- Include Denah --}}
+            {{-- Kita kirim 'items' berisi inventory yang sudah diload relasi bookingnya di Controller --}}
+            @include('livewire.booking.layouts.denah', [
+                'items' => $cluster->inventory, // Gunakan relasi inventory dari $cluster
+                'isAdmin' => true,
+                'mode' => $mode
+            ])
+        @else
+            <div class="bg-white p-10 rounded-3xl shadow-sm text-center">
+                <p class="text-gray-400">Denah untuk ruangan ini belum tersedia.</p>
+            </div>
+         @endif
 
         <div wire:loading wire:target="mode" class="absolute inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-10">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
