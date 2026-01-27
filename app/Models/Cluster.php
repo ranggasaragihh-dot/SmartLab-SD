@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class Cluster extends Model
 {
@@ -12,6 +13,8 @@ class Cluster extends Model
 
     protected $fillable = [
         'name',
+        'denah_image',
+        'delay_time',
         // 'location',
         'description',
         'type',
@@ -22,6 +25,13 @@ class Cluster extends Model
     public function inventory(): HasMany
     {
         return $this->hasMany(Inventory::class);
+    }
+
+    public function getDenahUrlAttribute()
+    {
+        return $this->denah_image 
+            ? Storage::url($this->denah_image) 
+            : asset('images/default-denah.jpg'); // Gambar default jika kosong
     }
 
     // public function inventory()

@@ -1,52 +1,82 @@
-<div class="flex h-screen w-full bg-white text-gray-800 font-sans overflow-hidden">
+<div class="flex h-screen w-full bg-slate-50 overflow-hidden font-sans">
 
-    {{-- A. PANGGIL SIDEBAR --}}
-    @include('livewire.booking.sidebar')
+    {{-- 1. SIDEBAR (JANGAN UBAH SESUAI REQUEST) --}}
+    <!-- <aside class="w-64 hidden md:block border-r border-gray-200 bg-white z-20"> -->
+        @include('livewire.booking.sidebar')
+    <!-- </aside> -->
 
-    {{-- B. KONTEN UTAMA --}}
-    <main class="flex-1 flex flex-col h-full relative bg-gray-50">
-        
-        {{-- PANGGIL HEADER --}}
+    {{-- 2. KONTEN UTAMA --}}
+    <main class="flex-1 flex flex-col min-w-0">
         @include('livewire.booking.header')
+        {{-- Header Minimalis --}}
+        <div class="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center shadow-sm z-10">
+            <div>
+                <h1 class="text-xl font-bold text-gray-800">{{ $currentClusterName }}</h1>
+                <p class="text-xs text-gray-400 mt-0.5">Silakan pilih unit yang tersedia</p>
+            </div>
+            
+            {{-- Indikator Status (Legend) --}}
+            <div class="flex items-center gap-4 text-xs font-medium bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
+                <div class="flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-200"></span>
+                    <span class="text-gray-600">Kosong</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-gray-300"></span>
+                    <span class="text-gray-400">Terisi</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-blue-600 shadow-sm shadow-blue-200"></span>
+                    <span class="text-gray-600">Pilihanmu</span>
+                </div>
+            </div>
+        </div>
 
-        {{-- AREA SCROLLABLE --}}
-        <div class="flex-1 overflow-y-auto p-8">
-            <div class="max-w-5xl mx-auto pb-20">
+        {{-- AREA ISI (Grid Split) --}}
+        <div class="flex-1 overflow-hidden p-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
 
-                {{-- Judul & Legenda (Common) --}}
-                <div class="mb-6 flex items-center justify-between">
-                    <h2 class="text-xl font-bold text-gray-800">#{{ $currentClusterName }}</h2>
-                    <div class="flex gap-3 text-[10px] font-bold uppercase text-gray-400 bg-white px-3 py-1.5 rounded-full shadow-sm">
-                        <span class="flex items-center gap-1"><i class="w-2 h-2 rounded-full bg-gray-200"></i> Kosong</span>
-                        <span class="flex items-center gap-1"><i class="w-2 h-2 rounded-full bg-amber-400"></i> Saya</span>
-                        <span class="flex items-center gap-1"><i class="w-2 h-2 rounded-full bg-gray-600 opacity-30"></i> Isi</span>
+                {{-- KOLOM KIRI: DENAH (Sticky & Visual Reference) --}}
+                <div class="lg:col-span-4 flex flex-col">
+                    <div class="bg-white p-2 rounded-2xl shadow-sm border border-gray-200 w-full h-64 flex flex-col">
+                        {{-- Judul Kecil --}}
+                        <div class="px-3 py-2 border-b border-gray-100 mb-2">
+                            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Lokasi Ruangan</h3>
+                        </div>
+                        
+                        {{-- Area Gambar --}}
+                        <div class="flex-1 relative rounded-xl overflow-hidden bg-gray-50 w-full">
+                            @include('livewire.booking.denahBooking')
+                        </div>
                     </div>
                 </div>
 
-                {{-- LOGIKA PEMILIHAN LAYOUT DENAH --}}
-                @if($currentClusterName == 'PC-01' || $currentClusterName == 'Lab RPL')
+                {{-- KOLOM KANAN: GRID PC (Scrollable) --}}
+                <div class="lg:col-span-8 h-full flex flex-col">
                     
-                    {{-- PERBAIKAN DI SINI: --}}
-                    {{-- Kita WAJIB mengirim parameter 'items' dan 'isAdmin' --}}
-                    @include('livewire.booking.layouts.denah', [
-                        'items'   => $inventories,  {{-- Pastikan nama variabel ini sesuai dengan di Controller --}}
-                        'isAdmin' => false          {{-- Matikan mode edit, aktifkan mode booking --}}
-                    ])
-                
-                @elseif($currentClusterName == 'Lab Jaringan')
-                    <div class="p-10 text-center text-gray-400">Layout Lab Jaringan belum dibuat.</div>
+                    {{-- Container Putih untuk Grid --}}
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 flex-1 flex flex-col overflow-hidden">
+                        
+                        {{-- Header List --}}
+                        <div class="px-5 py-3 border-b border-gray-100 flex justify-between items-center bg-white">
+                            <h3 class="font-bold text-gray-700 text-sm">Daftar Unit PC</h3>
+                            <span class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-md font-bold">
+                                {{ $units->count() }} Unit Total
+                            </span>
+                        </div>
 
-                @else
-                    <div class="bg-white p-10 rounded-3xl shadow-sm text-center">
-                        <p class="text-gray-400">Denah untuk ruangan ini belum tersedia.</p>
+                        {{-- Area Scroll (Daftar PC) --}}
+                        <div class="flex-1 overflow-y-auto p-5 custom-scrollbar bg-slate-50/50">
+                            {{-- Panggil File Grid --}}
+                            @include('livewire.booking.pc-grid-list')
+                        </div>
                     </div>
-                @endif
+
+                </div>
 
             </div>
         </div>
+
     </main>
-
-    {{-- C. PANGGIL MODALS --}}
     @include('livewire.booking.modals')
-
 </div>

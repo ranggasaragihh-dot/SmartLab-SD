@@ -26,10 +26,11 @@ class Register extends Component
             'name' => 'required|min:3',
             'email' => 'required|email|unique:users,email',
             'nomor_induk' => 'required|numeric|unique:users,nomor_induk',
+            'ta' => 'required_if:role,mahasiswa|nullable|string',
             'password' => 'required|min:6',
             // PENTING: Hanya izinkan 'mahasiswa' atau 'dosen'. Admin DITOLAK disini.
             'role' => 'required|in:mahasiswa,dosen', 
-            'photo' => 'nullable|image|max:2048', 
+            // 'photo' => 'nullable|image|max:2048', 
         ]);
 
         // 2. Upload photo (Opsional)
@@ -43,6 +44,7 @@ class Register extends Component
             'name' => $this->name,
             'email' => $this->email,
             'nomor_induk' => $this->nomor_induk,
+            'ta' => $this->ta,
             'password' => Hash::make($this->password),
             'role' => $this->role, // Nilai aman dari input user
             'foto' => $photoPath,

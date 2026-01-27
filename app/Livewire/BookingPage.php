@@ -30,6 +30,11 @@ class BookingPage extends Component
     public $selectedBookingId = null; // ID booking untuk proses cancel
     public $selectedBookingStartTime = null;
 
+    public $cluster; 
+
+    public $clusterId;
+    public $currentClusterName;
+
     public $selectedBooking;
     
     public $start_time;
@@ -37,8 +42,26 @@ class BookingPage extends Component
 
     public $bookingStatus = null;
 
-    public function mount()
+    public function mount($clusterId = null)
     {
+        if ($clusterId) {
+            // SKENARIO 1: User klik link spesifik (ada ID)
+            $this->cluster = Cluster::findOrFail($clusterId);
+        } else {
+            // SKENARIO 2: User baru buka menu Booking (URL polos)
+            // Ambil Cluster pertama yang ada di DB sebagai default
+            $this->cluster = Cluster::first();
+
+            // Safety Check: Kalau database kosong melompong (belum ada cluster sama sekali)
+            if (!$this->cluster) {
+                abort(404, 'Belum ada data Cluster/Lab yang dibuat.');
+            }
+        }
+
+        // Set properti lainnya berdasarkan cluster yang terpilih
+        $this->clusterId = $this->cluster->id;
+        $this->currentClusterName = $this->cluster->name;
+
         // Default pilih lab pertama
         $firstCluster = Cluster::where('is_active', true)->first();
         if ($firstCluster) {
@@ -237,7 +260,11 @@ class BookingPage extends Component
         }
 
         $inventoryCollection = Inventory::where('cluster_id', $this->selectedClusterId)->get();
-        $units = $inventories->keyBy('name');
+        // $units = $inventories->keyBy('name');
+
+        $units = \App\Models\Inventory::where('cluster_id', $this->cluster->id)
+                ->orderBy('id', 'asc') 
+                ->get();
 
         if ($this->selectedClusterId && $clusters->isNotEmpty()) {
             $foundCluster = $clusters->find($this->selectedClusterId);
@@ -247,7 +274,8 @@ class BookingPage extends Component
         }
 
         return view('livewire.booking-page', [
-            'clusters' => $clusters,
+            // 'clusters' => $clusters,
+            'clusters' => Cluster::all(),
             'inventories' => $inventories,
             'bookingsMap' => $bookingsMap,
             'bookings' => $bookings,

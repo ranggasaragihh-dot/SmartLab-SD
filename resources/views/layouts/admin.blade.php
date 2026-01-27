@@ -39,11 +39,11 @@
                         Dashboard
                     </a>
 
-                    <!-- <a href="{{ route('admin.manajemen-user') }}" wire:navigate
+                    <a href="{{ route('admin.manajemen-user') }}" wire:navigate
                         class="flex items-center px-6 py-3 transition-all duration-200 group {{ request()->routeIs('admin.denah-manager') ? 'bg-slate-800 border-l-4 border-amber-500 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white border-l-4 border-transparent' }}">
                          <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
                         Manajemen User
-                    </a> -->
+                    </a>
 
                     {{-- Menu: Inventaris --}}
                     <a href="{{ route('admin.inventory') }}" wire:navigate

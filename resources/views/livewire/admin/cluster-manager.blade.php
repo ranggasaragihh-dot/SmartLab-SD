@@ -1,197 +1,213 @@
-<div class="space-y-6">
+<div class="p-6">
+    {{-- Header & Tombol Tambah --}}
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Manajemen Cluster Lab</h2>
+        <button wire:click="create" 
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+            </svg>
+            Tambah Cluster
+        </button>
+    </div>
 
-    {{-- 1. HEADER PAGE --}}
-    @include('livewire.admin.partials.header', [
-        'title' => 'Manajemen Ruangan',
-        'subtitle' => 'Kelola daftar lab dan aksesibilitas.',
-        'button' => 'Tambah Lab Baru',
-        'action' => 'create' 
-    ])
-
-    {{-- 2. FLASH MESSAGE --}}
-    @if (session()->has('message'))
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-sm flex justify-between items-center">
-            <span>{{ session('message') }}</span>
-            <button onclick="this.parentElement.remove()" class="text-green-700 font-bold">&times;</button>
+    {{-- Flash Message --}}
+    @if (session()->has('success'))
+        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
+            <p>{{ session('success') }}</p>
+        </div>
+    @endif
+    @if (session()->has('error'))
+        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
+            <p>{{ session('error') }}</p>
         </div>
     @endif
 
-    {{-- 3. TABEL DATA --}}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left text-gray-500">
-                <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b">
+    {{-- Tabel Cluster --}}
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Lab</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipe</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Config (Delay)</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                @forelse($clusters as $cluster)
                     <tr>
-                        <th class="px-6 py-3">Nama Lab / Ruangan</th>
-                        <th class="px-6 py-3">Jenis Akses</th>
-                        <th class="px-6 py-3">Kapasitas</th>
-                        <th class="px-6 py-3">Status Operasional</th>
-                        <th class="px-6 py-3 text-center">Aksi</th>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                @if($cluster->denah_image)
+                                    <img class="h-10 w-10 rounded-lg object-cover mr-3 border" 
+                                         src="{{ Storage::url($cluster->denah_image) }}" 
+                                         alt="Denah">
+                                @else
+                                    <div class="h-10 w-10 rounded-lg bg-gray-200 mr-3 flex items-center justify-center text-gray-400">
+                                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                    </div>
+                                @endif
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900">{{ $cluster->name }}</div>
+                                    <div class="text-xs text-gray-500">{{ Str::limit($cluster->description, 30) }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $cluster->type === 'public' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800' }}">
+                                {{ ucfirst($cluster->type) }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            {{ $cluster->delay_time ?? 15 }} Menit
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $cluster->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                {{ $cluster->is_active ? 'Active' : 'Maintenance' }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button wire:click="edit({{ $cluster->id }})" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
+                            <button wire:click="delete({{ $cluster->id }})" 
+                                    wire:confirm="Yakin ingin menghapus Lab ini? Data PC di dalamnya mungkin akan bermasalah."
+                                    class="text-red-600 hover:text-red-900">Hapus</button>
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    @forelse($clusters as $item)
-                        <tr class="bg-white border-b hover:bg-gray-50 transition-colors">
-                            
-                            {{-- Nama Lab & Deskripsi --}}
-                            <td class="px-6 py-4">
-                                <div class="font-bold text-gray-800 text-base">{{ $item->name }}</div>
-                                <div class="text-xs text-gray-500 line-clamp-1 mt-0.5">
-                                    {{ $item->description ?? '-' }}
-                                </div>
-                            </td>
-
-                            {{-- Jenis Akses --}}
-                            <td class="px-6 py-4">
-                                @if($item->type == 'public')
-                                    <span class="inline-flex items-center gap-1 bg-green-50 text-green-700 text-xs font-bold px-2.5 py-1 rounded-full border border-green-100">
-                                        🌍 Public
-                                    </span>
-                                @else
-                                    <span class="inline-flex items-center gap-1 bg-purple-50 text-purple-700 text-xs font-bold px-2.5 py-1 rounded-full border border-purple-100">
-                                        🔒 Private
-                                    </span>
-                                @endif
-                            </td>
-
-                            {{-- Kapasitas --}}
-                            <td class="px-6 py-4">
-                                <span class="flex items-center gap-2 text-gray-600 font-medium">
-                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                                    {{ $item->inventory()->count() }} Unit
-                                </span>
-                            </td>
-
-                            {{-- Status Aktif --}}
-                            <td class="px-6 py-4">
-                                @if($item->is_active)
-                                    <span class="inline-flex items-center bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                                        <span class="w-2 h-2 mr-1 bg-blue-500 rounded-full"></span>
-                                        Aktif
-                                    </span>
-                                @else
-                                    <span class="inline-flex items-center bg-gray-100 text-gray-500 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                                        <span class="w-2 h-2 mr-1 bg-gray-400 rounded-full"></span>
-                                        Tutup
-                                    </span>
-                                @endif
-                            </td>
-
-                            {{-- Aksi --}}
-                            <td class="px-6 py-4 text-center">
-                                <div class="flex justify-center items-center gap-2">
-                                    {{-- Tombol Lihat Denah --}}
-                                    <!-- <a href="{{ route('admin.lab.manager', $item->id) }}" 
-                                       class="p-2 text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors shadow-sm"
-                                       title="Kelola Denah">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
-                                    </a> -->
-
-                                    {{-- Edit --}}
-                                    <button wire:click="edit({{ $item->id }})" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg border border-transparent hover:border-blue-100 transition-colors">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                    </button>
-
-                                    {{-- Delete --}}
-                                    <button wire:click="delete({{ $item->id }})" 
-                                            wire:confirm="Yakin ingin menghapus Lab ini?"
-                                            class="p-2 text-red-600 hover:bg-red-50 rounded-lg border border-transparent hover:border-red-100 transition-colors">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="text-center py-12 text-gray-400">Belum ada data Lab.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                @empty
+                    <tr>
+                        <td colspan="5" class="px-6 py-10 text-center text-gray-500 italic">
+                            Belum ada data cluster. Silakan tambah baru.
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
     </div>
 
-
-    {{-- 4. MODAL FORM CLUSTER (LANGSUNG DI SINI) --}}
+    {{-- MODAL FORM (Create / Edit) --}}
     @if($showFormModal)
-    @teleport('body')
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-opacity">
-        
-        {{-- CONTAINER: max-w-md (Compact) --}}
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-100">
-            
-            {{-- HEADER --}}
-            <div class="bg-gray-50 px-5 py-3 border-b border-gray-100 flex justify-between items-center">
-                <h3 class="text-base font-bold text-gray-800">
-                    {{ $isEdit ? 'Edit Ruangan' : 'Buat Ruangan Baru' }}
-                </h3>
-                <button wire:click="closeModal" class="text-gray-400 hover:text-gray-600 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
+        <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                
+                {{-- Backdrop --}}
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" wire:click="closeModal"></div>
 
-            {{-- FORM BODY --}}
-            <form wire:submit.prevent="store">
-                <div class="p-5 space-y-4">
-                    
-                    {{-- Nama Lab --}}
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Nama Lab / Ruangan</label>
-                        <input wire:model="form.name" type="text" placeholder="Contoh: Lab Jaringan" class="w-full border-gray-300 rounded-lg text-sm py-2 focus:ring-blue-500 focus:border-blue-500">
-                        @error('form.name') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
-                    </div>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-                    {{-- Jenis Akses (Dropdown) --}}
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Jenis Akses</label>
-                        <select wire:model="form.type" class="w-full border-gray-300 rounded-lg text-sm py-2 bg-white">
-                            <option value="public">🌍 Public (Semua Mahasiswa)</option>
-                            <option value="private">🔒 Private (Dosen/Khusus)</option>
-                        </select>
-                    </div>
+                {{-- Modal Panel --}}
+                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <form wire:submit.prevent="store">
+                        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                            <div class="mb-4">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                    {{ $isEdit ? 'Edit Cluster' : 'Tambah Cluster Baru' }}
+                                </h3>
+                            </div>
 
-                    <div class="mt-2 p-2 bg-yellow-100 text-xs font-mono text-red-600 border border-yellow-300">
-                        DEBUG: Nilai saat ini = {{ var_export($form['is_active']) }}
-                    </div>
+                            <div class="space-y-4">
+                                {{-- Nama Lab --}}
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Nama Lab / Cluster</label>
+                                    <input type="text" wire:model="form.name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2">
+                                    @error('form.name') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                </div>
 
-                    {{-- Deskripsi --}}
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Deskripsi</label>
-                        <textarea wire:model="form.description" rows="2" class="w-full border-gray-300 rounded-lg text-sm py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Keterangan singkat..."></textarea>
-                    </div>
+                                {{-- Tipe & Delay Time (Grid 2 Kolom) --}}
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Tipe Akses</label>
+                                        <select wire:model="form.type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2">
+                                            <option value="public">Public (Mahasiswa)</option>
+                                            <option value="private">Private (Dosen/Khusus)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Waktu Delay (Menit)</label>
+                                        <input type="number" wire:model="form.delay_time" min="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2">
+                                        <p class="text-xs text-gray-400 mt-1">Batas waktu sebelum auto-cancel.</p>
+                                        @error('form.delay_time') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
 
-                    {{-- Status Operasional (DROPDOWN SEDERHANA) --}}
-                    <div class="pt-2">
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Status Operasional</label>
-                        <div class="relative">
-                            <select wire:model="form.is_active" class="w-full border-gray-300 rounded-lg text-sm py-2 pl-3 pr-10 appearance-none bg-white">
-                                <option value="1">🔵 Aktif (Bisa Digunakan)</option>
-                                <option value="0">⚫ Tutup Sementara</option>
-                            </select>
-                            {{-- Ikon Panah --}}
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                {{-- Deskripsi --}}
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Deskripsi</label>
+                                    <textarea wire:model="form.description" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"></textarea>
+                                </div>
+
+                                {{-- UPLOAD GAMBAR DENAH --}}
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Gambar Denah</label>
+                                    
+                                    <div class="flex items-center space-x-4">
+                                        {{-- Preview Logic --}}
+                                        <div class="shrink-0">
+                                            @if ($image_upload)
+                                                {{-- Preview Gambar Baru yang Dipilih --}}
+                                                <img class="h-16 w-16 object-cover rounded-md border border-blue-300" 
+                                                     src="{{ $image_upload->temporaryUrl() }}" alt="New Preview">
+                                            @elseif ($isEdit && !empty($form['denah_image']))
+                                                {{-- Preview Gambar Lama dari Database --}}
+                                                <img class="h-16 w-16 object-cover rounded-md border border-gray-300" 
+                                                     src="{{ Storage::url($form['denah_image']) }}" alt="Old Preview">
+                                            @else
+                                                <div class="h-16 w-16 rounded-md bg-gray-100 flex items-center justify-center text-gray-400 border border-dashed border-gray-300">
+                                                    <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                    </svg>
+                                                </div>
+                                            @endif
+                                        </div>
+
+                                        {{-- Input File --}}
+                                        <div class="flex-1">
+                                            <input type="file" wire:model="image_upload" accept="image/*"
+                                                class="block w-full text-sm text-gray-500
+                                                file:mr-4 file:py-2 file:px-4
+                                                file:rounded-full file:border-0
+                                                file:text-sm file:font-semibold
+                                                file:bg-blue-50 file:text-blue-700
+                                                hover:file:bg-blue-100">
+                                            <p class="text-xs text-gray-500 mt-1">PNG, JPG up to 2MB.</p>
+                                            @error('image_upload') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                    
+                                    {{-- Loading State saat upload --}}
+                                    <div wire:loading wire:target="image_upload" class="text-xs text-blue-500 mt-2 font-semibold">
+                                        Mengupload gambar...
+                                    </div>
+                                </div>
+
+                                {{-- Toggle Active Status --}}
+                                <div class="flex items-center">
+                                    <input id="is_active" type="checkbox" wire:model="form.is_active" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <label for="is_active" class="ml-2 block text-sm text-gray-900">
+                                        Lab Aktif (Bisa dibooking)
+                                    </label>
+                                </div>
                             </div>
                         </div>
-                        <p class="text-[10px] text-gray-400 mt-1">Jika ditutup, lab ini tidak akan muncul di menu booking.</p>
-                    </div>
 
+                        {{-- Footer Modal --}}
+                        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                            <button type="submit" 
+                                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
+                                wire:loading.attr="disabled">
+                                <span wire:loading.remove>Simpan</span>
+                                <span wire:loading>Menyimpan...</span>
+                            </button>
+                            <button type="button" wire:click="closeModal" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                                Batal
+                            </button>
+                        </div>
+                    </form>
                 </div>
-
-                {{-- FOOTER ACTION --}}
-                <div class="bg-gray-50 px-5 py-3 flex justify-end gap-2 border-t border-gray-100">
-                    <button type="button" wire:click="closeModal" class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 text-xs font-medium transition">
-                        Batal
-                    </button>
-                    <button type="submit" class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md text-xs font-bold transition transform active:scale-95">
-                        Simpan
-                    </button>
-                </div>
-            </form>
-
+            </div>
         </div>
-    </div>
-    @endteleport
     @endif
-
 </div>

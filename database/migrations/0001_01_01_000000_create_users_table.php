@@ -13,9 +13,11 @@ return new class extends Migration
         {
             Schema::create('users', function (Blueprint $table) {
                 $table->id();
-                $table->string('photo')->nullable();
+                // $table->string('photo')->nullable();
                 $table->string('name');
                 $table->string('nomor_induk')->unique(); // NIM atau NIP
+                // $table->string('ta')->nullable();
+                $table->boolean('ta')->default(false);
                 // $table->enum('role', ['admin', 'student', 'lecturer'])->default('student');
                 $table->string('email')->unique(); // Email kampus (opsional)
                 $table->string('password');

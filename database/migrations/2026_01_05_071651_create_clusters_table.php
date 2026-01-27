@@ -14,6 +14,8 @@ return new class extends Migration
         Schema::create('clusters', function (Blueprint $table) {
             $table->id();
             $table->string('name'); // Contoh: "Lab Basis Data", "Lab Jaringan"
+            $table->string('denah_image')->nullable();
+            $table->integer('delay_time')->default(15);
             // $table->string('location')->nullable(); // Contoh: "Gedung Bonaventura Lt. 3"
             $table->enum('type', ['public', 'private'])->default('public');
             $table->text('description')->nullable(); 
