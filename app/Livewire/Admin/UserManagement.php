@@ -35,11 +35,14 @@ class UserManagement extends Component // Ganti nama class agar representatif
     public $showImportModal = false;
     public $importFile;
 
+    public $activeTab = 'manual';
+
     public function create()
     {
         $this->resetInputFields(); // Pastikan bersih dari sisa data edit
         $this->resetValidation();
-        $this->isEditMode = false; // Flag bahwa ini mode Create
+        $this->isEditMode = false;
+        $this->activeTab = 'manual'; 
         $this->showModal = true;
     }
 
@@ -251,6 +254,8 @@ class UserManagement extends Component // Ganti nama class agar representatif
         $this->selectedRoles = [];
         $this->editingUserId = null;
         $this->isEditMode = false;
+        $this->activeTab = 'manual';
+        $this->importFile = null;
     }
 
     public function render()

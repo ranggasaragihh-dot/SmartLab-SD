@@ -12,7 +12,7 @@
         <div 
             x-show="open"
             x-cloak
-            style="display: none;" {{-- Fallback native CSS, akan dihapus Alpine saat load --}}
+            style="display: none; z-index: 999999 !important;" {{-- Fallback native CSS, akan dihapus Alpine saat load --}}
             x-transition.opacity.duration.300ms
             class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
         >
@@ -77,7 +77,7 @@
         <div 
             x-show="open"
             x-cloak
-            style="display: none;"
+            style="display: none; z-index: 999999 !important;"
             x-transition.opacity.duration.300ms
             class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
         >
