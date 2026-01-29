@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Role;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
@@ -17,7 +18,8 @@ use App\Imports\UsersImport; // Kita buat ini nanti
 class UserManagement extends Component // Ganti nama class agar representatif
 {
     use WithPagination;
-
+    use WithFileUploads;
+    
     protected $paginationTheme = 'tailwind'; 
 
     // Properti untuk pencarian (Opsional tapi sangat disarankan untuk backend yang baik)
@@ -36,6 +38,7 @@ class UserManagement extends Component // Ganti nama class agar representatif
     public $importFile;
 
     public $activeTab = 'manual';
+    public $ta=0;
 
     public function create()
     {
@@ -114,6 +117,7 @@ class UserManagement extends Component // Ganti nama class agar representatif
         } catch (\Exception $e) {
             session()->flash('error', 'Gagal import: ' . $e->getMessage());
         }
+        $this->closeModal();
     }
 
     // Reset pagination saat search berubah agar tidak stuck di halaman kosong
@@ -256,6 +260,7 @@ class UserManagement extends Component // Ganti nama class agar representatif
         $this->isEditMode = false;
         $this->activeTab = 'manual';
         $this->importFile = null;
+        $this->ta = 0;
     }
 
     public function render()

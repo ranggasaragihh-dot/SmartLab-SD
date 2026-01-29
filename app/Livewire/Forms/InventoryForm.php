@@ -21,7 +21,6 @@ class InventoryForm extends Form
     #[Validate('required|string|max:255')]
     public $name = '';
 
-    #[Validate('nullable|string|max:255')]
     public $mac_address = '';
 
     #[Validate('required|in:available,maintenance,broken')]
@@ -30,10 +29,24 @@ class InventoryForm extends Form
     #[Validate('required|in:none,force_open,force_close')]
     public $admin_override = 'none';
 
-    #[Validate('boolean')]
-    public $is_bookable = false;
+    #[Validate('required|in:0,1')]
+    public $is_bookable = 0;
 
     public $qr_token = '';
+
+    protected function rules()
+    {
+        // Logika Unik: Abaikan ID sendiri jika sedang mode Edit ($this->id)
+        $uniqueRule = 'unique:inventories,mac_address';
+        if ($this->id) {
+            $uniqueRule .= ',' . $this->id;
+        }
+
+        return [
+            // Kita gabungkan rules dari Attributes + Rules manual ini
+            'mac_address' => ['nullable', 'string', 'max:255', $uniqueRule],
+        ];
+    }
 
     // FUNGSI INI DIPANGGIL SAAT TOMBOL EDIT DITEKAN
     public function setInventory(Inventory $inventory)
@@ -54,7 +67,7 @@ class InventoryForm extends Form
     // FUNGSI SIMPAN (CREATE ATAU UPDATE)
     public function save()
     {
-        // $this->validate();
+        $this->validate();
 
         // 1. Tentukan QR Token (Generate baru jika kosong)
         $token = $this->qr_token ?: Str::random(32);
@@ -66,7 +79,7 @@ class InventoryForm extends Form
             'mac_address'         => $this->mac_address,
             'status'              => $this->status,
             'admin_override'      => $this->admin_override,
-            'is_bookable'         => $this->is_bookable ? 1 : 0, // Paksa jadi integer 1/0
+            'is_bookable'         => $this->is_bookable,
             'qr_token'            => $token,
         ];
 

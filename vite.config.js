@@ -8,4 +8,11 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+
+    build: {
+        // Mencegah Vite melakukan preload module script secara agresif
+        modulePreload: {
+            polyfill: false,
+        },
+    },
 });

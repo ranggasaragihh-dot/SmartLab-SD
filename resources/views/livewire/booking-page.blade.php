@@ -85,8 +85,7 @@
                             <div class="flex-1 overflow-y-auto p-6 bg-slate-50/50 custom-scrollbar">
                                 <div class="min-h-full pb-10"> 
                                     @include('livewire.booking.pc-grid-list',[
-                                        'units'         => $units,
-                                        
+                                        'units'         => $cluster->inventory,
                                         'currentUserId' => auth()->id(),
                                         'mode'          => 'booking'
                                     ])
