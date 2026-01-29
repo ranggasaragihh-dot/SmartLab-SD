@@ -67,10 +67,18 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-center flex justify-center gap-2">
-                                <button wire:click="edit({{ $cluster->id }})" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
-                                <button wire:click="delete({{ $cluster->id }})" 
-                                        wire:confirm="Yakin ingin menghapus Lab ini? Data PC di dalamnya mungkin akan bermasalah."
-                                        class="text-red-600 hover:text-red-900">Hapus</button>
+                                <div class="flex justify-end items-center gap-3">
+                                    <button wire:click="edit({{ $cluster->id }})" class="text-indigo-600 hover:text-indigo-900 font-medium hover:underline transition">
+                                        Edit
+                                    </button>
+                                    <span class="text-gray-300">|</span>
+                                    <button
+                                        wire:click="delete({{ $cluster->id  }})"
+                                        wire:confirm="Yakin ingin menghapus {{ $cluster->name }}?"
+                                        class="text-red-600 hover:text-red-900 font-medium hover:underline transition">
+                                        Hapus
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     @empty

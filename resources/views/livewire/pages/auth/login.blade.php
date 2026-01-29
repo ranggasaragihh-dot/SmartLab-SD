@@ -8,16 +8,46 @@
     <div class="relative z-10 w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-100">
         
         {{-- Header --}}
-        <div class="bg-blue-800 p-8 text-center relative">
-            <div class="absolute bottom-0 left-0 w-full h-2 bg-amber-400"></div>
+        <div class="bg-blue-900 p-10 text-center relative overflow-hidden">
+            {{-- Hiasan Background (Opsional - agar tidak terlalu flat) --}}
+            <div class="absolute top-0 left-0 w-full h-full bg-white/5 pointer-events-none"></div>
+            <div class="absolute bottom-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500"></div>
             
-            <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg border-4 border-blue-100">
-                {{-- Icon Login --}}
-                <svg class="w-10 h-10 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
+            <div class="relative z-10 flex flex-col items-center">
+                
+                {{-- AREA LOGO --}}
+                <div class="w-24 h-24 bg-white rounded-2xl flex items-center justify-center mb-5 shadow-xl border-4 border-blue-800/50 transform rotate-3 hover:rotate-0 transition-transform duration-300">
+                    
+                    {{-- OPSI 1: JIKA PAKAI GAMBAR FILE (Hapus komentar ini jika file sudah ada) --}}
+                    <img src="{{ asset('images/logo-uajy.png') }}" alt="Logo UAJY" class="w-16 h-16 object-contain">
+
+                    {{-- OPSI 2: JIKA BELUM ADA GAMBAR (Pakai Icon Sementara) --}}
+                    <!-- <svg class="w-12 h-12 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                    </svg> -->
+
+                </div>
+                
+                {{-- MAIN TITLE --}}
+                {{-- Font Sans-serif, Tebal (Black/Bold), dan Tracking Tight agar terlihat modern --}}
+                <h1 class="text-4xl font-black text-white tracking-tight font-sans drop-shadow-sm">
+                    ATMA<span class="text-amber-400">-</span>LAB
+                </h1>
+
+                {{-- SUB-TITLE --}}
+                <p class="text-blue-200 text-sm font-medium mt-2 tracking-wide uppercase opacity-90">
+                    Integrated Booking & Inventory System
+                </p>
+
+                {{-- BADGE: SISTRUK EDITION --}}
+                <div class="mt-5">
+                    <span class="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold bg-blue-800 text-amber-400 border border-blue-700 shadow-sm">
+                        <span class="w-2 h-2 bg-amber-400 rounded-full mr-2 animate-pulse"></span>
+                        SISTRUK EDITION (Lab. Struktur Data)
+                    </span>
+                </div>
+
             </div>
-            
-            <h2 class="text-2xl font-bold text-white tracking-wide">SmartLab Login</h2>
-            <p class="text-blue-200 text-sm mt-1">Informatika UAJY</p>
         </div>
 
         {{-- Form --}}
@@ -56,7 +86,7 @@
             </form>
 
             <div class="mt-8 text-center text-xs text-gray-400">
-                &copy; {{ date('Y') }} Informatika UAJY.
+                &copy; {{ date('Y') }} Informatika UAJY | Powered by SISTRUK Engine.
             </div>
         </div>
     </div>

@@ -3,49 +3,45 @@
 <div class="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 justify-items-center mb-10">
 
     @foreach($units as $unit)
-        @php
-            // 1. Tentukan Status Dasar
-            $isBooked = $unit->is_booked; // Pastikan di model/query ada status ini
-            $isMyBooking = ($isBooked && $unit->user_id == $currentUserId); // Cek kepemilikan
-            $isDisabled = false;
-            $cardStyle = '';
-            $textStyle = '';
-            $dotStyle = ''; // Opsional jika ada dot indikator
-
-            // 2. Logika Warna & Cursor
+       @php
+            // --- 1. DETEKSI DATA (One-Liner) ---
+            // Mengambil booking aktif (jika ada)
+            $activeBooking = $unit->bookings->whereIn('status', ['booked', 'active'])->first();
             
+            // Cek apakah booking tersebut milik saya (Return true/false langsung)
+            $isMyBooking = $activeBooking && ((int)$activeBooking->user_id === (int)$currentUserId);
+
+            // --- 2. LOGIKA VISUAL & AKSES ---
+            // Default: Disabled (False)
+            $isDisabled = true; 
+
+            // PRIORITAS 1: Rusak
             if ($unit->status == 'broken') {
-                // KASUS: RUSAK
                 $cardStyle = 'bg-red-50 border-red-200 text-red-400';
-                $isDisabled = ($mode !== 'manage');
 
-            } elseif ($unit->status == 'maintenance') {
-                // KASUS: MAINTENANCE
+            // PRIORITAS 2: Maintenance / Closed
+            } elseif ($unit->status == 'maintenance' || !$unit->is_bookable) {
                 $cardStyle = 'bg-gray-100 border-gray-200 text-gray-400 opacity-75';
-                $isDisabled = ($mode !== 'manage');
 
-            } elseif ($isBooked) {
-                // KASUS: SUDAH DIBOOKING
-                if ($isMyBooking) {
-                    $cardStyle = 'bg-amber-100 border-amber-300 text-amber-700'; // Punya Sendiri
-                    $isDisabled = false; // User bisa klik punya sendiri (misal untuk batal)
-                } else {
-                    $cardStyle = 'bg-gray-100 border-gray-300 text-gray-400'; // Punya Orang Lain
-                    $isDisabled = true;
-                }
+            // PRIORITAS 3: Booked (Gunakan Ternary untuk mempersingkat if-else)
+            } elseif ($activeBooking) {
+                // Jika punya saya: Kuning. Jika orang lain: Abu.
+                $cardStyle = $isMyBooking 
+                    ? 'bg-amber-100 border-amber-300 text-amber-700' 
+                    : 'bg-gray-100 border-gray-300 text-gray-400';
+                
+                // Khusus punya saya, tombol aktif
+                $isDisabled = !$isMyBooking;
 
+            // PRIORITAS 4: Available
             } else {
-                // KASUS: AVAILABLE (HIJAU)
-                $cardStyle = 'bg-green-50 border-green-300 text-green-700 hover:bg-green-100 hover:shadow-md hover:border-green-400 cursor-pointer';
+                $cardStyle = 'bg-green-50 border-green-300 text-green-700 hover:bg-green-100 hover:shadow-md hover:border-green-400';
                 $isDisabled = false;
             }
 
-            // 3. Override Cursor jika Disabled
-            if ($isDisabled) {
-                $cardStyle .= ' cursor-not-allowed';
-            } else {
-                $cardStyle .= ' cursor-pointer hover:scale-105';
-            }
+            // --- 3. FINALISASI STYLE ---
+            // Gabungkan string class cursor
+            $cardStyle .= $isDisabled ? ' cursor-not-allowed' : ' cursor-pointer hover:scale-105';
         @endphp
 
         <button 
@@ -65,13 +61,9 @@
                 {{ $unit->name }}
             </span>
 
-            {{-- Indikator Status (Opsional) --}}
-            @if($isMyBooking)
-                <span class="absolute top-1 right-1 flex h-3 w-3">
-                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                  <span class="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
-                </span>
-            @endif
+            <span class="text-[8px] h-[8px]">
+                @if($isMyBooking) MILIK SAYA @endif
+            </span> 
         </button>
 
     @endforeach
