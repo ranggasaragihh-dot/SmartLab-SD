@@ -86,10 +86,6 @@
                             <option value="0">⛔ Tidak, Sembunyikan dari Mahasiswa</option>
                         </select>
                         
-                        {{-- Ikon Panah (Hiasan agar terlihat modern) --}}
-                        <!-- <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                        </div> -->
                     </div>
                     
                     <p class="text-[10px] text-gray-400 mt-1">

@@ -1,117 +1,115 @@
-<div class="space-y-6">
+<div class="font-sans text-slate-900">
 
-    {{-- 2. HEADER PAGE --}}
-    {{-- Pastikan file ada di: resources/views/livewire/admin/partials/header.blade.php --}}
-    @include('livewire.admin.partials.manajemenUser.header', [
-        'title'    => 'Manajemen User',
-        'subtitle' => 'Daftar semua pengguna yang terdaftar dalam sistem.',
-        'button'   => 'Tambah User',
-        'action'   => 'create' 
+    {{-- HEADER DENGAN @INCLUDE --}}
+    @include('livewire.admin.partials.header', [
+        'title'             => 'Manajemen User',
+        'subtitle'          => 'Total ' . $users->total() . ' pengguna terdaftar.',
+        'button'            => 'Tambah User',
+        'action'            => 'create',
+        
+        // Cukup tambahkan ini agar Search Bar muncul:
+        'searchable'        => true,
+        'searchPlaceholder' => 'Cari Nama, NPM, atau Email...'
     ])
 
-    {{-- ALERTS (Jika ada) --}}
-    @if (session()->has('message') || session()->has('error'))
-    <div class="px-6 pt-4">
-        @if (session()->has('message'))
-            <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-md">
-                <div class="flex">
-                    <div class="flex-shrink-0"><i class="fas fa-check-circle text-green-500"></i></div>
-                    <div class="ml-3 text-sm font-medium text-green-700">{{ session('message') }}</div>
-                </div>
-            </div>
-        @endif
-        @if (session()->has('error'))
-            <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-md">
-                <div class="flex">
-                    <div class="flex-shrink-0"><i class="fas fa-exclamation-circle text-red-500"></i></div>
-                    <div class="ml-3 text-sm font-medium text-red-700">{{ session('error') }}</div>
-                </div>
-            </div>
-        @endif
-    </div>
-    @endif
-
-    {{-- TABLE SECTION: Full Width (Tanpa Padding Samping) --}}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    {{-- 2. TABLE CONTAINER --}}
+    <div class="bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 overflow-hidden">
+            
         <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left text-gray-500">
-                <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b">
+            <table class="w-full text-sm text-left">
+                {{-- Header Tabel --}}
+                <thead class="bg-slate-50 border-b border-slate-100 text-xs uppercase font-bold text-slate-500 tracking-wider">
                     <tr>
-                        {{-- Padding th disesuaikan agar teks tidak mepet dinding --}}
-                        <th class="px-6 py-3">User Profile</th>
-                        <th class="px-6 py-3">Role</th>
-                        <th class="px-6 py-3">Nomor Induk</th>
-                        <th class="px-6 py-3">Tugas Akhir</th>
-                        <th class="px-6 py-3 text-center">Aksi</th>
+                        <th class="px-6 py-4">Mahasiswa</th>
+                        <th class="px-6 py-4">NPM / ID</th>
+                        <th class="px-6 py-4 text-center">Role</th>
+                        <th class="px-6 py-4 text-center">Status TA</th>
+                        <th class="px-6 py-4 text-right">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @foreach($users as $user)
-                    <tr class="bg-white border-b hover:bg-gray-50 transition-colors">
-                        <td class="px-6 py-4 font-medium text-gray-900">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0 h-10 w-10">
-                                    @if($user->photo)
-                                        <img class="h-10 w-10 rounded-full object-cover border border-gray-200" src="{{ asset('storage/'.$user->photo) }}" alt="{{ $user->name }}">
-                                    @else
-                                        <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold border border-indigo-200 text-sm">
-                                            {{ substr($user->name, 0, 1) }}
-                                        </div>
+
+                {{-- Body Tabel --}}
+                <tbody class="divide-y divide-slate-50">
+                    @forelse($users as $user)
+                        <tr class="hover:bg-slate-50/80 transition-colors group">
+                                
+                            {{-- Profil --}}
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    {{-- Avatar Fix: Menggunakan Background Color Solid jika Gradient gagal render --}}
+                                    <div class="flex-shrink-0 w-9 h-9 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold ring-2 ring-white shadow-sm">
+                                        {{ substr($user->name, 0, 2) }}
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="font-bold text-slate-800 truncate">{{ $user->name }}</div>
+                                        <div class="text-xs text-slate-500 truncate">{{ $user->email }}</div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            {{-- NPM --}}
+                            <td class="px-6 py-4">
+                                <span class="font-mono text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-1 rounded border border-slate-200">
+                                    {{ $user->nomor_induk ?? '-' }}
+                                </span>
+                            </td>
+
+                            {{-- Role --}}
+                            <td class="px-6 py-4 text-center">
+                                <div class="inline-flex justify-center">
+                                    @forelse($user->role_badges as $badge)
+                                        <span class="px-2 py-0.5 text-[10px] font-bold uppercase rounded-full bg-blue-50 text-blue-600 border border-blue-100">
+                                            {{ $badge['label'] }}
+                                        </span>
+                                    @empty
+                                        <span class="text-slate-300 text-xs">-</span>
+                                    @endforelse
+                                </div>
+                            </td>
+
+                            {{-- Status TA --}}
+                            <td class="px-6 py-4 text-center">
+                                @if($user->ta == 1)
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                        Sedang TA
+                                    </span>
+                                @else
+                                    <span class="text-xs text-slate-400 font-medium">Belum</span>
+                                @endif
+                            </td>
+
+                            {{-- Aksi --}}
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    <button wire:click="edit({{ $user->id }})" class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-md transition-all">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                    </button>
+                                        
+                                    @if($user->id !== auth()->id())
+                                        <button wire:click="confirmDelete({{ $user->id }})" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                        </button>
                                     @endif
                                 </div>
-                                <div class="ml-4">
-                                    <div class="text-sm font-semibold text-gray-900">{{ $user->name }}</div>
-                                    <div class="text-sm text-gray-500">{{ $user->email }}</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 font-medium text-gray-900">
-                            <div class="flex flex-wrap gap-1">
-                                @forelse($user->role_badges as $badge)
-                                    <span class="px-2.5 py-0.5 inline-flex text-xs font-medium rounded-full {{ $badge['class'] }} border border-opacity-20">
-                                        {{ $badge['label'] }}
-                                    </span>
-                                @empty
-                                    <span class="text-gray-400 text-sm italic">No Role</span>
-                                @endforelse
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 font-medium text-gray-900">
-                            {{ $user->nomor_induk ?? '-' }}
-                        </td>
-                        <td class="px-6 py-4 font-medium text-gray-900">
-                            {{ $user->ta ?? '-' }}
-                        </td>
-                        <td class="px-6 py-4 text-center flex justify-center gap-2">
-                            <div class="flex justify-end items-center gap-3">
-                                <button wire:click="edit({{ $user->id }})" class="text-indigo-600 hover:text-indigo-900 font-medium hover:underline transition">
-                                    Edit
-                                </button>
-                                <span class="text-gray-300">|</span>
-                                @if($user->id === auth()->id())
-                                    <span class="text-gray-400 cursor-not-allowed" title="Akun Sendiri">Hapus</span>
-                                @else
-                                    <button
-                                        wire:click="delete({{ $user->id }})"
-                                        wire:confirm="Yakin ingin menghapus {{ $user->name }}?"
-                                        class="text-red-600 hover:text-red-900 font-medium hover:underline transition">
-                                        Hapus
-                                    </button>
-                                @endif
-                            </div>
-                        </td>
-                    </tr>
-                    @endforeach
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="px-6 py-12 text-center text-slate-500">
+                                Tidak ada data ditemukan.
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
+            
+        {{-- Footer --}}
+        <div class="px-6 py-4 border-t border-slate-100 bg-slate-50">
+            {{ $users->links() }}
+        </div>
     </div>
-
-    {{-- FOOTER PAGINATION --}}
-    <div class="bg-white px-6 py-4 border-t border-gray-200">
-        {{ $users->links() }}
-    </div>
-    
-    @include('livewire.admin.partials.manajemenUser.modal')
-
+        @include('livewire.admin.partials.manajemenUser.modal')
+        <!-- @include('livewire.admin.partials.manajemenUser.delete-modal') -->
 </div>

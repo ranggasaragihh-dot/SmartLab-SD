@@ -27,6 +27,9 @@ class UserManagement extends Component // Ganti nama class agar representatif
 
     public $showModal = false; // Kontrol visibilitas Modal
     public $isEditMode = false; // Pembeda antara Create vs Edit
+    public $showDeleteModal = false;
+
+    public $deleteId = null;
 
     // Data Form
     public $editingUserId = null;
@@ -126,6 +129,18 @@ class UserManagement extends Component // Ganti nama class agar representatif
         $this->resetPage();
     }
 
+    public function confirmDelete($id)
+    {
+        $this->activeTab = 'delete';
+        $this->showDeleteModal = true; // Tutup modal lain jika ada
+        
+        // Ambil nama untuk ditampilkan di popup
+        $user = User::find($id);
+        $this->name = $user->name;
+        $this->deleteId = $user->id;
+        
+    }
+
     public function delete($userId)
     {
         // 1. Validasi Input
@@ -157,6 +172,7 @@ class UserManagement extends Component // Ganti nama class agar representatif
 
         // 5. Hapus Data
         $user->delete();
+        $this->closeDeleteModal();
 
         // Flash message
         session()->flash('message', 'User berhasil dihapus.');
@@ -245,6 +261,12 @@ class UserManagement extends Component // Ganti nama class agar representatif
     {
         $this->showModal = false;
         $this->resetInputFields();
+    }
+
+    public function closeDeleteModal()
+    {
+        $this->showDeleteModal = false;
+        // $this->resetInputFields();
     }
 
     private function resetInputFields()

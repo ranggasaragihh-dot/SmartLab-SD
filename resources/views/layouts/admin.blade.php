@@ -59,73 +59,7 @@
 
     <div class="flex h-screen overflow-hidden">
 
-        {{-- ================================================= --}}
-        {{--                SIDEBAR ADMIN (DARK)               --}}
-        {{-- ================================================= --}}
-        <aside class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white transition-transform duration-300 transform md:relative md:translate-x-0"
-               :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
-            
-            <div class="flex flex-col h-full">
-                
-                {{-- 1. LOGO HEADER --}}
-                <div class="h-16 flex items-center justify-center border-b border-slate-800 bg-slate-950 shadow-md">
-                    <div class="flex items-center gap-2">
-                        <div class="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center text-slate-900 font-bold">S</div>
-                        <h1 class="text-lg font-bold tracking-wider">SMARTLAB <span class="text-xs text-amber-500 block -mt-1">ADMINISTRATOR</span></h1>
-                    </div>
-                </div>
-
-                {{-- 2. MENU NAVIGASI (LOOPING) --}}
-                <nav class="flex-1 overflow-y-auto py-6 space-y-1">
-                    
-                    @foreach($menus as $menu)   
-                        @if(isset($menu['header']))
-                            
-                            {{-- Tampilan Label Header (Kecil, Uppercase, Slate-500) --}}
-                            <div class="px-6 mt-12 mb-3 text-xs font-bold text-slate-500 uppercase tracking-widest">
-                                {{ $menu['header'] }}
-                            </div>
-
-                        @else
-                            @php
-                                // Cek apakah route saat ini cocok dengan menu ini
-                                $isActive = request()->routeIs($menu['route']);
-                            @endphp
-
-                            <a href="{{ route($menu['route']) }}" wire:navigate
-                            class="{{ $baseClass }} {{ $isActive ? $activeClass : $inactiveClass }}">
-                                
-                                {{-- Icon SVG --}}
-                                <svg class="w-5 h-5 mr-3 {{ $isActive ? $iconActive : $iconInactive }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $menu['icon'] }}"></path>
-                                </svg>
-                                
-                                {{-- Label Text --}}
-                                {{ $menu['label'] }}
-                            </a>
-                        @endif
-                    @endforeach
-
-                </nav>
-
-                {{-- 3. TOMBOL LOGOUT (Fixed di Bawah) --}}
-                <div class="p-4 border-t border-slate-800 bg-slate-900">
-                    <form method="POST" action="{{ route('logout') }}" x-data>
-                        @csrf
-                        <a href="{{ route('logout') }}" 
-                           @click.prevent="$root.submit();" 
-                           class="flex items-center w-full px-4 py-3 text-sm font-medium text-red-400 bg-slate-950/50 hover:bg-red-900/20 hover:text-red-300 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-red-900/30">
-                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                            Keluar Sistem
-                        </a>
-                    </form>
-                    <div class="mt-4 text-xs text-center text-slate-600">
-                        &copy; 2026 SmartLab System
-                    </div>
-                </div>
-
-            </div>
-        </aside>
+        @include('layouts.sidebar')
 
         {{-- ================================================= --}}
         {{--                  KONTEN UTAMA                     --}}
@@ -164,6 +98,8 @@
                 
                 {{ $slot }}
             </main>
+
+            @include('layouts.footer')
         </div>
 
     </div>
