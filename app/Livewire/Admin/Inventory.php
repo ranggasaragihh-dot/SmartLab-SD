@@ -32,6 +32,8 @@ class Inventory extends Component
     public $qrName = '';
     public $qrUrl = '';
 
+    public $deleteName;
+
     public function updatedSearch() { $this->resetPage(); }
 
     public function create()
@@ -82,15 +84,29 @@ class Inventory extends Component
 
     public function confirmDelete($id)
     {
-        $this->deleteId = $id;
-        $this->showDeleteModal = true;
+        // Cari data dulu sebelum buka modal
+        $item = InventoryModel::find($id); // Sesuaikan nama Model Anda (misal: Inventory)
+        
+        if ($item) {
+            $this->deleteId = $id;
+            $this->deleteName = $item->name; // <--- Ambil nama untuk ditampilkan
+            $this->showDeleteModal = true;   // Baru buka modal
+        }
     }
 
     public function destroy()
     {
-        InventoryModel::find($this->deleteId)->delete();
+        $item = InventoryModel::find($this->deleteId);
+        
+        if ($item) {
+            $item->delete();
+            session()->flash('message', 'Unit PC berhasil dihapus dari inventaris.');
+        }
+
+        // Reset & Tutup
         $this->showDeleteModal = false;
-        session()->flash('message', 'Data dihapus.');
+        $this->deleteId = null;
+        $this->deleteName = null;
     }
 
     public function closeModal()

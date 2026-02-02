@@ -1,24 +1,30 @@
-{{-- File: resources/views/livewire/admin/partials/header.blade.php --}}
-
 <div class="space-y-4 mb-6 font-sans">
     
-    {{-- BARIS UTAMA: Judul (Kiri) & Kontrol (Kanan) --}}
-    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+    {{-- BARIS UTAMA: Flex Container --}}
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
         
-        {{-- BAGIAN KIRI: Judul & Subjudul --}}
-        <div>
+        {{-- 1. BAGIAN KIRI: Judul & Subjudul --}}
+        <div class="flex-shrink-0">
             <h1 class="text-2xl font-bold tracking-tight text-slate-900">{{ $title }}</h1>
             <p class="text-sm text-slate-500 mt-1">{{ $subtitle }}</p>
         </div>
-        
-        {{-- BAGIAN KANAN: Search Bar & Tombol --}}
-        <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+
+        {{-- 2. BAGIAN KANAN: Tools (Filter -> Search -> Tombol) --}}
+        {{-- Kita jadikan satu container flex agar rapi sebaris --}}
+        <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto items-center justify-end">
             
-            {{-- LOGIKA SEARCH BAR: Hanya muncul jika variabel 'searchable' dikirim --}}
+            {{-- A. SLOT FILTER (Ditempatkan Paling Kiri dalam Grup Kanan) --}}
+            @if(isset($filters))
+                <div class="w-full sm:w-auto min-w-[160px]"> 
+                    {{-- Render HTML apapun yang dikirim dari Parent View --}}
+                    {!! $filters !!}
+                </div>
+            @endif
+            
+            {{-- B. SEARCH BAR (Tengah) --}}
             @if(isset($searchable) && $searchable)
                 <div class="relative w-full sm:w-64">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        {{-- Icon Search --}}
                         <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
@@ -32,10 +38,10 @@
                 </div>
             @endif
 
-            {{-- TOMBOL UTAMA (Warna Hitam/Slate-900) --}}
+            {{-- C. TOMBOL UTAMA (Paling Kanan) --}}
             <button 
                 wire:click="{{ $action }}" 
-                class="inline-flex items-center justify-center px-4 py-2 text-sm font-bold text-white bg-slate-900 rounded-lg hover:bg-slate-800 shadow-md transition-all whitespace-nowrap gap-2 focus:ring-4 focus:ring-slate-200"
+                class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 text-sm font-bold text-white bg-slate-900 rounded-lg hover:bg-slate-800 shadow-lg shadow-slate-900/10 hover:shadow-slate-900/20 transition-all whitespace-nowrap gap-2"
             >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"></path></svg>
                 {{ $button }}
@@ -44,21 +50,26 @@
         </div>
     </div>
 
-    {{-- FLASH MESSAGE (Alert Modern) --}}
-    @if (session()->has('message'))
-        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)" 
-             class="flex items-center gap-3 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg shadow-sm animate-fade-in-down">
-            <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-            <span class="text-sm font-medium">{{ session('message') }}</span>
-        </div>
-    @endif
+    {{-- FLASH MESSAGES (Alert System) --}}
+    <div class="space-y-2">
+        @if (session()->has('message'))
+            <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)" 
+                 x-transition:leave="transition ease-in duration-300"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="flex items-center gap-3 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg shadow-sm">
+                <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                <span class="text-sm font-medium">{{ session('message') }}</span>
+            </div>
+        @endif
 
-    @if (session()->has('error'))
-        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)" 
-             class="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg shadow-sm animate-fade-in-down">
-            <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-            <span class="text-sm font-medium">{{ session('error') }}</span>
-        </div>
-    @endif
+        @if (session()->has('error'))
+            <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)" 
+                 class="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg shadow-sm">
+                <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                <span class="text-sm font-medium">{{ session('error') }}</span>
+            </div>
+        @endif
+    </div>
 
 </div>

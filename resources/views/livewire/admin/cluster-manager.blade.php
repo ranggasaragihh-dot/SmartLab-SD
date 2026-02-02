@@ -1,98 +1,133 @@
-<div class="space-y-6">
-    @include('livewire.admin.partials.manajemenUser.header', [
-        'title'    => 'Manajemen Cluster',
-        'subtitle' => 'Kelola daftar lab dan aksesibilitas.',
+<div class="font-sans text-slate-900">
+
+    {{-- 1. HEADER PAGE --}}
+    @include('livewire.admin.partials.header', [
+        'title'    => 'Manajemen Cluster Lab',
+        'subtitle' => 'Kelola daftar laboratorium, denah, dan aturan akses.',
         'button'   => 'Tambah Lab',
-        'action'   => 'create' 
+        'action'   => 'create', 
+        'searchable' => true,
+        'searchPlaceholder' => 'Cari Nama Lab...'
     ])
 
-    {{-- Flash Message --}}
-    @if (session()->has('success'))
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
-            <p>{{ session('success') }}</p>
-        </div>
-    @endif
-    @if (session()->has('error'))
-        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
-            <p>{{ session('error') }}</p>
-        </div>
-    @endif
-
-    {{-- Tabel Cluster --}}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    {{-- 2. TABEL DATA --}}
+    <div class="bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left text-gray-500">
-                <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b">
+            <table class="w-full text-sm text-left">
+                <thead class="bg-slate-50 border-b border-slate-100 text-xs uppercase font-bold text-slate-500 tracking-wider">
                     <tr>
-                        <th class="px-6 py-3">Nama Lab</th>
-                        <th class="px-6 py-3">Tipe</th>
-                        <th class="px-6 py-3">Config (Delay)</th>
-                        <th class="px-6 py-3">Status</th>
-                        <th class="px-6 py-3 text-center">Aksi</th>
+                        <th class="px-6 py-4">Informasi Lab & Denah</th>
+                        <th class="px-6 py-4">Tipe Akses</th>
+                        <th class="px-6 py-4">Config (Delay)</th>
+                        <th class="px-6 py-4 text-center">Status</th>
+                        <th class="px-6 py-4 text-right">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @forelse($clusters as $cluster)
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center">
-                                    @if($cluster->denah_image)
-                                        <img class="h-10 w-10 rounded-lg object-cover mr-3 border" 
-                                            src="{{ Storage::url($cluster->denah_image) }}" 
-                                            alt="Denah">
-                                    @else
-                                        <div class="h-10 w-10 rounded-lg bg-gray-200 mr-3 flex items-center justify-center text-gray-400">
-                                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                            </svg>
+                <tbody class="divide-y divide-slate-50">
+                    @forelse($clusters as $item)
+                        <tr class="hover:bg-slate-50/80 transition-colors group">
+                            
+                            {{-- KOLOM 1: DENAH & NAMA --}}
+                            <td class="px-6 py-4">
+                                <div class="flex items-start gap-4">
+                                    {{-- Thumbnail Denah (Lebih Besar & Ada Border) --}}
+                                    <div class="relative w-16 h-16 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-amber-400 transition-all"
+                                         title="Klik untuk perbesar denah">
+                                        @if($item->denah_image)
+                                            <img src="{{ Storage::url($item->denah_image) }}" class="w-full h-full object-cover">
+                                        @else
+                                            <div class="w-full h-full flex items-center justify-center text-slate-300">
+                                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                            </div>
+                                        @endif
+                                    </div>
+                                    
+                                    {{-- Nama & Deskripsi --}}
+                                    <div class="mt-1">
+                                        <div class="text-base font-bold text-slate-900">{{ $item->name }}</div>
+                                        <div class="text-xs text-slate-500 mt-0.5 max-w-[200px] truncate">
+                                            {{ $item->description ?? 'Tidak ada deskripsi.' }}
                                         </div>
-                                    @endif
-                                    <div>
-                                        <div class="text-sm font-medium text-gray-900">{{ $cluster->name }}</div>
-                                        <div class="text-xs text-gray-500">{{ Str::limit($cluster->description, 30) }}</div>
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $cluster->type === 'public' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800' }}">
-                                    {{ ucfirst($cluster->type) }}
-                                </span>
+
+                            {{-- KOLOM 2: TIPE AKSES --}}
+                            <td class="px-6 py-4">
+                                @if($item->type == 'public')
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        Public Lab
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                        Private / Exam
+                                    </span>
+                                @endif
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                {{ $cluster->delay_time ?? 15 }} Menit
+
+                            {{-- KOLOM 3: CONFIG DELAY --}}
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2 text-slate-600 font-medium">
+                                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    {{ $item->delay_time ?? '0' }} Menit
+                                </div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $cluster->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                    {{ $cluster->is_active ? 'Active' : 'Maintenance' }}
-                                </span>
+
+                            {{-- KOLOM 4: STATUS (Dot Style) --}}
+                            <td class="px-6 py-4 text-center">
+                                @if($item->is_active)
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                        Active
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                                        Inactive
+                                    </span>
+                                @endif
                             </td>
-                            <td class="px-6 py-4 text-center flex justify-center gap-2">
-                                <div class="flex justify-end items-center gap-3">
-                                    <button wire:click="edit({{ $cluster->id }})" class="text-indigo-600 hover:text-indigo-900 font-medium hover:underline transition">
-                                        Edit
+
+                            {{-- KOLOM 5: AKSI (Icons) --}}
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    {{-- Edit --}}
+                                    <button wire:click="edit({{ $item->id }})" class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-md transition-all" title="Edit Cluster">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                     </button>
-                                    <span class="text-gray-300">|</span>
-                                    <button
-                                        wire:click="delete({{ $cluster->id  }})"
-                                        wire:confirm="Yakin ingin menghapus {{ $cluster->name }}?"
-                                        class="text-red-600 hover:text-red-900 font-medium hover:underline transition">
-                                        Hapus
+                                    
+                                    {{-- Delete --}}
+                                    {{-- Kita pakai confirmDelete untuk memanggil MODAL MERAH yang cantik --}}
+                                    <button wire:click="confirmDelete({{ $item->id }})" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all" title="Hapus Cluster">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                     </button>
                                 </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-10 text-center text-gray-500 italic">
-                                Belum ada data cluster. Silakan tambah baru.
+                            <td colspan="5" class="px-6 py-12 text-center text-slate-500">
+                                <div class="flex flex-col items-center justify-center">
+                                    <svg class="w-12 h-12 text-slate-200 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                    <p>Belum ada data Cluster / Lab.</p>
+                                </div>
                             </td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
+        
+        {{-- Pagination --}}
+        <div class="px-6 py-4 border-t border-slate-100 bg-slate-50">
+            {{ $clusters->links() }}
+        </div>
     </div>
 
-    {{-- 4. MODAL FORM --}}
+    {{-- 4. MODALS --}}
+    {{-- Pastikan file modal-delete dan modal-form (create/edit) sudah dibuat/diinclude --}}
     @include('livewire.admin.partials.clusterManager.modal')
+    @include('livewire.admin.partials.clusterManager.modal-delete')
 </div>

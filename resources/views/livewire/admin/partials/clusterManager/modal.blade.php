@@ -1,121 +1,130 @@
 @if($showFormModal)
-    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    @teleport('body')
+    <div class="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 sm:px-0">
+        
+        {{-- BACKDROP --}}
+        <div wire:click="closeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] transition-opacity"></div>
+
+        {{-- MODAL CARD --}}
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all scale-100 relative z-10 border border-slate-100">
             
-            {{-- Backdrop Blur --}}
-            <div class="fixed inset-0 bg-gray-900 bg-opacity-60 transition-opacity backdrop-blur-sm" wire:click="closeModal"></div>
-            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-            {{-- Modal Panel --}}
-            <div class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
-                <form wire:submit.prevent="store">
-                    
-                    {{-- Header Modal --}}
-                    <div class="bg-white px-6 py-5 border-b border-gray-100 flex justify-between items-center">
-                        <h3 class="text-lg leading-6 font-bold text-gray-900" id="modal-title">
-                            {{ $isEdit ? 'Edit Cluster Lab' : 'Tambah Cluster Baru' }}
-                        </h3>
-                        <button type="button" wire:click="closeModal" class="text-gray-400 hover:text-gray-500 transition">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-
-                    {{-- Body Modal --}}
-                    <div class="bg-white px-6 py-6 space-y-5">
-                        
-                        {{-- Nama Lab --}}
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Lab / Cluster</label>
-                            <input type="text" wire:model="form.name" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition placeholder-gray-300" placeholder="Contoh: Lab Jaringan Komputer">
-                            @error('form.name') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
-                        </div>
-
-                        {{-- Grid: Tipe & Delay --}}
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-1">Tipe Akses</label>
-                                <select wire:model="form.type" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                    <option value="public">Public (Mahasiswa)</option>
-                                    <option value="private">Private (Dosen/Khusus)</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-1">Delay (Menit)</label>
-                                <div class="relative">
-                                    <input type="number" wire:model="form.delay_time" min="1" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm pl-3 pr-8">
-                                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                        <span class="text-gray-400 sm:text-xs">m</span>
-                                    </div>
-                                </div>
-                                <p class="text-[10px] text-gray-400 mt-1">Auto-cancel jika telat.</p>
-                                @error('form.delay_time') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-
-                        {{-- Deskripsi --}}
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Deskripsi Singkat</label>
-                            <textarea wire:model="form.description" rows="3" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Keterangan mengenai lab ini..."></textarea>
-                        </div>
-
-                        {{-- Upload Gambar --}}
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Gambar Denah</label>
-                            <div class="flex items-start space-x-4 p-4 border border-dashed border-gray-300 rounded-xl bg-gray-50">
-                                {{-- Preview Area --}}
-                                <div class="shrink-0">
-                                    @if ($image_upload)
-                                        <img class="h-16 w-16 object-cover rounded-lg shadow-sm border border-indigo-200" src="{{ $image_upload->temporaryUrl() }}">
-                                    @elseif ($isEdit && !empty($form['denah_image']))
-                                        <img class="h-16 w-16 object-cover rounded-lg shadow-sm border border-gray-200" src="{{ Storage::url($form['denah_image']) }}">
-                                    @else
-                                        <div class="h-16 w-16 rounded-lg bg-white flex items-center justify-center text-gray-300 border border-gray-200 shadow-sm">
-                                            <i class="fas fa-image text-xl"></i>
-                                        </div>
-                                    @endif
-                                </div>
-
-                                {{-- Input File --}}
-                                <div class="flex-1">
-                                    <input type="file" wire:model="image_upload" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
-                                    <p class="text-xs text-gray-400 mt-2">Format: PNG, JPG (Max. 2MB)</p>
-                                    @error('image_upload') <span class="text-red-500 text-xs font-bold">{{ $message }}</span> @enderror
-                                    
-                                    <div wire:loading wire:target="image_upload" class="text-xs text-indigo-600 font-semibold mt-1">
-                                        <i class="fas fa-spinner fa-spin mr-1"></i> Uploading...
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Active Switch --}}
-                        <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-100">
-                            <span class="flex-grow flex flex-col">
-                                <span class="text-sm font-medium text-gray-900">Status Aktif</span>
-                                <span class="text-xs text-gray-500">Jika mati, lab tidak bisa dibooking.</span>
-                            </span>
-                            <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
-                                <input type="checkbox" wire:model="form.is_active" id="toggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer checked:right-0 right-5"/>
-                                <label for="toggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer peer-checked:bg-indigo-500"></label>
-                                {{-- Fallback Checkbox (Jika CSS Toggle Ribet) --}}
-                                <input type="checkbox" wire:model="form.is_active" class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded ml-2">
-                            </div>
-                        </div>
-
-                    </div>
-
-                    {{-- Footer --}}
-                    <div class="bg-gray-50 px-6 py-4 flex flex-row-reverse gap-3">
-                        <button type="submit" wire:loading.attr="disabled" class="inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none sm:text-sm disabled:opacity-50">
-                            <span wire:loading.remove>{{ $isEdit ? 'Simpan Perubahan' : 'Buat Cluster' }}</span>
-                            <span wire:loading><i class="fas fa-circle-notch fa-spin mr-2"></i>Loading...</span>
-                        </button>
-                        <button type="button" wire:click="closeModal" class="inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:text-sm">
-                            Batal
-                        </button>
-                    </div>
-                </form>
+            {{-- HEADER --}}
+            <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-start bg-white">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900 tracking-tight">
+                        {{ $isEdit ? 'Edit Cluster Lab' : 'Tambah Cluster Baru' }}
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-1">Kelola informasi laboratorium dan denah ruangan.</p>
+                </div>
+                <button wire:click="closeModal" class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-full transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
             </div>
+
+            {{-- FORM BODY --}}
+            <form wire:submit.prevent="store">
+                <div class="p-6 space-y-5">
+
+                    {{-- 1. Nama Lab --}}
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Nama Lab / Cluster</label>
+                        <input type="text" wire:model="form.name" class="w-full border-slate-300 rounded-lg focus:ring-1 focus:ring-amber-500 focus:border-amber-500 text-sm py-2.5 text-slate-700 placeholder-slate-400 transition-shadow font-medium" placeholder="Contoh: Lab Jaringan Komputer">
+                        @error('form.name') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                    </div>
+
+                    {{-- 2. Grid: Tipe & Delay --}}
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Tipe Akses</label>
+                            <select wire:model="form.type" class="w-full border-slate-300 rounded-lg focus:ring-1 focus:ring-amber-500 focus:border-amber-500 text-sm py-2.5 text-slate-700">
+                                <option value="public">Public (Mahasiswa)</option>
+                                <option value="private">Private (Dosen/Khusus)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Delay (Menit)</label>
+                            <div class="relative">
+                                <input type="number" wire:model="form.delay_time" min="1" class="w-full border-slate-300 rounded-lg focus:ring-1 focus:ring-amber-500 focus:border-amber-500 text-sm py-2.5 pl-3 pr-8 text-slate-700">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                    <span class="text-slate-400 text-xs font-bold">min</span>
+                                </div>
+                            </div>
+                            @error('form.delay_time') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+
+                    {{-- 3. Deskripsi --}}
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Deskripsi Singkat</label>
+                        <textarea wire:model="form.description" rows="3" class="w-full border-slate-300 rounded-lg focus:ring-1 focus:ring-amber-500 focus:border-amber-500 text-sm py-2 text-slate-700 placeholder-slate-400" placeholder="Keterangan mengenai fasilitas atau aturan lab ini..."></textarea>
+                    </div>
+
+                    {{-- 4. Upload Gambar Denah --}}
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Gambar Denah</label>
+                        <div class="flex items-start space-x-4 p-4 border border-dashed border-slate-300 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors relative">
+                            
+                            {{-- Preview Area --}}
+                            <div class="shrink-0 relative group">
+                                @if ($image_upload)
+                                    <img class="h-16 w-16 object-cover rounded-lg shadow-sm border border-amber-200" src="{{ $image_upload->temporaryUrl() }}">
+                                
+                                {{-- PERBAIKAN DISINI: Pakai ['key'] karena form Anda Array --}}
+                                @elseif ($isEdit && !empty($form['denah_image'])) 
+                                    <img class="h-16 w-16 object-cover rounded-lg shadow-sm border border-slate-200" src="{{ Storage::url($form['denah_image']) }}">
+                                @else
+                                    <div class="h-16 w-16 rounded-lg bg-white flex items-center justify-center text-slate-300 border border-slate-200 shadow-sm">
+                                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    </div>
+                                @endif
+                                
+                                <div wire:loading wire:target="image_upload" class="absolute inset-0 bg-white/80 flex items-center justify-center rounded-lg">
+                                    <svg class="animate-spin h-5 w-5 text-amber-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                </div>
+                            </div>
+
+                            {{-- Input File --}}
+                            <div class="flex-1">
+                                <input type="file" wire:model="image_upload" accept="image/*" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100 cursor-pointer">
+                                <p class="text-[10px] text-slate-400 mt-2">Format: PNG, JPG (Max. 2MB). Gambar akan otomatis di-resize.</p>
+                                @error('image_upload') <span class="text-red-500 text-xs font-bold mt-1 block">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- 5. Active Status (Toggle Style) --}}
+                    <div class="p-4 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between">
+                        <div>
+                            <span class="block text-xs font-bold text-slate-900 uppercase tracking-wide">Status Operasional</span>
+                            <span class="text-[10px] text-slate-500">Jika non-aktif, lab tidak muncul di menu booking.</span>
+                        </div>
+                        
+                        <div class="flex items-center">
+                             {{-- PERBAIKAN DISINI: Pakai ['key'] --}}
+                            <select wire:model="form.is_active" class="border-slate-300 rounded-lg focus:ring-1 focus:ring-amber-500 focus:border-amber-500 text-xs py-1.5 font-bold {{ $form['is_active'] ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-slate-500 bg-white' }}">
+                                <option value="1">✅ Aktif</option>
+                                <option value="0">⛔ Non-Aktif</option>
+                            </select>
+                        </div>
+                    </div>
+
+                </div>
+
+                {{-- FOOTER ACTION --}}
+                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 rounded-b-2xl">
+                    <button type="button" wire:click="closeModal" class="px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-800 text-sm font-bold transition-all shadow-sm">
+                        Batal
+                    </button>
+                    <button type="submit" wire:loading.attr="disabled" class="px-6 py-2.5 bg-slate-900 text-white rounded-xl hover:bg-slate-800 hover:shadow-lg hover:shadow-slate-900/20 text-sm font-bold transition-all transform active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span wire:loading.remove wire:target="store">{{ $isEdit ? 'Simpan Perubahan' : 'Buat Cluster' }}</span>
+                        <span wire:loading wire:target="store" class="flex items-center gap-2">
+                            <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            Menyimpan...
+                        </span>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
+    @endteleport
 @endif

@@ -6,12 +6,14 @@ use App\Models\Cluster;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\WithFileUploads; // Wajib import ini
+use Livewire\WithPagination;
 use Illuminate\Support\Facades\Storage;
 
 #[Layout('layouts.admin')]
 class ClusterManager extends Component
 {
     use WithFileUploads; // Wajib gunakan trait ini
+    use WithPagination;
 
     // Variabel khusus untuk file upload sementara
     // Jangan dicampur dengan $form agar tidak error saat serialize data
@@ -20,6 +22,11 @@ class ClusterManager extends Component
     public $isEdit = false;
     public $editId = null;
     public $showFormModal = false;
+
+    // Property untuk Delete Modal
+    public $showDeleteModal = false;
+    public $deleteId;
+    public $deleteName; // <--- Variabel untuk menyimpan nama lab sementara
 
     // Data Form (Sesuai kolom database terbaru)
     public $form = [
@@ -35,7 +42,8 @@ class ClusterManager extends Component
     public function render()
     {
         return view('livewire.admin.cluster-manager', [
-            'clusters' => Cluster::orderBy('name', 'asc')->get()
+            // UBAH get() MENJADI paginate(jumlah_per_halaman)
+            'clusters' => Cluster::orderBy('name', 'asc')->paginate(10) 
         ]);
     }
 
@@ -113,6 +121,46 @@ class ClusterManager extends Component
         $this->showFormModal = false;
         $this->resetForm();
     }
+
+    // Dipanggil saat klik ikon sampah di tabel
+    public function confirmDelete($id)
+    {
+        $cluster = Cluster::find($id);
+        
+        if ($cluster) {
+            $this->deleteId = $id;
+            $this->deleteName = $cluster->name; // Ambil nama untuk ditampilkan di modal
+            $this->showDeleteModal = true;      // Buka modal merah
+        }
+    }
+
+    // Dipanggil saat klik "Batal"
+    public function closeDeleteModal()
+    {
+        $this->showDeleteModal = false;
+        $this->deleteId = null;
+        $this->deleteName = null;
+    }
+
+    // Dipanggil saat klik "Ya, Hapus"
+    // public function destroy()
+    // {
+    //     if ($this->deleteId) {
+    //         $cluster = Cluster::find($this->deleteId);
+    //         if ($cluster) {
+    //             // Hapus gambar fisik jika ada
+    //             if ($cluster->denah_image) {
+    //                 Storage::disk('public')->delete($cluster->denah_image);
+    //             }
+    //             $cluster->delete();
+                
+    //             // Kirim notifikasi sukses
+    //             session()->flash('message', 'Cluster berhasil dihapus.');
+    //         }
+    //     }
+
+    //     $this->closeDeleteModal(); // Tutup modal
+    // }
 
     // --- DELETE ---
     public function delete($id)
