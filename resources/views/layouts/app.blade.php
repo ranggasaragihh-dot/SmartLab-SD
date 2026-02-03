@@ -23,29 +23,12 @@
     {{-- WAJIB: x-data DITARUH DI SINI agar melingkupi Sidebar & Konten --}}
     <div x-data="{ sidebarOpen: false }" class="flex h-screen overflow-hidden">
 
-        {{-- HIERARKI 2: Include Sidebar --}}
-        {{-- Karena berada DI DALAM div x-data, file ini BISA BACA sidebarOpen --}}
-        @include('layouts.admin')
-
         {{-- HIERARKI 3: Konten Utama & Header --}}
         <div class="relative flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
-            
-            {{-- Header dengan Tombol Burger --}}
-            <!-- <header class="md:hidden ...">
-                <div class="flex items-center gap-3">
-                    
-                    {{-- PANGGIL GLOBAL STORE --}}
-                    <button @click="$store.layout.open()" class="...">
-                        <svg class="...">...</svg>
-                    </button>
-
-                    <span class="font-bold">Lab Booking</span>
-                </div>
-            </header> -->
-
             <main>
                 {{ $slot }}
             </main>
+            @include('layouts.footer')
         </div>
 
     </div>

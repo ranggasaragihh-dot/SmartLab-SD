@@ -56,4 +56,10 @@ class Inventory extends Model
     {
         return $this->hasMany(Booking::class);
     }
+
+    public function activeBooking()
+    {
+        // Mengambil satu data booking terbaru yang statusnya 'booked' atau 'active'
+        return $this->hasOne(Booking::class)->latestOfMany()->where('status', 'booked');
+    }
 }
