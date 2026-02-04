@@ -14,6 +14,8 @@ use App\Livewire\Admin\LabManager;
 use App\Livewire\Admin\ClusterManager;
 use App\Livewire\Admin\DenahManager;
 use App\Livewire\Admin\UserManagement;
+use App\Livewire\Admin\Booking\Dashboard;
+use App\Livewire\Admin\Booking\Manager;
 
 /*
 |--------------------------------------------------------------------------
@@ -64,6 +66,10 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     // Route::get('/lab/{clusterId}', \App\Livewire\Admin\LabManager::class)->name('lab.manage');
     Route::get('/denah-manager', DenahManager::class)->name('denah-manager');
     Route::get('/manajemen-user', UserManagement::class)->name('manajemen-user');
+
+    Route::get('/booking', Dashboard::class)->name('booking.dashboard');
+    // 2. Manager (Detail Lab dengan Dropdown)
+    Route::get('/booking/{clusterId}', Manager::class)->name('booking.manage');
 });
 
 // 5. LOGOUT: Wajib Method POST

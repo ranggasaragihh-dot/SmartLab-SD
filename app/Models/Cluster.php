@@ -27,6 +27,18 @@ class Cluster extends Model
         return $this->hasMany(Inventory::class);
     }
 
+    public function bookings()
+    {
+        return $this->hasManyThrough(
+            Booking::class,    // Model Tujuan (Booking)
+            Inventory::class,  // Model Perantara (Inventory/Unit)
+            'cluster_id',      // Foreign Key di tabel Inventory
+            'inventory_id',    // Foreign Key di tabel Booking
+            'id',              // Local Key di tabel Cluster
+            'id'               // Local Key di tabel Inventory
+        );
+    }
+
     public function getDenahUrlAttribute()
     {
         return $this->denah_image 
