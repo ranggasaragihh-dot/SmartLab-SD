@@ -15,17 +15,17 @@ class Dashboard extends Component
         // Mengambil data Cluster dengan perhitungan statistik otomatis
         // Pastikan relasi 'units' ada di model Cluster
         $clusters = Cluster::withCount([
-            'inventory', // Menghitung total unit (units_count)
-            'inventory as available_count' => function ($query) {
+            'inventories', // Menghitung total unit (units_count)
+            'inventories as available_count' => function ($query) {
                 $query->where('status', 'available');
             },
             'bookings as booked_count' => function ($query) {
                 $query->where('bookings.status', 'booked');
             },
-            'inventory as maintenance_count' => function ($query) {
+            'inventories as maintenance_count' => function ($query) {
                 $query->where('status', 'maintenance');
             },
-            'inventory as broken_count' => function ($query) {
+            'inventories as broken_count' => function ($query) {
                 $query->where('status', 'broken');
             }
         ])->get();

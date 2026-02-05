@@ -35,7 +35,7 @@
             Daftar Ruangan
         </p>
 
-        @foreach($clusters as $cluster)
+        @foreach($allowedClusters as $cluster)
             <button 
                 wire:click="$set('selectedClusterId', {{ $cluster->id }})"
                 @click="open = false"

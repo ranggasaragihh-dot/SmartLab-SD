@@ -72,19 +72,25 @@
 {{-- ======================================================================== --}}
 {{-- MODAL 2: INFO & AKSI (CANCEL/FINISH) - UNTUK USER PEMILIK BOOKING        --}}
 {{-- ======================================================================== --}}
-<div x-data="{ open: @entangle('showCancelModal') }"> 
+{{-- PERBAIKAN: Entangle kedua variabel sekaligus --}}
+<div x-data="{ 
+    isCancel: @entangle('showCancelModal'), 
+    isFinish: @entangle('showFinishModal') 
+}"> 
     <template x-teleport="body">
         <div 
-            x-show="open"
+            {{-- TAMPILKAN JIKA SALAH SATU BERNILAI TRUE --}}
+            x-show="isCancel || isFinish"
             x-cloak
             style="display: none; z-index: 999999 !important;"
             x-transition.opacity.duration.300ms
             class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
         >
-            <div @click="open = false" class="absolute inset-0"></div>
+            {{-- KLIK LATAR UNTUK MENUTUP KEDUANYA --}}
+            <div @click="isCancel = false; isFinish = false" class="absolute inset-0"></div>
 
             <div 
-                x-show="open"
+                x-show="isCancel || isFinish"
                 x-transition:enter="transition ease-out duration-300"
                 x-transition:enter-start="opacity-0 scale-90"
                 x-transition:enter-end="opacity-100 scale-100"
@@ -93,19 +99,34 @@
                 x-transition:leave-end="opacity-0 scale-90"
                 class="bg-white p-6 rounded-2xl w-full max-w-sm shadow-2xl relative z-10 overflow-hidden"
             >
-                {{-- PASTIIN DATA ADA DULU BARU RENDER --}}
-                @if($selectedInventoryId && $selectedBooking)
+                @if($selectedBooking)
                     <div class="text-center pt-2">
-                        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-amber-100 mb-4">
-                            <svg class="h-6 w-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        
+                        {{-- ICON & JUDUL DINAMIS MENGGUNAKAN ALPINE X-SHOW --}}
+                        
+                        {{-- 1. TAMPILAN FINISH (HIJAU) --}}
+                        <div x-show="isFinish">
+                            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                                <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-800">Selesaikan Sesi?</h3>
+                            <p class="text-sm text-gray-500 mb-6">
+                                Anda akan mengakhiri penggunaan <span class="font-bold text-green-600">{{ $selectedInventoryName ?? 'Unit ini' }}</span>
+                            </p>
+                        </div>
+
+                        {{-- 2. TAMPILAN CANCEL (MERAH/AMBER) --}}
+                        <div x-show="isCancel">
+                            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                                <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-800">Batalkan Booking?</h3>
+                            <p class="text-sm text-gray-500 mb-6">
+                                Anda akan membatalkan jadwal di <span class="font-bold text-red-600">{{ $selectedInventoryName ?? 'Unit ini' }}</span>
+                            </p>
                         </div>
                         
-                        <h3 class="text-lg font-bold text-gray-800">Status Unit</h3>
-                        <p class="text-sm text-gray-500 mb-6">
-                            Anda sedang menyewa <span class="font-bold text-amber-600">{{ $selectedInventoryName }}</span>
-                        </p>
-                        
-                        {{-- Info Waktu --}}
+                        {{-- Info Waktu (Tampil di kedua kondisi) --}}
                         <div class="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-100">
                             <div class="flex justify-between text-sm mb-2">
                                 <span class="text-gray-500">Mulai</span>
@@ -118,41 +139,49 @@
                         </div>
                     </div>
 
+                    {{-- TOMBOL AKSI DINAMIS --}}
+                    
+                    {{-- TOMBOL FINISH (Hanya muncul jika isFinish true) --}}
                     <button 
+                        x-show="isFinish"
                         wire:click="finishBooking" 
                         wire:loading.attr="disabled"
                         class="w-full py-3 bg-green-500 text-white shadow-lg shadow-green-200 rounded-xl font-bold hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
                     >
                         <span wire:loading.remove wire:target="finishBooking">
                             <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            Selesaikan Sesi
+                            Ya, Selesaikan
                         </span>
                         <span wire:loading wire:target="finishBooking">Memproses...</span>
                     </button>
 
+                    {{-- TOMBOL CANCEL (Hanya muncul jika isCancel true) --}}
                     <button 
+                        x-show="isCancel"
                         wire:click="cancelBooking" 
                         wire:loading.attr="disabled"
-                        class="w-full py-3 bg-red-50 text-red-600 border border-red-100 rounded-xl font-bold hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
+                        class="w-full py-3 bg-red-600 text-white shadow-lg shadow-red-200 rounded-xl font-bold hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
                     >
                         <span wire:loading.remove wire:target="cancelBooking">
                             <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                            Batalkan Booking
+                            Ya, Batalkan
                         </span>
                         <span wire:loading wire:target="cancelBooking">Memproses...</span>
                     </button>
-
-                        <!-- <button @click="open = false" class="w-full py-2 mt-2 text-xs text-gray-400 hover:text-gray-600">
-                            Tutup / Kembali
-                        </button> -->
+                    
+                    {{-- TOMBOL KEMBALI (Menutup keduanya) --}}
+                    <button @click="isCancel = false; isFinish = false" class="w-full py-2 mt-3 text-xs font-bold text-gray-400 hover:text-gray-600">
+                        Batal / Kembali
+                    </button>
 
                 @else
-                    {{-- Loading State kalau data belum siap --}}
-                    <!-- <div class="text-center py-8 text-gray-500">Memuat data...</div> -->
-                    
-                    <!-- </div> -->
+                    {{-- Loading State --}}
+                    <div class="flex flex-col items-center justify-center py-8 text-gray-400 animate-pulse">
+                        <svg class="w-8 h-8 mb-2" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        <span class="text-xs">Memuat Data...</span>
+                    </div>
                 @endif
             </div>
         </div>
     </template>
-</div> 
+</div>

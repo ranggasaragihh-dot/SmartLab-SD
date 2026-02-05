@@ -5,180 +5,196 @@ namespace App\Livewire;
 use App\Models\Cluster;
 use App\Models\Inventory;
 use App\Models\Booking;
-use App\Services\BookingService;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
-use Exception;
 
 #[Layout('layouts.booking')]
 class BookingPage extends Component
 {
-    // Filter
+    // --- STATE UTAMA ---
     public $selectedClusterId = null;
-    public $filterDate;
-    public $filterTime;
-
-    // Modal State
-    public $showBookModal = false;
-    public $showCancelModal = false;
-    
-    // Data Form Booking
-    public $selectedInventoryId = null;
-    public $selectedInventoryName = '';
-    public $selectedBookingId = null; // ID booking untuk proses cancel
-    public $selectedBookingStartTime = null;
-
     public $cluster; 
 
-    public $clusterId;
-    public $currentClusterName;
-
-    public $selectedBooking;
-    
+    // --- FILTER & FORM ---
+    public $filterDate;
     public $start_time;
     public $end_time;
-
+    
+    // --- DATA SELECTION ---
+    public $selectedInventoryId = null; 
+    public $selectedInventoryName = '';
+    
+    // --- MODAL STATE ---
+    public $showBookModal = false;
+    public $showCancelModal = false;
+    public $showFinishModal = false;
+    
+    // --- EDIT/CANCEL STATE ---
+    public $selectedBookingId = null;
+    public $selectedBooking;
     public $bookingStatus = null;
 
     public function mount($clusterId = null)
     {
+        $this->filterDate = Carbon::today()->format('Y-m-d');
+
         if ($clusterId) {
-            // SKENARIO 1: User klik link spesifik (ada ID)
             $this->cluster = Cluster::findOrFail($clusterId);
         } else {
-            // SKENARIO 2: User baru buka menu Booking (URL polos)
-            // Ambil Cluster pertama yang ada di DB sebagai default
-            $this->cluster = Cluster::first();
-
-            // Safety Check: Kalau database kosong melompong (belum ada cluster sama sekali)
-            if (!$this->cluster) {
-                abort(404, 'Belum ada data Cluster/Lab yang dibuat.');
-            }
+            // Default ke cluster aktif pertama
+            $this->cluster = Cluster::where('is_active', true)->first();
         }
 
-        // Set properti lainnya berdasarkan cluster yang terpilih
-        $this->clusterId = $this->cluster->id;
-        $this->currentClusterName = $this->cluster->name;
-
-        // Default pilih lab pertama
-        $firstCluster = Cluster::where('is_active', true)->first();
-        if ($firstCluster) {
-            $this->selectedClusterId = $firstCluster->id;
+        if ($this->cluster) {
+            $this->selectedClusterId = $this->cluster->id;
         }
-
-        $this->filterDate = Carbon::today()->format('Y-m-d');
-        $this->filterTime = Carbon::today()->format('H:i');
     }
 
-    // --- LOGIC 1: FILTER LAB BERDASARKAN ROLE USER ---
-    private function getAllowedClustersQuery()
+    // Listener saat dropdown ganti
+    public function updatedSelectedClusterId($value)
     {
-        $user = Auth::user();
-        $query = Cluster::where('is_active', true);
-
-        // Jika user adalah MAHASISWA (student), hanya tampilkan Lab PUBLIC
-        // Asumsi role di database: 'student', 'dosen', 'admin'
-        if ($user->role === 'student') {
-            $query->where('type', 'public');
-        }
-        
-        // Jika user adalah DOSEN atau ADMIN, tampilkan SEMUA (Public + Private)
-        // Jadi tidak perlu 'where' tambahan.
-
-        return $query;
+        $this->cluster = Cluster::find($value);
+        $this->reset(['selectedInventoryId', 'selectedInventoryName', 'start_time', 'end_time']);
     }
 
-    // Fungsi: Saat kotak PC diklik
+    private function resetModals()
+    {
+        // Matikan semua saklar modal
+        $this->showBookModal = false;
+        $this->showCancelModal = false;
+        $this->showFinishModal = false;
+        
+        // Kosongkan data container
+        $this->selectedBookingId = null;
+        $this->selectedBooking = null;
+        $this->selectedInventoryId = null;
+        $this->selectedInventoryName = null;
+        
+        $this->resetErrorBag();
+    }
+
+    // =================================================================
+    // 1. FUNGSI INTERAKSI (Hanya Booking Satuan)
+    // =================================================================
+
+    /**
+     * Logic saat user klik kotak PC/Meja.
+     */
     public function clickSeat($inventoryId)
     {
-        // 1. Cari data Inventory (PC/Meja)
+        $this->resetModals(); // Bersihkan state dulu
+
         $inventory = Inventory::find($inventoryId);
-        
-        // Cek validasi dasar (jika barang dihapus/maintenance saat user sedang melihat)
-        if (!$inventory || $inventory->status !== 'available') {
-            return;
+
+        // Validasi Fisik: Jika tidak ada atau Rusak/Maintenance, stop.
+        if (!$inventory || in_array($inventory->status, ['broken', 'maintenance'])) {
+            return; 
         }
 
+        // Set Data Inventory Dasar
         $this->selectedInventoryId = $inventory->id;
         $this->selectedInventoryName = $inventory->name;
 
-        // 2. Cek apakah kursi ini SEDANG ADA YANG PUNYA saat ini?
-        // Kita cek manual di sini karena ini untuk kebutuhan UI (Buka modal mana?)
+        // Cek Booking Aktif/Mendatang di Unit ini
         $activeBooking = Booking::where('inventory_id', $inventoryId)
-            ->whereNotIn('status', ['cancelled', 'completed'])
-            ->where('end_time', '>', Carbon::now()) // Yang belum selesai
+            ->where('user_id', Auth::id()) // Cek milik user sendiri
+            ->whereNotIn('status', ['cancelled', 'rejected', 'completed'])
+            ->where('end_time', '>', Carbon::now()) // Yang belum berakhir
+            ->orderBy('start_time', 'asc')
             ->first();
 
-        // --- LOGIKA KEPUTUSAN ---
-
+        // --- SKENARIO A: SAYA PUNYA JADWAL DI SINI ---
         if ($activeBooking) {
-            // SKENARIO A: SUDAH DIBOOKING
             
-            if ($activeBooking->user_id === Auth::id()) {
-                // Milik Saya -> Buka Modal Cancel/Finish
-                $this->selectedBookingId = $activeBooking->id;
-                $this->bookingStatus = $activeBooking->status;
-                $this->selectedInventoryName = $inventory->name;
-                $this->showCancelModal = true; 
-                $this->showBookModal = false;
-                $this->selectedBooking = $activeBooking;
-            } else {
-                // Milik Orang Lain -> Jangan lakukan apa-apa (atau tampilkan error)
-                // User seharusnya melihat warna biru/abu, tapi kalau memaksa klik, kita tolak.
-                return;
+            $this->selectedBookingId = $activeBooking->id;
+            $this->selectedBooking = $activeBooking;
+
+            // LOGIKA WAKTU (Time Gate)
+            $now = Carbon::now();
+            $startTime = Carbon::parse($activeBooking->start_time);
+
+            // ATURAN TEGAS:
+            // 1. Jika Status ACTIVE (Sudah Check-in) -> PASTI FINISH (Tidak boleh cancel)
+            // 2. Jika Waktu SUDAH MULAI (Meski belum check-in) -> PASTI FINISH
+            if ($activeBooking->status === 'active' || $now->greaterThanOrEqualTo($startTime)) {
+                $this->showFinishModal = true;
+            } 
+            // 3. Jika Masih Status BOOKED DAN Waktu BELUM MULAI -> BOLEH CANCEL
+            else {
+                $this->showCancelModal = true;
             }
 
-        } else {
-            // SKENARIO B: KOSONG (AVAILABLE)
-            // Ini bagian yang sebelumnya mungkin error/hilang
-            
-            $this->selectedInventoryId = $inventory->id;
-            $this->selectedInventoryName = $inventory->name;
-            
-            // Reset form input jam
-            $this->start_time = null;
-            $this->end_time = null;
+        } 
+        // --- SKENARIO B: UNIT KOSONG/AVAILABLE (Atau punya orang lain) ---
+        else {
+            // Cek dulu apakah dipakai orang lain?
+            $isBookedByOther = Booking::where('inventory_id', $inventoryId)
+                ->whereNotIn('status', ['cancelled', 'rejected', 'completed'])
+                ->where('end_time', '>', Carbon::now())
+                ->exists();
 
-            // BUKA MODAL
+            if ($isBookedByOther) {
+                // Opsional: Beri tahu user unit ini dipakai orang
+                // $this->dispatch('notify', ...);
+                return; 
+            }
+
+            // Jika benar-benar kosong, buka form booking baru
+            $this->reset(['start_time', 'end_time']);
             $this->showBookModal = true;
-            $this->showCancelModal = false; 
         }
     }
 
-    // Fungsi: Simpan ke Database
+    // CATATAN: Fungsi clickRoom() SUDAH DIHAPUS karena pindah ke Admin.
+
+    // =================================================================
+    // 2. FUNGSI TRANSAKSI
+    // =================================================================
+
     public function createBooking()
     {
-        // Validasi Form Standar
+        // 1. Validasi Input
         $this->validate([
             'start_time' => 'required|date|after:now',
-            'end_time' => 'required|date|after:start_time',
-            'selectedInventoryId' => 'required'
+            'end_time'   => 'required|date|after:start_time',
         ]);
 
-        try {
-            // PANGGIL SERVICE (OTAK)
-            // Kita lempar tanggung jawab cek bentrok & create ke Service
-            (new BookingService())->createBooking(
-                Auth::id(),
-                $this->selectedInventoryId,
-                $this->start_time,
-                $this->end_time
-            );
+        $start = Carbon::parse($this->start_time);
+        $end   = Carbon::parse($this->end_time);
+        $diffMinutes = $start->diffInMinutes($end);
 
-            // Sukses
-            session()->flash('success', 'Booking berhasil! Silakan datang dan Scan QR.');
+        // 2. Cek Aturan Durasi Cluster
+        if ($this->cluster->max_duration_minutes && $diffMinutes > $this->cluster->max_duration_minutes) {
+            $jam = $this->cluster->max_duration_minutes / 60;
+            $this->addError('end_time', "Maksimal durasi main di sini adalah {$jam} jam.");
+            return;
+        }
+
+        // 3. Cek Ketersediaan (PENTING: Cek juga apakah Admin membooking Full Ruangan)
+        if (!$this->isSlotAvailable($start, $end)) {
+            $this->addError('start_time', 'Slot tidak tersedia (Mungkin ruangan dibooking Admin/Event).');
+            return;
+        }
+
+        // 4. Simpan Booking Satuan
+        try {
+            Booking::create([
+                'user_id'      => Auth::id(),
+                'cluster_id'   => $this->cluster->id,
+                'inventory_id' => $this->selectedInventoryId, // Pasti ada isinya (bukan null)
+                'start_time'   => $this->start_time,
+                'end_time'     => $this->end_time,
+                'status'       => 'booked',
+            ]);
+
+            session()->flash('success', 'Booking berhasil!');
             $this->showBookModal = false;
-            
-            // Reset Form
-            $this->start_time = null;
-            $this->end_time = null;
+            $this->reset(['start_time', 'end_time']);
 
         } catch (\Exception $e) {
-            // Gagal (Misal: Bentrok)
-            session()->flash('error', $e->getMessage());
-            // Modal tetap terbuka biar user bisa ganti jam
+            session()->flash('error', 'Gagal: ' . $e->getMessage());
         }
     }
 
@@ -186,105 +202,155 @@ class BookingPage extends Component
     {
         $booking = Booking::find($this->selectedBookingId);
 
-        // Validasi keamanan: Pastikan yang cancel adalah pemilik booking
-        if ($booking && $booking->user_id === Auth::id()) {
-            $booking->update(['status' => 'cancelled']);
-            session()->flash('success', 'Booking berhasil dibatalkan.');
-        } else {
-            session()->flash('error', 'Gagal membatalkan.');
+        // 1. Validasi Keberadaan & Kepemilikan
+        if (!$booking || $booking->user_id !== Auth::id()) {
+            return;
         }
 
-        $this->showCancelModal = false;
+        // 2. SECURITY CHECK: Validasi Waktu Server
+        $now = Carbon::now();
+        $startTime = Carbon::parse($booking->start_time);
+
+        // Jika user memaksa cancel padahal jam sudah lewat (atau sudah check-in)
+        if ($booking->status === 'active' || $now->greaterThanOrEqualTo($startTime)) {
+            
+            // Tolak Aksi
+            session()->flash('error', 'Gagal! Sesi sudah berjalan. Silakan selesaikan sesi (Finish).');
+            
+            // Redirect Pintar: Tutup modal cancel, paksa buka modal finish
+            $this->showCancelModal = false;
+            $this->showFinishModal = true;
+            
+            return; // BERHENTI DISINI
+        }
+
+        // 3. Eksekusi Pembatalan (Jika lolos validasi)
+        $booking->update(['status' => 'cancelled']);
+        
+        $this->resetModals(); // Tutup semua modal
+        session()->flash('success', 'Booking berhasil dibatalkan.');
     }
 
     public function finishBooking()
     {
-        try {
-            (new BookingService())->finishBooking($this->selectedBookingId, Auth::id());
+        $booking = Booking::find($this->selectedBookingId);
+        
+        // 1. Validasi Keberadaan & Kepemilikan
+        if (!$booking || $booking->user_id !== Auth::id()) {
+            return;
+        }
 
-            session()->flash('success', 'Sesi selesai. Terima kasih!');
-            $this->showCancelModal = false;
+        // 2. Eksekusi Selesai
+        // Kita tidak perlu cek waktu start disini, karena checkout dini (pulang cepat) itu boleh.
+        $booking->update(['status' => 'completed']);
+        
+        $this->resetModals(); // Tutup semua modal
+        session()->flash('success', 'Terima kasih, sesi Anda telah selesai.');
+    }
 
-        } catch (\Exception $e) {
-            session()->flash('error', $e->getMessage());
+    public function processCheckIn()
+    {
+        if ($this->selectedBookingId) {
+            $booking = Booking::find($this->selectedBookingId);
+            $booking->update([
+                'status' => 'active',
+                'check_in_time' => Carbon::now()
+            ]);
+            $this->bookingStatus = 'active';
+            session()->flash('success', 'Check-in Berhasil!');
         }
     }
 
-    public function processCheckIn($userId, $qrToken)
+    // =================================================================
+    // 3. HELPER LOGIC (ANTI BENTROK USER VS ADMIN)
+    // =================================================================
+
+    private function isSlotAvailable($start, $end)
     {
-        $now = Carbon::now();
-
-        // ... (Logika cari inventory & booking sama seperti sebelumnya) ...
-        $booking = Booking::find($this->selectedBookingId);
-
-        // UPDATE DATA
-        $booking->update([
-            'status' => 'active',       // Kunci Pintu dibuka
-            'check_in_time' => $now,    // MENCATAT JAM MASUK (Ide Anda)
-        ]);
+        // Logika: User mau booking PC X.
+        // Gagal Jika:
+        // 1. PC X itu sendiri sudah dibooking orang lain.
+        // 2. ATAU Ruangan Lab ini sudah dibooking FULL oleh Admin (inventory_id NULL).
         
-        return $booking;
+        return ! Booking::where('cluster_id', $this->cluster->id)
+            ->where('status', '!=', 'cancelled')
+            ->where(function ($query) {
+                // Cek Spesifik PC atau Cek Global Ruangan
+                $query->where('inventory_id', $this->selectedInventoryId)
+                      ->orWhereNull('inventory_id'); 
+            })
+            ->where(function ($q) use ($start, $end) {
+                $q->whereBetween('start_time', [$start, $end])
+                  ->orWhereBetween('end_time', [$start, $end])
+                  ->orWhere(function($sub) use ($start, $end) {
+                      $sub->where('start_time', '<', $start)
+                          ->where('end_time', '>', $end);
+                  });
+            })
+            ->exists();
     }
 
+    // =================================================================
+    // 4. RENDER
+    // =================================================================
     public function render()
     {
-        // 1. Ambil Clusters (Lab)
-        $clusters = $this->getAllowedClustersQuery()
-            ->orderBy('name', 'asc') // Opsional: Urutkan nama lab
+        if (!$this->cluster) {
+            return view('livewire.booking-page', [
+                'allowedClusters'     => [],
+                'inventories'         => collect(),
+                'bookingsMap'         => [],
+                'isRoomLockedByAdmin' => false,
+                'currentUserId'       => null,
+                'currentClusterName'  => '',
+                'cluster'             => null,
+            ]);
+        }
+
+        // Query Cluster (Hanya Public untuk Mahasiswa, atau Semua jika diperlukan)
+        $allowedClusters = Cluster::where('is_active', true)
+            ->when(Auth::user()->role === 'student', function($q) {
+                $q->where('type', 'public'); // Mahasiswa cuma bisa liat Lab Public
+            })
+            ->orderBy('name')
             ->get();
 
-        // 2. Ambil Inventory (Station/Meja)
-        // Filter HANYA yang 'is_bookable' = true (Hasil migrasi tadi)
-        $inventories = collect();
-        $bookings = collect();
-        if ($this->selectedClusterId) {
-            $inventories = Inventory::where('cluster_id', $this->selectedClusterId)
-                ->where('is_bookable', true) 
-                ->orderBy('name', 'asc')
-                ->get();
-        }
+        // Ambil Inventory
+        $inventories = Inventory::where('cluster_id', $this->cluster->id)
+            ->where('status', '!=', 'broken')
+            ->orderBy('name', 'asc')
+            ->get();
 
-        // 3. Mapping Booking (Visual Denah)
-        // Service tidak mengurus UI, jadi query visual tetap di sini agar ringan
+        // Mapping Booking untuk Denah
+        // Kita perlu tahu PC mana yang booked, DAN apakah ruangan ini sedang di-lock admin?
         $bookingsMap = [];
-        if ($this->selectedClusterId) {
-            $bookings = Booking::whereIn('inventory_id', $inventories->pluck('id'))
-                ->whereNotIn('status', ['cancelled', 'finished'])
-                ->whereDate('start_time', $this->filterDate)
-                ->where('end_time', '>', Carbon::now()) // Hanya yang belum lewat
-                ->get();
+        $isRoomLockedByAdmin = false;
 
-            foreach($bookings as $b) {
+        $todayBookings = Booking::where('cluster_id', $this->cluster->id)
+            ->where('status', '!=', 'cancelled')
+            ->whereDate('start_time', $this->filterDate)
+            ->where('end_time', '>', Carbon::now())
+            ->get();
+        
+        foreach($todayBookings as $b) {
+            if ($b->inventory_id) {
+                // Booking Satuan Biasa
                 $bookingsMap[$b->inventory_id] = $b->user_id;
-            }
-        }
-
-        $inventoryCollection = Inventory::where('cluster_id', $this->selectedClusterId)->get();
-        // $units = $inventories->keyBy('name');
-
-        $units = \App\Models\Inventory::where('cluster_id', $this->cluster->id)
-                ->orderBy('id', 'asc') 
-                ->get();
-
-        if ($this->selectedClusterId && $clusters->isNotEmpty()) {
-            $foundCluster = $clusters->find($this->selectedClusterId);
-            if ($foundCluster) {
-                $currentClusterName = $foundCluster->name;
+            } else {
+                // ADA BOOKING RUANGAN (Oleh Admin)
+                // Jika ini terjadi, semua PC harus dianggap 'booked' secara visual
+                $isRoomLockedByAdmin = true;
             }
         }
 
         return view('livewire.booking-page', [
-            // 'clusters' => $clusters,
-            'clusters' => Cluster::all(),
-            'inventories' => $inventories,
-            'bookingsMap' => $bookingsMap,
-            'bookings' => $bookings,
-            'currentUserId' => Auth::id(),
-            'currentClusterName' => $clusters->find($this->selectedClusterId)->name ?? 'Pilih Ruangan',
-            'units' => $units,
-            ]);
-
-        // return view('livewire.booking-page', []);
-        // ->layout('layouts.kosong');
+            'allowedClusters' => $allowedClusters,
+            'inventories'     => $inventories,
+            'bookingsMap'     => $bookingsMap,
+            'isRoomLockedByAdmin' => $isRoomLockedByAdmin,
+            'currentUserId'   => Auth::id(),
+            'currentClusterName' => $this->cluster->name,
+            'cluster'         => $this->cluster,
+        ]);
     }
 }

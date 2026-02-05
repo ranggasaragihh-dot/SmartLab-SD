@@ -67,7 +67,7 @@
                         class="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:shadow-md transition-all active:scale-95 ml-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
                     <span class="hidden md:inline">Book Event</span>
-                    <span class="md:hidden">Book</span>
+                    <!-- <span class="md:hidden">Book</span> -->
                 </button>
             </div>
         </div>
@@ -199,7 +199,7 @@
                                     </button>
                                 @elseif($pc->status == 'available')
                                     {{-- Tombol CREATE (Biru) --}}
-                                    <button wire:click="openCreateModal({{ $pc->id }})" 
+                                    <button wire:click="openCreateUnitModal({{ $pc->id }})" 
                                             class="text-blue-600 hover:bg-blue-50 border border-blue-200 text-[10px] font-bold px-2 py-1 rounded">
                                         + Manual
                                     </button>

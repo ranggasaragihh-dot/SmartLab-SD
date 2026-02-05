@@ -62,14 +62,20 @@ class ClusterManager extends Component
         $this->editId = $id;
         $this->isEdit = true;
 
-        // Isi form dengan data dari database
         $this->form = [
             'name' => $data->name,
             'type' => $data->type,
             'description' => $data->description,
-            'is_active' => (bool) $data->is_active,
-            'delay_time' => $data->delay_time ?? 15, // Ambil delay_time
-            'denah_image' => $data->denah_image, // Path gambar lama
+            
+            // PERBAIKAN DI SINI:
+            // Gunakan ternary operator. Jika true/1 jadi 1, jika false/0 jadi 0.
+            'is_active' => $data->is_active ? 1 : 0, 
+
+            'delay_time' => $data->delay_time ?? 15,
+            'denah_image' => $data->denah_image,
+            
+            // Jangan lupa field baru ini jika sudah ditambahkan di migration
+            'max_duration_minutes' => $data->max_duration_minutes, 
         ];
 
         $this->showFormModal = true;
@@ -143,45 +149,45 @@ class ClusterManager extends Component
     }
 
     // Dipanggil saat klik "Ya, Hapus"
-    // public function destroy()
-    // {
-    //     if ($this->deleteId) {
-    //         $cluster = Cluster::find($this->deleteId);
-    //         if ($cluster) {
-    //             // Hapus gambar fisik jika ada
-    //             if ($cluster->denah_image) {
-    //                 Storage::disk('public')->delete($cluster->denah_image);
-    //             }
-    //             $cluster->delete();
+    public function destroy()
+    {
+        if ($this->deleteId) {
+            $cluster = Cluster::find($this->deleteId);
+            if ($cluster) {
+                // Hapus gambar fisik jika ada
+                if ($cluster->denah_image) {
+                    Storage::disk('public')->delete($cluster->denah_image);
+                }
+                $cluster->delete();
                 
-    //             // Kirim notifikasi sukses
-    //             session()->flash('message', 'Cluster berhasil dihapus.');
-    //         }
-    //     }
+                // Kirim notifikasi sukses
+                session()->flash('message', 'Cluster berhasil dihapus.');
+            }
+        }
 
-    //     $this->closeDeleteModal(); // Tutup modal
-    // }
+        $this->closeDeleteModal(); // Tutup modal
+    }
 
     // --- DELETE ---
-    public function delete($id)
-    {
-        // Cek apakah ada inventory (PC) di dalamnya
-        // Sesuaikan 'inventory' dengan nama relasi di Model Cluster Anda (misal: 'pcs')
-        $cluster = Cluster::withCount('inventory')->findOrFail($id);
+    // public function delete($id)
+    // {
+    //     // Cek apakah ada inventory (PC) di dalamnya
+    //     // Sesuaikan 'inventory' dengan nama relasi di Model Cluster Anda (misal: 'pcs')
+    //     $cluster = Cluster::withCount('inventory')->findOrFail($id);
         
-        if ($cluster->pcs_count > 0) {
-            session()->flash('error', 'Gagal hapus! Cluster ini masih memiliki PC aktif.');
-            return;
-        }
+    //     if ($cluster->pcs_count > 0) {
+    //         session()->flash('error', 'Gagal hapus! Cluster ini masih memiliki PC aktif.');
+    //         return;
+    //     }
 
-        // Hapus file gambar denah jika ada
-        if ($cluster->denah_image && Storage::disk('public')->exists($cluster->denah_image)) {
-            Storage::disk('public')->delete($cluster->denah_image);
-        }
+    //     // Hapus file gambar denah jika ada
+    //     if ($cluster->denah_image && Storage::disk('public')->exists($cluster->denah_image)) {
+    //         Storage::disk('public')->delete($cluster->denah_image);
+    //     }
 
-        $cluster->delete();
-        session()->flash('success', 'Cluster berhasil dihapus.');
-    }
+    //     $cluster->delete();
+    //     session()->flash('success', 'Cluster berhasil dihapus.');
+    // }
 
     public function closeModal()
     {

@@ -15,27 +15,44 @@ class CheckInController extends Controller
         $this->bookingService = $bookingService;
     }
 
-    // Method ini dipanggil saat URL QR dibuka di Browser
     public function handleScan($qrToken)
     {
         try {
-            // 1. Proses Check-in pakai Service (Logic-nya sama persis)
-            $booking = $this->bookingService->processCheckIn(Auth::id(), $qrToken);
+            // 1. Panggil Service
+            // Service sekarang mengembalikan ARRAY: ['booking' => ..., 'scanned_pc' => ...]
+            $result = $this->bookingService->processCheckIn(Auth::id(), $qrToken);
 
-            // 2. Jika sukses, return Tampilan Sukses (Bukan JSON)
+            // 2. Ekstrak Data
+            $booking = $result['booking'];
+            $pc = $result['scanned_pc']; // Data PC fisik yang di-scan
+
+            // 3. Buat Pesan Sukses
+            // PENTING: Gunakan $pc->name, JANGAN $booking->inventory->name
+            // Karena kalau booking ruangan, inventory di booking itu NULL.
+            $message = "Check-in Berhasil! PC {$pc->name} Unlocked.";
+
+            // Tambahan info jika ini adalah booking ruangan
+            if (!$booking->inventory_id) {
+                $message .= " (Akses Full Ruangan)";
+            }
+
+            // 4. Redirect Sukses
             return redirect()->route('booking.index')
-                ->with('success', "Check-in Berhasil! PC {$booking->inventory->name} Unlocked.");
+                ->with('success', $message);
 
         } catch (\Exception $e) {
-            // 3. Jika gagal, return pesan error ke dashboard
+            // 5. Error Handling
+            // Kembalikan ke halaman booking dengan pesan error, jangan dd() agar user tidak bingung
+            return redirect()->route('booking.index')
+                ->with('error', 'Gagal Check-in: ' . $e->getMessage());
+            
+            // Debugging (Uncomment jika butuh)
+            /*
             dd([
                 'Pesan Error' => $e->getMessage(),
-                'Baris Error' => $e->getLine(),
-                'File Error'  => $e->getFile(),
-                'Trace'       => $e->getTraceAsString() // Jejak langkah errornya
+                'Line' => $e->getLine()
             ]);
-            // return redirect()->route('booking')
-            //     ->with('error', $e->getMessage());
+            */
         }
     }
 }

@@ -15,41 +15,49 @@ class Cluster extends Model
         'name',
         'denah_image',
         'delay_time',
-        // 'location',
         'description',
-        'type',
+        'type',                 // 'public' / 'private'
         'is_active',
+        'max_duration_minutes', // <--- WAJIB DITAMBAHKAN
     ];
 
-    // Relasi: Satu Lab punya banyak PC/Meja
-    public function inventory(): HasMany
+    /**
+     * Casting tipe data agar output JSON/Array konsisten.
+     */
+    protected $casts = [
+        'is_active' => 'boolean',
+        'delay_time' => 'integer',
+        'max_duration_minutes' => 'integer',
+    ];
+
+    /**
+     * Relasi ke Unit Inventory (PC/Meja)
+     * Saya ubah nama method jadi jamak 'inventories' (Best Practice Laravel)
+     */
+    public function inventories(): HasMany
     {
         return $this->hasMany(Inventory::class);
     }
 
-    public function bookings()
+    /**
+     * Relasi ke Booking
+     * PERBAIKAN: Ganti hasManyThrough menjadi hasMany biasa.
+     * * Alasan: Tabel bookings sekarang sudah punya kolom 'cluster_id'.
+     * Keuntungan: 
+     * 1. Query lebih cepat (tidak perlu join tabel inventory).
+     * 2. Bisa membaca booking tipe "Whole Room" (yang inventory_id-nya null).
+     * (Jika pakai hasManyThrough, booking ruangan tidak akan terdeteksi).
+     */
+    public function bookings(): HasMany
     {
-        return $this->hasManyThrough(
-            Booking::class,    // Model Tujuan (Booking)
-            Inventory::class,  // Model Perantara (Inventory/Unit)
-            'cluster_id',      // Foreign Key di tabel Inventory
-            'inventory_id',    // Foreign Key di tabel Booking
-            'id',              // Local Key di tabel Cluster
-            'id'               // Local Key di tabel Inventory
-        );
+        return $this->hasMany(Booking::class);
     }
 
+    // Accessor URL Gambar
     public function getDenahUrlAttribute()
     {
         return $this->denah_image 
             ? Storage::url($this->denah_image) 
-            : asset('images/default-denah.jpg'); // Gambar default jika kosong
+            : asset('images/default-denah.jpg');
     }
-
-    // public function inventory()
-    // {
-    //     // Parameter 2: nama kolom foreign key di tabel inventories
-    //     // Parameter 3: nama kolom primary key di tabel clusters
-    //     return $this->hasMany(Inventory::class, 'cluster_id', 'id');
-    // }
 }

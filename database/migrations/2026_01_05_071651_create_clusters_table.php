@@ -13,13 +13,20 @@ return new class extends Migration
     {
         Schema::create('clusters', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // Contoh: "Lab Basis Data", "Lab Jaringan"
+            $table->string('name'); // Contoh: "Lab Basis Data", "Meeting Room A"
             $table->string('denah_image')->nullable();
-            $table->integer('delay_time')->default(15);
-            // $table->string('location')->nullable(); // Contoh: "Gedung Bonaventura Lt. 3"
+            
+            // ATURAN WAKTU (PENTING)
+            $table->integer('delay_time')->default(15); // Toleransi telat check-in (menit)
+            $table->integer('max_duration_minutes')->nullable()->default(120); // Batas maksimal booking (default 2 jam). Null = Unlimited.
+            
+            // TIPE RUANGAN (PENTING)
+            // Public = Booking per PC (Inventory ID wajib)
+            // Private = Booking satu ruangan (Inventory ID null)
             $table->enum('type', ['public', 'private'])->default('public');
+            
             $table->text('description')->nullable(); 
-            $table->boolean('is_active')->default(true); // Biar bisa tutup lab sementara
+            $table->boolean('is_active')->default(true); // Switch ON/OFF ruangan
             $table->timestamps();
         });
     }
