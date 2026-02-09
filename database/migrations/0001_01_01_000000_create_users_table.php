@@ -19,7 +19,7 @@ return new class extends Migration
                 // $table->string('ta')->nullable();
                 $table->boolean('ta')->default(false);
                 // $table->enum('role', ['admin', 'student', 'lecturer'])->default('student');
-                $table->string('email')->unique(); // Email kampus (opsional)
+                $table->string('email')->unique()->nullable(); // Email kampus (opsional)
                 $table->string('password');
                 $table->boolean('is_banned')->default(false); // Sanksi
                 $table->rememberToken();

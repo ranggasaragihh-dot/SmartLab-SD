@@ -38,7 +38,8 @@ return new class extends Migration
             // 3. UPDATE STATUS
             // Tambahkan 'pending' untuk logic approval ruangan jika diperlukan nanti
             $table->enum('status', ['booked', 'active', 'completed', 'cancelled'])->default('booked');
-            
+            $table->string('purpose')->nullable();
+
             $table->timestamps();
         });
     }

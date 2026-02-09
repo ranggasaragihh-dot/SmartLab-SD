@@ -18,7 +18,8 @@ return new class extends Migration
             
             // ATURAN WAKTU (PENTING)
             $table->integer('delay_time')->default(15); // Toleransi telat check-in (menit)
-            $table->integer('max_duration_minutes')->nullable()->default(120); // Batas maksimal booking (default 2 jam). Null = Unlimited.
+            $table->integer('min_duration_minutes')->default(30);
+            $table->integer('max_duration_minutes')->default(120); // Batas maksimal booking (default 2 jam). Null = Unlimited.
             
             // TIPE RUANGAN (PENTING)
             // Public = Booking per PC (Inventory ID wajib)

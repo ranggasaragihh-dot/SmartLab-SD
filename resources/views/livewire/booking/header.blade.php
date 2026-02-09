@@ -28,29 +28,41 @@
                 
                 {{-- 1. FILTER TANGGAL --}}
                 <div class="relative w-full">
-                    {{-- Ikon Kalender (Hiasan Kiri - Agar Seimbang) --}}
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                         <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
                     </div>
-
-                    <input type="date" 
+                    <input type="datetime-local" 
                         wire:model.live="filterDate" 
-                        class="w-full pl-10 pr-3 py-2 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm uppercase appearance-none"
-                        placeholder="Tanggal">
+                        class="w-full pl-10 pr-3 py-2 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm appearance-none"
+                        placeholder="Pilih Tanggal & Jam">
                 </div>
 
                 {{-- 2. FILTER STATUS --}}
                 <div class="relative w-full">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <!-- <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <input type="time" 
+                        wire:model.live="filterTime"
+                        class="pl-10 pr-3 py-2 bg-white border border-slate-300 rounded-md text-sm font-bold text-slate-700 focus:ring-blue-500 focus:border-blue-500 shadow-sm w-full md:w-32 cursor-pointer">
+                         -->
+                    <!-- <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
                     </div>
 
                     <select wire:model.live="filterStatus" 
-                            class="w-full pl-10 pr-8 py-2 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg focus:ring-blue-500 focus:border-blue-500 block shadow-sm appearance-none truncate">
-                        <option value="">Semua</option> 
-                        <option value="available">Tersedia</option>
-                        <option value="booked">Booked</option>
-                    </select>
+                            class="w-full pl-10 pr-8 py-2 bg-white border border-slate-300 rounded-lg text-sm font-bold text-slate-700 focus:ring-blue-500 focus:border-blue-500 shadow-sm appearance-none cursor-pointer">
+                        
+                        <option value="">Semua Status</option>
+                        <option value="available">Tersedia (Available)</option>
+                        <option value="booked">Sedang Dipakai (Booked)</option>
+                        <option value="broken">Rusak</option>
+                        <option value="maintenance">Maintenance</option>
+                        <option value="mine">Milik Saya</option>
+                    
+                    </select> -->
                 </div>
             </div>
         </div>

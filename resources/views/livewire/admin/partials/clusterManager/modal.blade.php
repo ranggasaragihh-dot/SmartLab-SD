@@ -51,6 +51,27 @@
                             </div>
                             @error('form.delay_time') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                         </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Min. Durasi (Menit)</label>
+                            <div class="relative">
+                                <input type="number" wire:model="form.min_duration_minutes" min="1" class="w-full border-slate-300 rounded-lg focus:ring-1 focus:ring-amber-500 focus:border-amber-500 text-sm py-2.5 pl-3 pr-8 text-slate-700">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                    <span class="text-slate-400 text-xs font-bold">min</span>
+                                </div>
+                            </div>
+                            @error('form.min_duration_minutes') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Max. Durasi (Menit)</label>
+                            <div class="relative">
+                                <input type="number" wire:model="form.max_duration_minutes" min="1" class="w-full border-slate-300 rounded-lg focus:ring-1 focus:ring-amber-500 focus:border-amber-500 text-sm py-2.5 pl-3 pr-8 text-slate-700">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                    <span class="text-slate-400 text-xs font-bold">min</span>
+                                </div>
+                            </div>
+                            @error('form.max_duration_minutes') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                        </div>
                     </div>
 
                     {{-- 3. Deskripsi --}}

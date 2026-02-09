@@ -62,6 +62,8 @@ class Manager extends Component
     public $showCancelModal = false; // <--- TAMBAHKAN INI
     public $showFinishModal = false; // Tambahkan juga ini jaga-jaga untuk modal selesai
 
+    public $purpose;
+
     // ==========================================
     // LIFECYCLE
     // ==========================================
@@ -70,6 +72,7 @@ class Manager extends Component
         $this->clusterId = $clusterId;
         $this->cluster = Cluster::findOrFail($clusterId);
         $this->dateFilter = Carbon::today()->format('Y-m-d');
+        $this->timeFilter = Carbon::now()->format('H:i');
     }
 
     // --- LOGIC PENCARIAN USER ---
@@ -162,7 +165,7 @@ class Manager extends Component
             'inputStartTime' => 'required',
             'inputEndTime'   => 'required|after:inputStartTime',
             'selectedTargetUserId' => 'required', 
-            'inputDescription' => 'nullable|string|max:100',
+            'purpose' => 'nullable|string|max:100',
         ], [
             'selectedTargetUserId.required' => 'Wajib pilih User/Peminjam.',
         ]);
@@ -213,6 +216,7 @@ class Manager extends Component
             'start_time'   => $startDateTime,
             'end_time'     => $endDateTime,
             'status'       => 'booked', // Admin langsung approve
+            'purpose'      => $this->purpose,
             'description'  => $this->inputDescription ?? 'Admin Manual Booking',
             'type'         => 'admin_manual', // Opsional, penanda
         ]);
@@ -373,12 +377,45 @@ class Manager extends Component
     #[Layout('layouts.admin')] 
     public function render()
     {
-        // 1. Ambil Inventory (PC)
+        // 1. Tentukan Waktu Pengecekan (Real-time atau Filter Manual)
+        $checkTime = $this->timeFilter ? \Carbon\Carbon::parse($this->timeFilter) : now();
+
+        // 2. Query Dasar
         $inventories = Inventory::where('cluster_id', $this->clusterId)
-            ->when($this->statusFilter, function($q) {
-                $q->where('status', $this->statusFilter);
-            })
-            ->get();
+            ->when($this->statusFilter, function($query) use ($checkTime) {
+                
+            switch ($this->statusFilter) {
+                    
+                // KASUS 1: ADMIN MEMILIH "AVAILABLE"
+                // Syarat: Fisik 'available' DAN Tidak ada bokingan di jam itu
+                case 'available':
+                    return $query->where('status', 'available')
+                                ->whereDoesntHave('bookings', function($q) use ($checkTime) {
+                                    $q->where('start_time', '<=', $checkTime)
+                                    ->where('end_time', '>', $checkTime)
+                                    ->whereIn('status', ['booked', 'active']);
+                                });
+
+                // KASUS 2: ADMIN MEMILIH "BOOKED"
+                // Syarat: Fisik 'available' TAPI Sedang ada bokingan di jam itu
+                case 'booked':
+                    return $query->where('status', 'available')
+                                ->whereHas('bookings', function($q) use ($checkTime) {
+                                    $q->where('start_time', '<=', $checkTime)
+                                    ->where('end_time', '>', $checkTime)
+                                    ->whereIn('status', ['booked', 'active']);
+                                });
+
+                // KASUS 3: STATUS FISIK LAINNYA
+                // Syarat: Cukup cek kolom status di tabel inventory
+                case 'broken':
+                    return $query->where('status', 'broken');
+                    
+                case 'maintenance':
+                    return $query->where('status', 'maintenance');
+            }
+        })
+        ->get();
 
         // 2. Cek apakah Ruangan SEDANG DIBOOKING FULL hari ini?
         // (Untuk ditampilkan di alert admin)
@@ -420,7 +457,7 @@ class Manager extends Component
 
         return view('livewire.admin.manage-lab', [
             'inventories' => $inventories,
-            'roomBookings' => $roomBookings
+            'roomBookings' => $roomBookings,
         ]);
     }
 }

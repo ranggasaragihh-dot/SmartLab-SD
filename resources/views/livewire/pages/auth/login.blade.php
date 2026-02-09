@@ -54,12 +54,26 @@
         <div class="p-8 pt-10">
             <form wire:submit="login" class="space-y-6">
                 
-                {{-- Input Email --}}
+                {{-- Input Nomor Induk --}}
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Email / NPM</label>
-                    {{-- HAPUS 'form.' --}}
-                    <input wire:model="email" type="email" class="w-full pl-4 pr-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none bg-gray-50 focus:bg-white" placeholder="Email Anda" required autofocus>
-                    @error('email') <span class="text-red-500 text-xs mt-1 ml-1 block">{{ $message }}</span> @enderror
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">
+                        Nomor Induk NPM / NPP
+                    </label>
+                    
+                    {{-- PERBAIKAN: Ganti wire:model ke 'nomor_induk' dan type ke 'text' --}}
+                    <input 
+                        wire:model="nomor_induk" 
+                        type="text" 
+                        class="w-full pl-4 pr-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none bg-gray-50 focus:bg-white" 
+                        placeholder="Masukkan Nomor Induk NPM/NPP" 
+                        required 
+                        autofocus
+                    >
+
+                    {{-- PERBAIKAN: Error message harus sesuai wire:model --}}
+                    @error('nomor_induk') 
+                        <span class="text-red-500 text-xs mt-1 ml-1 block">{{ $message }}</span> 
+                    @enderror
                 </div>
 
                 {{-- Input Password --}}

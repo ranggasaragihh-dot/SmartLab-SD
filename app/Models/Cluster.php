@@ -18,6 +18,7 @@ class Cluster extends Model
         'description',
         'type',                 // 'public' / 'private'
         'is_active',
+        'min_duration_minutes',
         'max_duration_minutes', // <--- WAJIB DITAMBAHKAN
     ];
 

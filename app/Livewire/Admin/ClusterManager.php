@@ -36,6 +36,8 @@ class ClusterManager extends Component
         'is_active' => true,
         'delay_time' => 15, // Default sesuai request (pengganti booking_timeout)
         'denah_image' => null, // Menyimpan path string (bukan file fisik)
+        'min_duration_minutes' => 30, // Default 30 menit
+        'max_duration_minutes' => 120, // Default 2 jam
     ];
 
     // --- READ ---
@@ -75,7 +77,8 @@ class ClusterManager extends Component
             'denah_image' => $data->denah_image,
             
             // Jangan lupa field baru ini jika sudah ditambahkan di migration
-            'max_duration_minutes' => $data->max_duration_minutes, 
+            'min_duration_minutes' => $data->min_duration_minutes ?? 30, 
+            'max_duration_minutes' => $data->max_duration_minutes ?? 120, 
         ];
 
         $this->showFormModal = true;
@@ -91,7 +94,11 @@ class ClusterManager extends Component
             'form.description' => 'nullable|string|max:255',
             'form.is_active' => 'boolean',
             'form.delay_time' => 'required|integer|min:1', // Validasi delay_time
+            'form.min_duration_minutes' => 'required|integer|min:1',
+            'form.max_duration_minutes' => 'required|integer|min:1|gt:form.min_duration_minutes',
             'image_upload' => 'nullable|image|max:2048', // Max 2MB (Validasi file fisik)
+        ],[
+            'form.max_duration_minutes.gt' => 'Durasi maksimal harus lebih besar dari durasi minimal.'
         ]);
 
         $imagePath = $this->isEdit ? $this->form['denah_image'] : null;
@@ -204,6 +211,8 @@ class ClusterManager extends Component
             'description' => '',
             'is_active' => true,
             'delay_time' => 15, // Default 15 menit
+            'min_duration_minutes' => 30,
+            'max_duration_minutes' => 120,
             'denah_image' => null,
         ];
         $this->image_upload = null; // Reset input file

@@ -99,6 +99,10 @@
 
                 @error('selectedTargetUserId') <span class="text-red-500 text-xs block mt-1">{{ $message }}</span> @enderror
             </div>
+            <div>
+                <label class="text-xs font-bold text-slate-600 mb-1 block">Tujuan</label>
+                <input type="text" wire:model="purpose" placeholder="Contoh: Izin Khusus, Skripsi, dll" class="w-full border-slate-300 rounded-lg text-sm focus:ring-blue-500">
+            </div>
         </div>
 
         {{-- Footer Modal --}}

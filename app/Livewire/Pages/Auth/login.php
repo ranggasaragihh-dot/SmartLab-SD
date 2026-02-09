@@ -6,15 +6,16 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
-use Livewire\Attributes\Validate; // Import Validate attribute
+use Livewire\Attributes\Validate;
 use Livewire\Component;
 
 #[Layout('layouts.guest')] 
 class Login extends Component
 {
-    // 1. DEFINISIKAN VARIABEL LANGSUNG DI SINI
-    #[Validate('required|email')]
-    public string $email = '';
+    // 1. GANTI PROPERTI EMAIL JADI NOMOR INDUK
+    // Hapus validasi 'email' karena nomor induk biasanya string/angka biasa
+    #[Validate('required|string')] 
+    public string $nomor_induk = '';
 
     #[Validate('required')]
     public string $password = '';
@@ -25,12 +26,14 @@ class Login extends Component
     {
         // 2. VALIDASI VARIABEL DI ATAS
         $this->validate();
+        // dd("Input Masuk:", $this->nomor_induk, $this->password);
 
-        // 3. COBA LOGIN (Auth Logic Langsung Di Sini)
-        if (! Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
-            // Jika gagal, lempar error validasi
+        // 3. COBA LOGIN (Gunakan key 'nomor_induk' sesuai kolom database)
+        if (! Auth::attempt(['nomor_induk' => $this->nomor_induk, 'password' => $this->password], $this->remember)) {
+            
+            // Jika gagal, lempar error validasi ke field nomor_induk
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
+                'nomor_induk' => trans('auth.failed'),
             ]);
         }
 
@@ -40,6 +43,7 @@ class Login extends Component
         // 5. REDIRECT SESUAI ROLE
         /** @var \App\Models\User $user */
         $user = Auth::user();
+        
         if ($user->hasRole('admin')) {
             return $this->redirect(route('admin.dashboard'), navigate: true);
         } else {

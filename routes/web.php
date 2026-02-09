@@ -16,12 +16,15 @@ use App\Livewire\Admin\DenahManager;
 use App\Livewire\Admin\UserManagement;
 use App\Livewire\Admin\Booking\Dashboard;
 use App\Livewire\Admin\Booking\Manager;
+use App\Livewire\PublicDisplay;
 
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
 */
+
+Route::get('/display', PublicDisplay::class)->name('public.display');
 
 // 1. ROOT URL: Selalu lempar ke Login
 Route::get('/', function () {

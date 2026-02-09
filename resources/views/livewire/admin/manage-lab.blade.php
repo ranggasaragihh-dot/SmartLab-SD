@@ -1,152 +1,109 @@
 <div class="flex flex-col h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden">
 
     {{-- ====================================================================== --}}
-    {{-- BAGIAN 1: STICKY HEADER (CLEAN & COMPACT) --}}
-    {{-- Berisi: Navigasi Kembali & Semua Alat Kontrol (Filter/Action) --}}
+    {{-- BAGIAN 2: MAIN CONTENT (UNIFIED CARD) --}}
     {{-- ====================================================================== --}}
-    <div class="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm shrink-0">
-        <div class="flex flex-col md:flex-row md:items-center justify-between px-6 py-4 gap-4">
+    <div class="flex-1 px-6 pb-6 overflow-hidden flex flex-col"> 
+        
+        {{-- UNIFIED CARD CONTAINER --}}
+        <div class="bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col h-full overflow-hidden">
             
-            {{-- KIRI: Navigasi & Judul Konteks --}}
-            <div class="flex items-center gap-4">
-                {{-- Tombol Kembali --}}
-                <a href="{{ route('admin.booking.dashboard') }}" class="group flex items-center gap-2 text-slate-500 hover:text-blue-700 transition-colors pr-4 border-r border-slate-200">
-                    <div class="p-1.5 rounded-md group-hover:bg-blue-50 transition-colors">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                    </div>
-                    <span class="text-sm font-bold hidden md:inline">Dashboard</span>
-                </a>
-
-                {{-- Judul Halaman --}}
-                <div>
-                    <div class="flex items-center gap-2">
-                        <h1 class="text-xl font-bold text-slate-800 tracking-tight">Cluster {{ $cluster->name }}</h1>
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
-                            {{ $inventories->count() }} Unit
-                        </span>
-                    </div>
-                    {{-- Subjudul Tanggal Aktif --}}
-                    <p class="text-xs text-blue-600 font-medium mt-0.5">
-                        Jadwal: {{ \Carbon\Carbon::parse($dateFilter)->isoFormat('dddd, D MMMM Y') }}
-                    </p>
-                </div>
-            </div>
-
-            {{-- KANAN: Filter & Action (Compact Row) --}}
-            <div class="flex items-center gap-2 md:gap-3">
+            {{-- A. CARD HEADER & TOOLBAR (Sticky di dalam Card) --}}
+            <div class="p-4 border-b border-slate-200 bg-white z-20 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shrink-0">
                 
-                {{-- 1. Filter Tanggal --}}
-                <div class="relative group">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg class="w-4 h-4 text-slate-400 group-focus-within:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                {{-- KIRI: Identitas Cluster --}}
+                <div class="flex items-center gap-4">
+                    
+                    {{-- TOMBOL KEMBALI (Menyatu dalam Header) --}}
+                    <a href="{{ route('admin.booking.dashboard') }}" 
+                       class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-50 border border-slate-200 text-slate-500 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all"
+                       title="Kembali ke Dashboard">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    </a>
+
+                    {{-- GARIS PEMISAH VERTIKAL --}}
+                    <div class="h-8 w-px bg-slate-200 hidden sm:block"></div>
+
+                    {{-- INFO CLUSTER --}}
+                    <div>
+                        <div class="flex items-center gap-3">
+                            <h1 class="text-xl font-bold text-slate-900 tracking-tight">Cluster {{ $cluster->name }}</h1>
+                            <span class="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-bold border border-slate-200">
+                                {{ $inventories->count() }} Unit
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-0.5 font-medium">
+                            Jadwal: {{ \Carbon\Carbon::parse($dateFilter)->isoFormat('dddd, D MMMM Y') }}
+                        </p>
                     </div>
-                    <input type="date" 
-                           wire:model.live="dateFilter"
-                           class="pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all w-36 md:w-auto">
                 </div>
 
-                <div class="relative group" title="Filter jam spesifik untuk cek ketersediaan">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                {{-- KANAN: Filter Controls Group --}}
+                <div class="flex flex-wrap items-center gap-2">
+                    
+                    {{-- Date Picker --}}
+                    <div class="relative group">
+                        <input type="date" wire:model.live="dateFilter" class="pl-3 pr-2 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm transition hover:border-blue-300 cursor-pointer font-medium w-auto">
                     </div>
-                    <input type="time" wire:model.live="timeFilter" class="pl-9 pr-2 w-28 bg-slate-50 border border-slate-200 rounded-lg text-sm px-3 py-2 font-medium text-slate-700 focus:ring-blue-500 placeholder-slate-400">
+
+                    {{-- Time Picker --}}
+                    <div class="relative group">
+                        <input type="time" wire:model.live="timeFilter" class="pl-3 pr-2 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm transition hover:border-blue-300 cursor-pointer font-medium w-auto">
+                    </div>
+
+                    {{-- Divider --}}
+                    <div class="h-8 w-px bg-slate-200 mx-1 hidden sm:block"></div>
+
+                    {{-- Status Dropdown --}}
+                    <select wire:model.live="statusFilter" class="pl-3 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm cursor-pointer font-medium">
+                        <option value="">Semua Status</option>
+                        <option value="available">Available</option>
+                        <option value="booked">Booked</option>
+                        <option value="broken">Rusak</option>
+                        <option value="maintenance">Maintenance</option>
+                    </select>
+
+                    {{-- Primary Action --}}
+                    <button wire:click="$set('showClusterBookingModal', true)" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md shadow-indigo-100 transition flex items-center gap-2 ml-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                        <span class="hidden sm:inline">Book Event</span>
+                    </button>
                 </div>
-
-                {{-- 2. Filter Status --}}
-                <select wire:model.live="statusFilter" 
-                        class="pl-3 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all cursor-pointer">
-                    <option value="">Semua Status</option>
-                    <option value="available">Available</option>
-                    <option value="booked">Booked</option>
-                    <option value="broken">Rusak</option>
-                    <option value="maintenance">Maintenance</option>
-                </select>
-
-                {{-- 3. Tombol Booking Cluster (Ungu) --}}
-                <button wire:click="$set('showClusterBookingModal', true)"
-                        class="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:shadow-md transition-all active:scale-95 ml-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                    <span class="hidden md:inline">Book Event</span>
-                    <!-- <span class="md:hidden">Book</span> -->
-                </button>
-            </div>
-        </div>
-    </div>
-
-    {{-- ====================================================================== --}}
-    {{-- BAGIAN 2: CONTENT AREA (DATA TABLE) --}}
-    {{-- ====================================================================== --}}
-    <div class="flex-1 overflow-y-auto p-4 md:p-6 pb-24"> 
-
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-
-            {{-- 1. AVAILABLE (SIAP PAKAI) --}}
-            {{-- Logic: Status fisik 'available' DAN tidak ada activeBooking --}}
-            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-                <span class="text-xs font-bold text-slate-400 uppercase">Available</span>
-                <span class="text-lg font-bold text-green-600">
-                    {{ $inventories->where('status', 'available')->filter(fn($pc) => !$pc->activeBooking)->count() }}
-                </span>
             </div>
 
-            {{-- 2. BOOKED (SEDANG DIPAKAI) --}}
-            {{-- Logic: Hitung inventory yang punya activeBooking --}}
-            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-                <span class="text-xs font-bold text-slate-400 uppercase">Booked</span>
-                <span class="text-lg font-bold text-blue-600">
-                    {{ $inventories->filter(fn($pc) => $pc->activeBooking)->count() }}
-                </span>
-            </div>
-
-            {{-- 3. RUSAK --}}
-            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-                <span class="text-xs font-bold text-slate-400 uppercase">Rusak</span>
-                <span class="text-lg font-bold text-red-500">
-                    {{ $inventories->where('status', 'broken')->count() }}
-                </span>
-            </div>
-
-            {{-- 4. MAINTENANCE --}}
-            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-                <span class="text-xs font-bold text-slate-400 uppercase">Maint.</span>
-                <span class="text-lg font-bold text-amber-500">
-                    {{ $inventories->where('status', 'maintenance')->count() }}
-                </span>
-            </div>
-
-        </div>
-
-        {{-- Tabel Inventory --}}
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm text-left">
-                    <thead class="text-xs font-bold text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
-                        <tr>
-                            <th class="px-6 py-3 w-1/4">Unit PC</th>
-                            <th class="px-6 py-3 w-1/6 text-center">Kondisi</th>
-                            <th class="px-6 py-3 w-1/3">Status Jadwal</th>
-                            <th class="px-6 py-3 text-right">Kontrol</th>
+            {{-- B. CARD BODY (TABEL SCROLLABLE) --}}
+            <div class="flex-1 overflow-auto bg-white relative">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-50/80 sticky top-0 z-10 backdrop-blur-sm shadow-sm">
+                        <tr class="text-xs uppercase tracking-wider text-slate-500 font-bold border-b border-slate-200">
+                            <th class="px-6 py-4 w-20">Unit</th>
+                            <th class="px-6 py-4">Info Spesifikasi</th>
+                            <th class="px-6 py-4 w-32 text-center">Kondisi</th>
+                            <th class="px-6 py-4 w-1/3">Status Jadwal</th>
+                            <th class="px-6 py-4 text-right">Kontrol</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody class="divide-y divide-slate-100 text-sm">
                         @forelse($inventories as $pc)
-                        <tr class="hover:bg-slate-50/80 transition-colors group">
+                        
+                        {{-- Logika Style Baris: Jika Booked -> Highlight Biru --}}
+                        <tr class="transition-colors group {{ $pc->activeBooking ? 'bg-blue-50/40 border-l-4 border-l-blue-500' : 'hover:bg-slate-50 border-l-4 border-l-transparent' }}">
                             
-                            {{-- Info Unit --}}
-                            <td class="px-6 py-3 align-middle">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-xs">
-                                        {{ substr($pc->name, -2) }} {{-- Ambil 2 digit terakhir nama --}}
-                                    </div>
-                                    <div>
-                                        <div class="font-bold text-slate-700">{{ $pc->name }}</div>
-                                        <div class="text-[10px] text-slate-400 font-mono">{{ $pc->specs ?? 'Standard Spec' }}</div>
-                                    </div>
-                                </div>
+                            {{-- Kolom 1: Unit ID --}}
+                            <td class="px-6 py-4 align-middle">
+                                <span class="w-10 h-10 rounded-lg {{ $pc->activeBooking ? 'bg-white border-blue-200 text-blue-700 shadow-sm' : 'bg-slate-100 text-slate-500' }} border flex items-center justify-center font-bold text-sm">
+                                    {{ substr($pc->name, -2) }}
+                                </span>
                             </td>
 
-                            {{-- Kondisi Fisik --}}
-                            <td class="px-6 py-3 align-middle text-center">
+                            {{-- Kolom 2: Info --}}
+                            <td class="px-6 py-4 align-middle">
+                                <div class="font-bold text-slate-700">{{ $pc->name }}</div>
+                                <div class="text-xs text-slate-400 font-mono mt-0.5">{{ $pc->specs ?? 'Standard Configuration' }}</div>
+                            </td>
+
+                            {{-- Kolom 3: Kondisi (Badge) --}}
+                            <td class="px-6 py-4 align-middle text-center">
                                 @if($pc->status == 'broken')
                                     <span class="inline-flex px-2 py-1 rounded bg-red-50 text-red-600 text-[10px] font-bold border border-red-100 uppercase tracking-wide">Rusak</span>
                                 @elseif($pc->status == 'maintenance')
@@ -156,51 +113,49 @@
                                 @endif
                             </td>
 
-                            {{-- Status Jadwal --}}
-                            <td class="px-6 py-3 align-middle">
+                            {{-- Kolom 4: Status Jadwal --}}
+                            <td class="px-6 py-4 align-middle">
                                 @if($pc->activeBooking)
-                                    <div class="flex items-center gap-3">
+                                    <div class="flex items-start gap-3">
+                                        {{-- Indikator Warna Tipe Booking --}}
                                         <div class="w-1 h-8 rounded-full {{ $pc->activeBooking->type == 'event' ? 'bg-purple-500' : 'bg-blue-500' }}"></div>
                                         <div>
-                                            <div class="text-xs font-bold {{ $pc->activeBooking->type == 'event' ? 'text-purple-700' : 'text-slate-700' }}">
+                                            <div class="font-bold {{ $pc->activeBooking->type == 'event' ? 'text-purple-800' : 'text-slate-800' }}">
                                                 {{ $pc->activeBooking->user->name ?? 'User' }}
+                                                @if($pc->activeBooking->type == 'event')
+                                                    <span class="ml-1 text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded uppercase tracking-wide">Event</span>
+                                                @endif
                                             </div>
-                                            <div class="text-[10px] text-slate-500">
+                                            <div class="text-xs text-slate-500 font-mono mt-0.5 flex items-center gap-1">
+                                                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                                 {{ \Carbon\Carbon::parse($pc->activeBooking->start_time)->format('H:i') }} - 
                                                 {{ \Carbon\Carbon::parse($pc->activeBooking->end_time)->format('H:i') }}
-                                                @if($pc->activeBooking->type == 'event')
-                                                    <span class="text-purple-500 font-bold ml-1">(Event)</span>
-                                                @endif
                                             </div>
                                         </div>
                                     </div>
                                 @elseif($pc->status == 'available')
-                                    <span class="text-green-600 text-xs font-bold flex items-center gap-1.5">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Available
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-100">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        Available
                                     </span>
                                 @else
                                     <span class="text-slate-300 text-xs italic">Off-limits</span>
                                 @endif
                             </td>
 
-                            {{-- Aksi --}}
+                            {{-- Kolom 5: Kontrol --}}
                             <td class="px-6 py-4 align-middle text-right">
                                 @if($pc->activeBooking)
-                                    {{-- Tombol FINISH (Hijau/Biru) --}}
-                                    <button wire:click="openFinishModal({{ $pc->activeBooking->id }})" 
-                                            class="text-emerald-600 hover:bg-emerald-50 border border-emerald-200 text-[10px] font-bold px-2 py-1 rounded mr-1">
-                                        Finish
-                                    </button>
-
-                                    {{-- Tombol CANCEL (Merah) --}}
-                                    <button wire:click="openCancelModal({{ $pc->activeBooking->id }})" 
-                                            class="text-red-600 hover:bg-red-50 border border-red-200 text-[10px] font-bold px-2 py-1 rounded">
-                                        Cancel
-                                    </button>
+                                    <div class="flex items-center justify-end gap-2">
+                                        <button wire:click="openFinishModal({{ $pc->activeBooking->id }})" class="px-3 py-1.5 rounded bg-white border border-emerald-200 text-emerald-600 text-xs font-bold hover:bg-emerald-50 shadow-sm transition">
+                                            Finish
+                                        </button>
+                                        <button wire:click="openCancelModal({{ $pc->activeBooking->id }})" class="px-3 py-1.5 rounded bg-white border border-red-200 text-red-600 text-xs font-bold hover:bg-red-50 shadow-sm transition">
+                                            Cancel
+                                        </button>
+                                    </div>
                                 @elseif($pc->status == 'available')
-                                    {{-- Tombol CREATE (Biru) --}}
-                                    <button wire:click="openCreateUnitModal({{ $pc->id }})" 
-                                            class="text-blue-600 hover:bg-blue-50 border border-blue-200 text-[10px] font-bold px-2 py-1 rounded">
+                                    <button wire:click="openCreateUnitModal({{ $pc->id }})" class="text-blue-600 hover:text-blue-800 font-medium text-xs border border-blue-200 hover:border-blue-400 bg-blue-50 hover:bg-white px-3 py-1.5 rounded transition shadow-sm">
                                         + Manual
                                     </button>
                                 @endif
@@ -208,18 +163,30 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="4" class="p-8 text-center text-slate-400 text-sm">
-                                Tidak ada data yang sesuai filter.
+                            <td colspan="5" class="py-12 text-center">
+                                <div class="flex flex-col items-center justify-center text-slate-400">
+                                    <svg class="w-12 h-12 mb-3 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <span class="text-sm font-medium">Tidak ada unit yang sesuai filter.</span>
+                                </div>
                             </td>
                         </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
+
+            {{-- C. FOOTER (PAGINATION) --}}
+            <div class="p-4 border-t border-slate-200 bg-slate-50 text-xs text-slate-500 flex justify-between items-center shrink-0">
+                <span>Menampilkan <strong>{{ $inventories->count() }}</strong> unit</span>
+                {{-- Jika ada pagination link, render di sini --}}
+            </div>
+
         </div>
+        {{-- END UNIFIED CARD --}}
 
     </div>
 
+    {{-- Modals --}}
     @include('livewire.admin.partials.booking.modals.create-manual')
     @include('livewire.admin.partials.booking.modals.create-cluster-booking')
     @include('livewire.admin.partials.booking.modals.cancel-booking')
