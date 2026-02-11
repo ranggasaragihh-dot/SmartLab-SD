@@ -31,7 +31,8 @@ class PcStatusController extends Controller
         if ($activeBooking) {
             return response()->json([
                 'command' => 'UNLOCK',
-                'user' => $activeBooking->user->name
+                'user' => $activeBooking->user->name,
+                'end_time' => \Carbon\Carbon::parse($activeBooking->end_time)->format('Y-m-d H:i:s'),
             ]);
         }
 
