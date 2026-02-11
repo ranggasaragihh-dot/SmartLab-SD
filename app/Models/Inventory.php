@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 class Inventory extends Model
 {
     protected $table = 'inventory';
+    protected $guarded = ['id'];
     use HasFactory;
 
     protected $fillable = [
@@ -46,9 +47,9 @@ class Inventory extends Model
     }
 
     // Relasi ke Items (Barang yang nempel)
-    public function items(): HasMany
+    public function item()
     {
-        return $this->hasMany(InventoryItem::class);
+        return $this->hasOne(InventoryItem::class, 'inventory_id');
     }
 
     // Relasi ke Booking

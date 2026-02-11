@@ -17,6 +17,7 @@ use App\Livewire\Admin\UserManagement;
 use App\Livewire\Admin\Booking\Dashboard;
 use App\Livewire\Admin\Booking\Manager;
 use App\Livewire\PublicDisplay;
+use App\Livewire\Admin\InventoryItemManager;
 
 /*
 |--------------------------------------------------------------------------
@@ -64,6 +65,8 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     Route::get('/inventory', AdminInventory::class)->name('inventory');
     Route::get('/lab/{clusterId}', LabManager::class)->name('lab.manager');
     Route::get('/clusters', ClusterManager::class)->name('clusters.index');
+
+    Route::get('/inventaris', InventoryItemManager::class)->name('inventaris.index');
 
     // 2. ROUTE UNTUK MENGELOLA ISI DALAM LAB (YANG SUDAH ADA SEBELUMNYA)
     // Route::get('/lab/{clusterId}', \App\Livewire\Admin\LabManager::class)->name('lab.manage');

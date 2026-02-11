@@ -49,7 +49,7 @@
                 </div>
 
                 {{-- 2. MAC Address (Highlighted Box) --}}
-                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                <!-- <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
                     <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">MAC Address (Opsional)</label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -57,7 +57,7 @@
                         </div>
                         <input wire:model="form.mac_address" type="text" placeholder="00:1B:44:11:3A:B7" class="w-full pl-9 border-slate-300 rounded-md focus:ring-1 focus:ring-amber-500 focus:border-amber-500 text-sm font-mono bg-white py-2">
                     </div>
-                </div>
+                </div> -->
 
                 <div class="border-t border-slate-100"></div>
 
@@ -74,14 +74,14 @@
                     </div>
 
                     {{-- Override Sistem --}}
-                    <div>
+                    <!-- <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1.5">Mode Sistem</label>
                         <select wire:model="form.admin_override_mode" class="w-full border-slate-300 rounded-lg focus:ring-1 focus:ring-amber-500 focus:border-amber-500 text-sm py-2.5 text-slate-700">
                             <option value="none">🛡️ Otomatis (System)</option>
                             <option value="force_open">🔓 Paksa Buka (Force Open)</option>
                             <option value="force_close">🔒 Paksa Tutup (Force Close)</option>
                         </select>
-                    </div>
+                    </div> -->
                 </div>
 
                 {{-- 4. TOGGLE BUKA BOOKING --}}

@@ -8,27 +8,35 @@ use Illuminate\Database\Eloquent\Model;
 class InventoryItem extends Model
 {
     use HasFactory;
-    // Agar bisa diisi massal
-    protected $guarded = []; 
+
     protected $table = 'inventory_items';
 
-    // PENTING: Mengubah JSON DB menjadi Array PHP otomatis
+    // 1. FILLABLE LENGKAP (Sesuai kolom Excel & Migration)
     protected $fillable = [
         'category_id',
         'brand_id',
-        'inventory_id',
+        'inventory_id', // Link ke Meja/Slot (Bisa Null jika di gudang)
+        'item_name',
+        'asset_code',   // Kode Asset Excel
         'serial_number',
+        'asset_type',   // Aktiva
+        'purchase_price',
+        'document_number',
+        'owner_unit',
         'purchase_date',
-        'condition',
+        'condition',    // good, maintenance, broken
         'specifications', // Kolom JSON
     ];
 
+    // 2. CASTING (PENTING)
     protected $casts = [
-        'specifications' => 'array', // Wajib dicast ke array agar bisa jadi Key-Value
+        'specifications' => 'array', // JSON otomatis jadi Array PHP
         'purchase_date' => 'date',
+        'purchase_price' => 'decimal:2',
     ];
 
-    public function inventory()
+    // 3. RELASI
+    public function inventory() // Relasi ke Meja/Slot
     {
         return $this->belongsTo(Inventory::class);
     }
@@ -41,5 +49,17 @@ class InventoryItem extends Model
     public function brand()
     {
         return $this->belongsTo(InventoryBrand::class);
+    }
+
+    // 4. HELPER ACCESSOR (Opsional: Agar mudah dipanggil di Blade)
+    // Contoh: $item->cpu_spec
+    public function getCpuSpecAttribute()
+    {
+        return $this->specifications['cpu'] ?? '-';
+    }
+
+    public function getRamSpecAttribute()
+    {
+        return $this->specifications['ram'] ?? '-';
     }
 }
