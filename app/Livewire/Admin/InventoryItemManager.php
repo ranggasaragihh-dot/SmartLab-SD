@@ -12,6 +12,8 @@ use App\Models\Inventory;
 use App\Models\InventoryCategory;
 use App\Models\InventoryBrand;
 use Livewire\Attributes\Layout;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Http;
 
 #[Layout('layouts.admin')]
 class InventoryItemManager extends Component
@@ -23,6 +25,14 @@ class InventoryItemManager extends Component
 
     // --- VARIABEL UTAMA ---
     public $search = '';
+    public $filterCategory = '';
+    public $filterBrand = '';
+
+    public $showQrModal = false;
+    public $qrCodeTarget = ''; // Menyimpan Kode Aset (misal: INV/2024/001)
+    public $qrCodeUrl = '';    // Link gambar QR
+    public $qrItemName = '';   // Nama barang untuk judul modal
+
     public $isModalOpen = false;
     public $itemId;
 
@@ -37,6 +47,8 @@ class InventoryItemManager extends Component
     // --- VARIABEL SPESIFIKASI (Pecahan JSON) ---
     // Kita buat properti terpisah agar mudah di-bind ke Input Form
     public $spec_cpu, $spec_ram, $spec_storage, $spec_gpu, $spec_other;
+
+    public function updatedSearch() { $this->resetPage(); }
 
     // --- RULES VALIDASI ---
     protected function rules()
@@ -55,20 +67,89 @@ class InventoryItemManager extends Component
         ];
     }
 
+    // --- LOGIC TAMPILKAN QR ASET ---
+    public function showQr($id)
+    {
+        $item = InventoryItem::findOrFail($id);
+        
+        $this->qrItemName = $item->item_name;
+        $this->qrCodeTarget = $item->asset_code; // Isi QR adalah KODE ASET
+        
+        // Generate QR menggunakan API (Bisa juga pakai library simple-qrcode)
+        // Ukuran 300x300, isinya teks kode aset mentah
+        $this->qrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . urlencode($item->asset_code);
+        
+        $this->showQrModal = true;
+    }
+
+    public function closeQrModal()
+    {
+        $this->showQrModal = false;
+        $this->qrCodeTarget = '';
+        $this->qrCodeUrl = '';
+    }
+
+    public function downloadQrImage()
+    {
+        // 1. Cek URL
+        if (empty($this->qrCodeUrl)) return;
+
+        // 2. Ambil gambar dari API via Server Laravel (Bukan Browser)
+        $response = Http::get($this->qrCodeUrl);
+
+        if ($response->successful()) {
+            // 3. Bersihkan nama file (Ganti tanda miring jadi strip)
+            $safeFileName = 'QR-' . str_replace(['/', '\\'], '-', $this->qrCodeTarget) . '.png';
+
+            // 4. Stream download ke browser user
+            return response()->streamDownload(function () use ($response) {
+                echo $response->body();
+            }, $safeFileName);
+        }
+    }
+
     public function render()
     {
+        $query = InventoryItem::query()
+            ->with(['brand', 'category', 'inventory']); // Eager load relasi
+
+        // 1. LOGIC SEARCH (Cari di Nama, Kode, Merk, atau Kategori)
+        if ($this->search) {
+            $query->where(function (Builder $q) {
+                $q->where('item_name', 'like', '%' . $this->search . '%')
+                  ->orWhere('asset_code', 'like', '%' . $this->search . '%')
+                  // Cari di dalam tabel Brand (Relasi)
+                  ->orWhereHas('brand', function ($b) {
+                      $b->where('name', 'like', '%' . $this->search . '%');
+                  })
+                  // Cari di dalam tabel Category (Relasi)
+                  ->orWhereHas('category', function ($c) {
+                      $c->where('name', 'like', '%' . $this->search . '%');
+                  });
+            });
+        }
+
+        // 2. LOGIC FILTER DROPDOWN
+        if ($this->filterCategory) {
+            $query->where('category_id', $this->filterCategory);
+        }
+        
+        if ($this->filterBrand) {
+            $query->where('brand_id', $this->filterBrand);
+        }
+
         // Ambil data dengan Search & Pagination
-        $items = InventoryItem::with(['inventory', 'category', 'brand'])
-            ->where('asset_code', 'like', '%' . $this->search . '%')
-            ->orWhere('serial_number', 'like', '%' . $this->search . '%')
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        // $items = InventoryItem::with(['inventory', 'category', 'brand'])
+        //     ->where('asset_code', 'like', '%' . $this->search . '%')
+        //     ->orWhere('serial_number', 'like', '%' . $this->search . '%')
+        //     ->orderBy('created_at', 'desc')
+        //     ->paginate(10);
 
         return view('livewire.admin.inventory-item-manager', [
-            'items' => $items,
-            'inventories' => Inventory::all(), // Untuk Dropdown Lokasi Meja
-            'categories' => InventoryCategory::all(),
-            'brands' => InventoryBrand::all(),
+            'items' => $query->latest()->paginate(10),
+            'inventories' => Inventory::orderBy('name')->get(), // Untuk Dropdown Lokasi Meja
+            'categories' => InventoryCategory::orderBy('name')->get(),
+            'brands' => InventoryBrand::orderBy('name')->get(),
         ]);
     }
 

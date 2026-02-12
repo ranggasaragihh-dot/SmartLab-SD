@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\Cluster;
 use App\Models\Inventory as InventoryModel;
+use App\Models\InventoryItem; // <--- WAJIB IMPORT INI
 use App\Livewire\Forms\InventoryForm;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -21,53 +22,88 @@ class Inventory extends Component
     public $search = '';
     public $filterCluster = '';
 
+    public $itemSearch = ''; 
+    public $isItemDropdownOpen = false;
+
     // State Modal Utama
     public $isOpen = false;
     public $isEdit = false;
+    
+    // State Modal Delete
     public $showDeleteModal = false;
     public $deleteId;
+    public $deleteName;
 
-    // --- [BARU] STATE UNTUK QR MODAL ---
+    // State Modal QR
     public $showQrModal = false;
     public $qrName = '';
     public $qrUrl = '';
-
-    public $deleteName;
 
     public function updatedSearch() { $this->resetPage(); }
 
     public function create()
     {
-        $this->form->reset();
+        $this->form->reset(); // Reset form & ID
         $this->isEdit = false;
         $this->isOpen = true;
     }
 
     public function edit(InventoryModel $inventory)
     {
+        // Load data meja & barang fisik yang nempel
         $this->form->setInventory($inventory);
+        
+        // Ambil nama barang saat ini (jika ada) untuk ditampilkan di input search
+        if ($inventory->item) {
+            $this->itemSearch = $inventory->item->item_name; // Atau asset_code
+        } else {
+            $this->itemSearch = '';
+        }
+
         $this->isEdit = true;
         $this->isOpen = true;
     }
 
-    // --- [BARU] LOGIC TAMPILKAN QR ---
+    public function selectItem($id, $name)
+    {
+        $this->form->selected_item_id = $id; // Set ID ke Form
+        $this->itemSearch = $name;           // Set Teks ke Input agar user tahu dia pilih apa
+        $this->isItemDropdownOpen = false;   // Tutup dropdown (Logic di View nanti)
+    }
+
+    public function store()
+    {
+        // Panggil logic simpan di Form Object
+        $this->form->save();
+        
+        session()->flash('message', $this->isEdit ? 'Data Meja & Aset diperbarui.' : 'Data Meja baru ditambahkan.');
+        $this->closeModal();
+    }
+
+    public function closeModal()
+    {
+        $this->isOpen = false;
+        $this->showDeleteModal = false;
+        $this->showQrModal = false;
+        $this->itemSearch = '';
+        
+        $this->form->reset();
+    }
+
+    // --- LOGIC QR CODE ---
     public function showQr($id)
     {
         $item = InventoryModel::findOrFail($id);
-        
         $this->qrName = $item->name;
         
-        // Generate Link Scan
-        // Pastikan route 'scan.qr' sudah ada di web.php
-        $scanUrl = route('scan.qr', ['qrToken' => $item->qr_token]);
-        
-        // Generate Link Gambar QR (API)
+        // Menggunakan API eksternal (sesuai kode Anda)
+        // Jika nanti mau pakai library lokal, ganti logic di sini
+        $scanUrl = route('scan.qr', ['qrToken' => $item->qr_token]); // Pastikan route ini ada
         $this->qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . urlencode($scanUrl);
         
         $this->showQrModal = true;
     }
 
-    // --- [BARU] LOGIC TUTUP QR (INI YANG HILANG TADI) ---
     public function closeQrModal()
     {
         $this->showQrModal = false;
@@ -75,61 +111,63 @@ class Inventory extends Component
         $this->qrUrl = '';
     }
 
-    public function store()
-    {
-        $this->form->save();
-        session()->flash('message', $this->isEdit ? 'Data diperbarui.' : 'Data ditambahkan.');
-        $this->closeModal(); // Ini akan memanggil fungsi di bawah
-    }
-
+    // --- LOGIC DELETE ---
     public function confirmDelete($id)
     {
-        // Cari data dulu sebelum buka modal
-        $item = InventoryModel::find($id); // Sesuaikan nama Model Anda (misal: Inventory)
-        
+        $item = InventoryModel::find($id);
         if ($item) {
             $this->deleteId = $id;
-            $this->deleteName = $item->name; // <--- Ambil nama untuk ditampilkan
-            $this->showDeleteModal = true;   // Baru buka modal
+            $this->deleteName = $item->name;
+            $this->showDeleteModal = true;
         }
     }
 
     public function destroy()
     {
         $item = InventoryModel::find($this->deleteId);
-        
         if ($item) {
+            // Opsional: Sebelum hapus meja, lepaskan dulu barang fisiknya (kembalikan ke gudang)
+            InventoryItem::where('inventory_id', $item->id)->update(['inventory_id' => null]);
+            
             $item->delete();
-            session()->flash('message', 'Unit PC berhasil dihapus dari inventaris.');
+            session()->flash('message', 'Unit Meja berhasil dihapus.');
         }
-
-        // Reset & Tutup
         $this->showDeleteModal = false;
-        $this->deleteId = null;
-        $this->deleteName = null;
     }
 
-    public function closeModal()
-    {
-        $this->isOpen = false;
-        $this->showDeleteModal = false;
-        
-        // --- [BARU] Pastikan QR juga tertutup saat reset total
-        $this->showQrModal = false;
-        
-        $this->form->reset();
-    }
-
+    // --- RENDER VIEW ---
     public function render()
     {
-        $query = InventoryModel::query()->with('cluster');
+        // 1. Query Utama (List Meja)
+        // Tambahkan 'item' di sini agar data spesifikasi ikut terambil
+        $query = InventoryModel::query()->with(['cluster', 'item']); 
 
         if ($this->search) $query->where('name', 'like', '%' . $this->search . '%');
         if ($this->filterCluster) $query->where('cluster_id', $this->filterCluster);
 
+        // 2. Query Dropdown (Tetap sama)
+        $currentInventoryId = $this->form->id ?? 0;
+        $availableItems = InventoryItem::query()
+            ->where(function($q) use ($currentInventoryId) {
+                // Ambil yang GUDANG (null) ATAU Milik Sendiri
+                $q->whereNull('inventory_id')
+                  ->orWhere('inventory_id', $currentInventoryId);
+            })
+            // FILTER PENCARIAN (Jika user mengetik)
+            ->when($this->itemSearch, function($q) {
+                $q->where(function($sub) {
+                    $sub->where('item_name', 'like', '%' . $this->itemSearch . '%')
+                        ->orWhere('asset_code', 'like', '%' . $this->itemSearch . '%');
+                });
+            })
+            ->orderBy('item_name', 'asc')
+            ->limit(50) // Batasi 50 biar tidak lag kalau datanya ribuan
+            ->get();
+
         return view('livewire.admin.inventory', [
             'inventories' => $query->paginate(10),
             'clusters' => Cluster::all(),
+            'availableItems' => $availableItems,
         ]);
     }
 }

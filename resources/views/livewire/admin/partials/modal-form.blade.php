@@ -72,6 +72,82 @@
                             <option value="broken">🔴 Rusak (Broken)</option>
                         </select>
                     </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Spesifikasi</label>
+                        <div x-data="{ open: false }" class="relative">
+                            <div class="relative">
+                                <input 
+                                    type="text" 
+                                    wire:model.live.debounce.300ms="itemSearch"
+                                    @focus="open = true" 
+                                    @click.away="open = false"
+                                    placeholder="Ketik Nama Barang / Kode Aset..."
+                                    class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                >
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <input type="hidden" wire:model="form.selected_item_id">
+
+                            <div x-show="open" 
+                                x-transition 
+                                class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                
+                                <ul>
+                                    <li @click="open = false; $wire.selectItem('', '')" 
+                                        class="px-4 py-3 hover:bg-red-50 cursor-pointer border-b border-gray-100 text-red-600 font-bold">
+                                        🚫 Lepas Aset (Kosongkan Meja)
+                                    </li>
+
+                                    @forelse($availableItems as $item)
+                                        @php
+                                            // Cek apakah item ini sedang terpilih
+                                            $isSelected = $form->selected_item_id == $item->id;
+                                            $cpu = $item->specifications['cpu'] ?? '-';
+                                            $ram = $item->specifications['ram'] ?? '-';
+                                        @endphp
+
+                                        <li wire:click="selectItem({{ $item->id }}, '{{ addslashes($item->item_name) }}')"
+                                            @click="open = false"
+                                            class="px-4 py-2 cursor-pointer hover:bg-blue-50 border-b border-gray-100 {{ $isSelected ? 'bg-blue-100' : '' }}">
+                                            
+                                            <div class="flex justify-between items-center">
+                                                <div>
+                                                    <div class="font-bold text-gray-800 text-sm">
+                                                        {{ $item->item_name }}
+                                                    </div>
+                                                    <div class="text-xs text-gray-500">
+                                                        Kode: {{ $item->asset_code }} | {{ $cpu }} / {{ $ram }}
+                                                    </div>
+                                                </div>
+                                                
+                                                @if($isSelected)
+                                                    <span class="text-blue-600 font-bold">✓</span>
+                                                @endif
+                                            </div>
+                                        </li>
+                                    @empty
+                                        <li class="px-4 py-3 text-sm text-gray-500 text-center">
+                                            Tidak ada barang ditemukan dengan kata kunci "{{ $itemSearch }}"
+                                        </li>
+                                    @endforelse
+                                </ul>
+                            </div>
+                        </div>
+
+                        @if($form->selected_item_id)
+                            <p class="text-xs text-green-600 mt-2 flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                Aset Terpilih: <b>{{ $itemSearch }}</b>
+                            </p>
+                        @else
+                            <p class="text-xs text-gray-400 mt-2">Belum ada aset dipilih.</p>
+                        @endif
+                    </div>
 
                     {{-- Override Sistem --}}
                     <!-- <div>

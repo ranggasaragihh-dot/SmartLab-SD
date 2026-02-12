@@ -62,6 +62,7 @@ class UserManagement extends Component // Ganti nama class agar representatif
             'password' => 'required|min:6', // Password wajib saat create
             'selectedRoles' => 'required|array|min:1',
             'photo' => 'nullable|image|max:1024',
+            'ta' => 'required|boolean'
         ]);
 
         // Handle Foto
@@ -77,6 +78,7 @@ class UserManagement extends Component // Ganti nama class agar representatif
             'nomor_induk' => $this->nomor_induk,
             'password' => bcrypt($this->password),
             'photo' => $photoPath,
+            'ta' => $this->ta,
         ]);
 
         // Attach Roles
@@ -191,6 +193,8 @@ class UserManagement extends Component // Ganti nama class agar representatif
         $this->email = $user->email;
         $this->nomor_induk = $user->nomor_induk;
         $this->existingPhoto = $user->photo; // Untuk preview di modal
+
+        $this->ta = $user->ta;
         
         // Ambil ID roles yang dimiliki user saat ini
         $this->selectedRoles = $user->roles->pluck('id')->map(fn($id) => (string) $id)->toArray();
@@ -212,6 +216,7 @@ class UserManagement extends Component // Ganti nama class agar representatif
             // Password opsional saat edit
             'password' => $this->isEditMode ? 'nullable|min:6' : 'required|min:6',
             'photo' => 'nullable|image|max:1024',
+            'ta' => 'required|boolean',
         ]);
 
         // --- 2. LOGIKA SELANJUTNYA TETAP SAMA ---
@@ -242,6 +247,7 @@ class UserManagement extends Component // Ganti nama class agar representatif
             'email' => $this->email,
             'nomor_induk' => $this->nomor_induk,
             'photo' => $photoPath,
+            'ta' => $this->ta,
         ];
 
         if (!empty($this->password)) {

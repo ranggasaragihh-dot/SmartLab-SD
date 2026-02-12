@@ -3,103 +3,137 @@
         
         {{-- KOLOM KIRI --}}
         <div class="space-y-5">
+            
+            {{-- IDENTITAS --}}
             <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Identitas Aset</h4>
+                <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/></svg>
+                    Identitas Aset
+                </h4>
                 
                 <div class="mb-4">
-                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Kode Aset <span class="text-red-500">*</span></label>
-                    <input type="text" wire:model="asset_code" class="w-full border-slate-300 rounded-lg text-sm py-2 px-3 font-mono" placeholder="INV-2024-001">
-                    @error('asset_code') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                    <label class="block text-[10px] font-bold text-slate-700 mb-1">Kode Aset <span class="text-red-500">*</span></label>
+                    {{-- UBAH FOCUS RING JADI SLATE/AMBER --}}
+                    <input type="text" wire:model="asset_code" 
+                           class="w-full border-slate-300 rounded-lg focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-sm py-2 px-3 font-mono placeholder-slate-400 transition-shadow" 
+                           placeholder="INV-202X-001">
+                    @error('asset_code') <span class="text-red-500 text-xs mt-1 block font-medium">{{ $message }}</span> @enderror
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1.5">Kategori</label>
-                        <select wire:model="category_id" class="w-full border-slate-300 rounded-lg text-sm py-2 px-3">
-                            <option value="">Pilih...</option>
+                        <select wire:model="category_id" class="w-full border-slate-300 rounded-lg focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-sm py-2 px-3 text-slate-700 cursor-pointer">
+                            <option value="">Pilih Kategori...</option>
                             @foreach($categories as $cat) <option value="{{ $cat->id }}">{{ $cat->name }}</option> @endforeach
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1.5">Merk</label>
-                        <select wire:model="brand_id" class="w-full border-slate-300 rounded-lg text-sm py-2 px-3">
-                            <option value="">Pilih...</option>
+                        <select wire:model="brand_id" class="w-full border-slate-300 rounded-lg focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-sm py-2 px-3 text-slate-700 cursor-pointer">
+                            <option value="">Pilih Merk...</option>
                             @foreach($brands as $brand) <option value="{{ $brand->id }}">{{ $brand->name }}</option> @endforeach
                         </select>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-blue-700 mb-1.5">Lokasi Penempatan</label>
-                    <select wire:model="inventory_id" class="w-full border-blue-200 bg-blue-50 rounded-lg text-sm py-2 px-3 text-slate-700 font-medium">
-                        <option value="">🏠 Di Gudang (Belum Terpasang)</option>
-                        @foreach($inventories as $inv)
-                            <option value="{{ $inv->id }}">🖥️ {{ $inv->name }} ({{ $inv->cluster->name ?? 'Unknown' }})</option>
-                        @endforeach
-                    </select>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Lokasi Penempatan</label>
+                    <div class="relative">
+                        <select wire:model="inventory_id" class="w-full border-slate-300 bg-slate-50/50 rounded-md focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-xs py-1.5 px-2 text-slate-700 font-medium">
+                            <option value="">📦 Di Gudang (Stok Cadangan)</option>
+                            @foreach($inventories as $inv)
+                                <option value="{{ $inv->id }}">🖥️ {{ $inv->name }} ({{ $inv->cluster->name ?? '?' }})</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
             </div>
-            
-            {{-- Administrasi --}}
+
+            {{-- ADMINISTRASI --}}
             <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                 <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Administrasi</h4>
-                 <div class="grid grid-cols-2 gap-4">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    Administrasi
+                </h4>
+                <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Harga Beli</label>
-                        <input type="number" wire:model="purchase_price" class="w-full border-slate-300 rounded-lg text-sm py-2 px-3">
+                        <label class="block text-[10px] font-bold text-slate-700 mb-1">Harga Beli</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-2 text-slate-400 text-xs">Rp</span>
+                            <input type="number" wire:model="purchase_price" class="w-full border-slate-300 rounded-lg focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-sm py-2 pl-8 pr-3 placeholder-slate-300">
+                        </div>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1.5">Tgl Terima</label>
-                        <input type="date" wire:model="purchase_date" class="w-full border-slate-300 rounded-lg text-sm py-2 px-3">
+                        <input type="date" wire:model="purchase_date" class="w-full border-slate-300 rounded-lg focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-sm py-2 px-3 text-slate-600">
                     </div>
-                 </div>
+                </div>
             </div>
         </div>
 
         {{-- KOLOM KANAN --}}
         <div class="space-y-5">
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm h-full">
-                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Spesifikasi Teknis</h4>
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm h-full flex flex-col">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                    Spesifikasi Teknis
+                </h4>
 
-                <div class="space-y-4">
+                <div class="space-y-4 flex-1">
+                    {{-- Inputan Specs (Semua Focus Ring diganti Slate-900) --}}
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1.5">Processor (CPU)</label>
-                        <input type="text" wire:model="spec_cpu" class="w-full border-slate-300 rounded-lg text-sm py-2 px-3">
+                        <input type="text" wire:model="spec_cpu" class="w-full border-slate-300 rounded-lg focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-sm py-2 px-3 placeholder-slate-300" placeholder="Contoh: Intel Core i5">
                     </div>
                     
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1.5">RAM</label>
-                            <input type="text" wire:model="spec_ram" class="w-full border-slate-300 rounded-lg text-sm py-2 px-3">
+                            <input type="text" wire:model="spec_ram" class="w-full border-slate-300 rounded-lg focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-sm py-2 px-3 placeholder-slate-300" placeholder="8GB">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1.5">Storage</label>
-                            <input type="text" wire:model="spec_storage" class="w-full border-slate-300 rounded-lg text-sm py-2 px-3">
+                            <input type="text" wire:model="spec_storage" class="w-full border-slate-300 rounded-lg focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-sm py-2 px-3 placeholder-slate-300" placeholder="SSD 512GB">
                         </div>
                     </div>
 
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1.5">Kartu Grafis (VGA)</label>
-                        <input type="text" wire:model="spec_gpu" class="w-full border-slate-300 rounded-lg text-sm py-2 px-3">
+                        <input type="text" wire:model="spec_gpu" class="w-full border-slate-300 rounded-lg focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-sm py-2 px-3 placeholder-slate-300" placeholder="NVIDIA RTX 3050">
                     </div>
 
-                    <div class="pt-4 border-t border-slate-100">
-                        <label class="block text-xs font-bold text-slate-700 mb-2">Kondisi Fisik</label>
-                        <div class="flex gap-4">
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" wire:model="condition" value="good" class="text-emerald-600 focus:ring-emerald-500">
-                                <span class="text-sm font-medium text-slate-700">Baik</span>
-                            </label>
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" wire:model="condition" value="maintenance" class="text-amber-600 focus:ring-amber-500">
-                                <span class="text-sm font-medium text-slate-700">Perbaikan</span>
-                            </label>
-                             <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" wire:model="condition" value="broken" class="text-red-600 focus:ring-red-500">
-                                <span class="text-sm font-medium text-slate-700">Rusak</span>
-                            </label>
-                        </div>
+                    <div>
+                         <label class="block text-xs font-bold text-slate-700 mb-1.5">Lainnya</label>
+                         <textarea wire:model="spec_other" rows="2" class="w-full border-slate-300 rounded-lg focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-sm py-2 px-3 placeholder-slate-300"></textarea>
                     </div>
+                </div>
+
+                {{-- KONDISI FISIK (Gunakan Amber agar matching dengan Logo) --}}
+                <div class="mt-6 pt-5 border-t border-slate-100">
+                    <label class="block text-xs font-bold text-slate-700 mb-3">Kondisi Fisik Saat Ini <span class="text-red-500">*</span></label>
+                    <div class="flex gap-3">
+                        <label class="relative flex items-center group cursor-pointer">
+                            <input type="radio" wire:model="condition" value="good" class="peer sr-only">
+                            <div class="w-3.5 h-3.5 border-2 border-slate-300 rounded-full peer-checked:border-emerald-500 peer-checked:bg-emerald-500 transition-all"></div>
+                            <span class="ml-2 text-sm font-medium text-slate-600 peer-checked:text-emerald-700 group-hover:text-slate-800">Baik</span>
+                        </label>
+
+                        <label class="relative flex items-center group cursor-pointer">
+                            <input type="radio" wire:model="condition" value="maintenance" class="peer sr-only">
+                            {{-- Maintenance pakai Amber (Kuning) --}}
+                            <div class="w-3.5 h-3.5 border-2 border-slate-300 rounded-full peer-checked:border-amber-500 peer-checked:bg-amber-500 transition-all"></div>
+                            <span class="ml-2 text-sm font-medium text-slate-600 peer-checked:text-amber-700 group-hover:text-slate-800">Perbaikan</span>
+                        </label>
+
+                        <label class="relative flex items-center group cursor-pointer">
+                            <input type="radio" wire:model="condition" value="broken" class="peer sr-only">
+                            {{-- Rusak pakai Merah --}}
+                            <div class="w-3.5 h-3.5 border-2 border-slate-300 rounded-full peer-checked:border-red-600 peer-checked:bg-red-600 transition-all"></div>
+                            <span class="ml-2 text-sm font-medium text-slate-600 peer-checked:text-red-700 group-hover:text-slate-800">Rusak</span>
+                        </label>
+                    </div>
+                    @error('condition') <span class="text-red-500 text-xs mt-1 block font-medium">{{ $message }}</span> @enderror
                 </div>
             </div>
         </div>
