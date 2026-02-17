@@ -100,7 +100,7 @@
                                         </div>
                                     @endif
                                     
-                                    <div wire:loading wire:target="image_upload" class="absolute inset-0 bg-white/80 flex items-center justify-center rounded-lg">
+                                    <div wire:loading.flex wire:target="image_upload" class="absolute inset-0 bg-white/80 flex items-center justify-center rounded-lg">
                                         <svg class="animate-spin h-5 w-5 text-amber-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                     </div>
                                 </div>
@@ -140,7 +140,6 @@
                 <button type="submit" form="mainForm" wire:loading.attr="disabled" class="px-6 py-2.5 bg-slate-900 text-white rounded-xl hover:bg-slate-800 hover:shadow-lg hover:shadow-slate-900/20 text-sm font-bold transition-all transform active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                     <span wire:loading.remove wire:target="store">{{ $isEdit ? 'Simpan Perubahan' : 'Buat Cluster' }}</span>
                     <span wire:loading wire:target="store" class="flex items-center gap-2">
-                        <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                         Menyimpan...
                     </span>
                 </button>

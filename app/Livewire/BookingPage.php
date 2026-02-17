@@ -339,6 +339,7 @@ class BookingPage extends Component
         }
 
         $user = Auth::user();
+        // dd($user->roles->toArray());
 
         // 1. Ambil List Cluster (Konsistensi Role)
         $allowedClusters = Cluster::where('is_active', true)
@@ -367,11 +368,21 @@ class BookingPage extends Component
         $filterStart = Carbon::parse($this->filterDate)->startOfDay();
         $filterEnd   = Carbon::parse($this->filterDate)->endOfDay();
 
-        $globalRoomBooking = Booking::where('cluster_id', $this->cluster->id)
-            ->whereNull('inventory_id') // Global Lock
+        // 3. Cek Booking 1 Ruangan (EVENT LOCK)
+        // Perbaikan: Tambahkan logika orWhereNull('cluster_id') jika Anda ingin mendukung "Lock Semua Cluster" sekaligus
+        $roomEvent = Booking::query()
+            ->whereNull('inventory_id')
             ->whereIn('status', ['booked', 'active'])
+            ->where(function($q) {
+                // KONDISI BARU SESUAI SKEMA ANDA:
+                // Lock dipicu jika event terjadi di ruangan ini, ATAU di ruangan manapun yang bertipe 'public'
+                $q->where('cluster_id', $this->cluster->id)
+                  ->orWhereHas('cluster', function($subQuery) {
+                      $subQuery->where('type', 'public');
+                  });
+            })
             ->where(function($q) use ($filterStart, $filterEnd) {
-                // Cek overlap sepanjang hari tanggal filter
+                // Pastikan waktunya beririsan di hari yang dipilih
                 $q->where('start_time', '<', $filterEnd)
                   ->where('end_time', '>', $filterStart);
             })
@@ -403,23 +414,42 @@ class BookingPage extends Component
         $lockReason = '';
         $lockedInventories = [];
 
-        $isLecturer = ($user->role === 'lecture');
-        $isStudentTA = ((int)$user->ta === 1 && $this->cluster->type === 'private');
-        $hasAccessRight = $isLecturer || $isStudentTA;
+        // 1. ADMIN: Penguasa mutlak, kebal dari semua lock
+        $isAdmin = $user->roles->where('role', 'admin')->isNotEmpty();
+        
+        // 2. DOSEN & TA: Digabung jadi satu logika yang valid secara sintaks
+        // $isDosenOrTA = ((int)$user->ta === 1 || $user->roles->where('role', 'lecture')->isNotEmpty());
+        // Cukup gunakan ->contains() untuk mengecek isi Collection
+        $isDosenOrTA = ((int)$user->ta === 1 || $user->roles->contains('role', 'lecturer'));
 
-        if ($this->cluster->type === 'private' && !$hasAccessRight) {
-            $isRoomLockedByAdmin = true;
-            $lockReason = "Khusus Mahasiswa TA";
-            $lockedInventories = $inventories->pluck('id')->toArray();
-        } 
-        else if ($globalRoomBooking && !$hasAccessRight) {
-            $isRoomLockedByAdmin = true;
-            $lockReason = $globalRoomBooking->purpose ?? 'Kegiatan Lab';
+        // A. FILTER RUANGAN PRIVATE (Khusus TA & Dosen)
+        if ($this->cluster->type === 'private') {
+            if (!$isAdmin && !$isDosenOrTA) {
+                $isRoomLockedByAdmin = true;
+                $lockReason = "Akses Terbatas: Khusus Mahasiswa Tugas Akhir (TA)";
+            } 
+            // Cek jika ada event yang SPESIFIK diadakan di ruang Private ini
+            elseif ($roomEvent && $roomEvent->cluster_id === $this->cluster->id && !$isAdmin) {
+                $isRoomLockedByAdmin = true;
+                $lockReason = $roomEvent->purpose ?? 'Lab TA sedang digunakan untuk Kegiatan Khusus';
+            }
+        }
+        
+        // B. FILTER RUANGAN PUBLIC (Dipengaruhi oleh Event Public Massal)
+        elseif ($this->cluster->type === 'public') {
+            // Jika ada $roomEvent (berarti ada event di cluster public manapun), 
+            // LOCK ruangan ini untuk semua mahasiswa (termasuk TA). Hanya Dosen yang lolos.
+            if ($roomEvent && !$isAdmin) {
+                $isRoomLockedByAdmin = true;
+                $lockReason = $roomEvent->purpose ?? 'Seluruh Lab Public ditutup untuk Event/Kegiatan';
+            }
+        }
+
+        // Jika ter-lock, kunci semua unit di tampilan
+        if ($isRoomLockedByAdmin) {
             $lockedInventories = $inventories->pluck('id')->toArray();
         }
 
-        // PERBAIKAN 4: Hapus getClusterData() (Statistik) karena tidak relevan untuk User Booking
-        
         return view('livewire.booking-page', [
             'allowedClusters' => $allowedClusters,
             'inventories'     => $inventories,

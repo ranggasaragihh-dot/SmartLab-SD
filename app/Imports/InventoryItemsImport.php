@@ -51,8 +51,8 @@ class InventoryItemsImport implements ToModel, WithStartRow
         if (empty($cleanPrice)) $cleanPrice = 0;
 
         // === 3. LOGIKA LOOKUP DATABASE ===
-        $brand    = InventoryBrand::firstOrCreate(['name' => $merkName]);
         $category = InventoryCategory::firstOrCreate(['name' => $katName]);
+        $brand    = InventoryBrand::firstOrCreate(['name' => $merkName, 'category_id' => $category->id],['category_id' => $category->id]);
 
         // Cari ID Meja
         $inventory = Inventory::where('name', $namaBarang)->first();

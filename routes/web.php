@@ -18,6 +18,8 @@ use App\Livewire\Admin\Booking\Dashboard;
 use App\Livewire\Admin\Booking\Manager;
 use App\Livewire\PublicDisplay;
 use App\Livewire\Admin\InventoryItemManager;
+use App\Livewire\Admin\BookingHistory;
+use App\Http\Controllers\InventoryScanController;
 
 /*
 |--------------------------------------------------------------------------
@@ -54,6 +56,8 @@ Route::middleware('auth')->group(function () {
     
     // === FITUR LAINNYA ===
     Route::get('/scan/{qrToken}', [CheckInController::class, 'handleScan'])->name('scan.qr');
+    Route::get('/inventory/scan/{asset_code}', [InventoryScanController::class, 'show'])->name('inventory.scan.show');
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -74,6 +78,7 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     Route::get('/manajemen-user', UserManagement::class)->name('manajemen-user');
 
     Route::get('/booking', Dashboard::class)->name('booking.dashboard');
+    Route::get('/booking/history', BookingHistory::class)->name('booking.history');
     // 2. Manager (Detail Lab dengan Dropdown)
     Route::get('/booking/{clusterId}', Manager::class)->name('booking.manage');
 });

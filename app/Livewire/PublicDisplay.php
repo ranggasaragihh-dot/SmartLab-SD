@@ -12,14 +12,14 @@ class PublicDisplay extends Component
     #[Layout('layouts.blank')]
     public function render()
     {
+        $now = Carbon::now();
         // 1. Ambil Data Cluster beserta Inventory & Booking Aktif
-        $clusters = Cluster::with(['inventories' => function($q) {
-            $q->with(['bookings' => function($b) {
-                // Filter: Hanya ambil booking yang SEDANG BERLANGSUNG
-                $now = Carbon::now();
-                $b->where('status', 'booked')
-                ->where('start_time', '<=', $now)
-                ->where('end_time', '>', $now);
+        $clusters = Cluster::with(['inventories' => function($q) use ($now) {
+            $q->with(['bookings' => function($b) use ($now) {
+                // PERBAIKAN: Gunakan whereIn untuk multiple status
+                $b->whereIn('status', ['booked', 'active'])
+                  ->where('start_time', '<=', $now)
+                  ->where('end_time', '>', $now);
             }]);
         }])->get();
 
@@ -39,9 +39,11 @@ class PublicDisplay extends Component
                 $booking = $unit->bookings->first();
                 
                 // Cek apakah tipe bookingnya 'event' (bukan booking satuan mahasiswa)
-                if ($booking && $booking->type === 'event') {
+                if ($booking && (is_null($booking->inventory_id))) {
+                    // Logic ini bisa Anda kustomisasi: jika salah satu unit aktif, 
+                    // apakah dianggap 1 cluster sedang dipakai?
                     $activeEvent = $booking;
-                    break; // Jika ketemu satu, berarti 1 cluster itu sedang dipakai event. Stop loop.
+                    break;
                 }
             }
 

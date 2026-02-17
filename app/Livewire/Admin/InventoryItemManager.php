@@ -14,6 +14,7 @@ use App\Models\InventoryBrand;
 use Livewire\Attributes\Layout;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Http;
+use Livewire\Attributes\Computed;
 
 #[Layout('layouts.admin')]
 class InventoryItemManager extends Component
@@ -23,10 +24,14 @@ class InventoryItemManager extends Component
     public $excelFile;
     // public $isImportModalOpen = false;
 
-    // --- VARIABEL UTAMA ---
+    // --- VARIABEL UTAMA (SEARCH & FILTER) ---
     public $search = '';
     public $filterCategory = '';
     public $filterBrand = '';
+    public $filterLocation = '';  // Untuk filter lokasi (tabel inventory)
+    public $filterCondition = ''; // Untuk filter kondisi fisik
+
+    public $availableBrands = [];
 
     public $showQrModal = false;
     public $qrCodeTarget = ''; // Menyimpan Kode Aset (misal: INV/2024/001)
@@ -35,6 +40,18 @@ class InventoryItemManager extends Component
 
     public $isModalOpen = false;
     public $itemId;
+
+    // --- VARIABEL KATEGORI & MERK BARU (On-the-fly) ---
+    public $isNewCategory = false;
+    public $new_category_name = '';
+    
+    public $isNewBrand = false;
+    public $new_brand_name = '';
+
+    // --- VARIABEL MODAL DELETE ---
+    public $isDeleteModalOpen = false;
+    public $deleteId = null; // Menyimpan ID barang yang akan dihapus
+    public $deleteItemName = '';
 
     public $activeTab = 'manual'; // Default tab adalah 'manual'
 
@@ -50,20 +67,50 @@ class InventoryItemManager extends Component
 
     public function updatedSearch() { $this->resetPage(); }
 
+    public function updated($property)
+    {
+        // Jika yang berubah adalah properti filter, kembalikan ke halaman 1
+        if (in_array($property, ['search', 'filterCategory', 'filterBrand', 'filterLocation', 'filterCondition'])) {
+            $this->resetPage();
+        }
+    }
+
+    public function updatedFilterCategory($value)
+    {
+        if (!empty($value)) {
+            // Ambil merk yang hanya memiliki category_id tersebut
+            $this->availableBrands = InventoryBrand::where('category_id', $value)
+                ->orderBy('name')
+                ->get();
+        } else {
+            // Jika kategori dikosongkan, kosongkan juga merk
+            $this->availableBrands = [];
+        }
+        
+        // Reset pilihan merk jika kategori berubah agar tidak terjadi konflik data
+        $this->filterBrand = ''; 
+        $this->resetPage();
+    }
+
     // --- RULES VALIDASI ---
     protected function rules()
     {
         return [
-            'category_id' => 'required',
-            'brand_id'    => 'required',
-            'inventory_id'=> 'nullable|exists:inventory,id', // Boleh null (Gudang)
-            'asset_code'  => 'required|unique:inventory_items,asset_code,' . $this->itemId,
-            'serial_number' => 'nullable',
-            'purchase_price'=> 'nullable|numeric',
-            'condition'   => 'required|in:good,maintenance,broken',
+            // Validasi Dinamis Kategori
+            'category_id'       => $this->isNewCategory ? 'nullable' : 'required',
+            'new_category_name' => $this->isNewCategory ? 'required|string|max:255|unique:inventory_categories,name' : 'nullable',
+            
+            // Validasi Dinamis Merk
+            'brand_id'          => $this->isNewBrand ? 'nullable' : 'required',
+            'new_brand_name'    => $this->isNewBrand ? 'required|string|max:255|unique:inventory_brands,name' : 'nullable',
+            'inventory_id'      => 'nullable|exists:inventory,id', // Boleh null (Gudang)
+            'asset_code'        => 'required|unique:inventory_items,asset_code,' . $this->itemId,
+            'serial_number'     => 'nullable',
+            'purchase_price'    => 'nullable|numeric',
+            'condition'         => 'required|in:good,maintenance,broken',
             // Specs opsional
-            'spec_cpu' => 'nullable|string',
-            'spec_ram' => 'nullable|string',
+            'spec_cpu'          => 'nullable|string',
+            'spec_ram'          => 'nullable|string',
         ];
     }
 
@@ -73,11 +120,14 @@ class InventoryItemManager extends Component
         $item = InventoryItem::findOrFail($id);
         
         $this->qrItemName = $item->item_name;
-        $this->qrCodeTarget = $item->asset_code; // Isi QR adalah KODE ASET
+        $this->qrCodeTarget = $item->asset_code; 
         
-        // Generate QR menggunakan API (Bisa juga pakai library simple-qrcode)
-        // Ukuran 300x300, isinya teks kode aset mentah
-        $this->qrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . urlencode($item->asset_code);
+        // PERBAIKAN: Gunakan URL lengkap menuju halaman scan
+        // Misal route name Anda adalah 'inventory.scan.show'
+        $fullUrl = route('inventory.scan.show', $item->asset_code);
+        
+        // Generate QR dengan payload URL lengkap
+        $this->qrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . urlencode($fullUrl);
         
         $this->showQrModal = true;
     }
@@ -106,6 +156,76 @@ class InventoryItemManager extends Component
                 echo $response->body();
             }, $safeFileName);
         }
+    }
+
+    // Berjalan otomatis saat dropdown Kategori berubah
+    public function updatedCategoryId($value)
+    {
+        if ($value === 'NEW') {
+            $this->isNewCategory = true;
+            $this->category_id = null; // Kosongkan ID agar tidak error
+        }
+    }
+
+    // Berjalan otomatis saat dropdown Merk berubah
+    public function updatedBrandId($value)
+    {
+        if ($value === 'NEW') {
+            $this->isNewBrand = true;
+            $this->brand_id = null; // Kosongkan ID
+        }
+    }
+
+    // Aksi saat tombol silang (batal) diklik di frontend
+    public function cancelNewCategory()
+    {
+        $this->isNewCategory = false;
+        $this->new_category_name = '';
+        $this->category_id = ''; // Kembalikan ke opsi "Pilih Kategori..."
+    }
+
+    public function cancelNewBrand()
+    {
+        $this->isNewBrand = false;
+        $this->new_brand_name = '';
+        $this->brand_id = ''; // Kembalikan ke opsi "Pilih Merk..."
+    }
+
+    #[Computed]
+    public function inventories()
+    {
+        return Inventory::orderBy('name')->get();
+    }
+
+    #[Computed]
+    public function categories()
+    {
+        return InventoryCategory::orderBy('name')->get();
+    }
+
+    #[Computed]
+    public function availableBrands()
+    {
+        // Jika Kategori kosong, kembalikan array kosong (mengunci data)
+        if (empty($this->filterCategory)) {
+            return collect(); 
+        }
+
+        // LOGIKA PENCARIAN MERK INDEPENDEN
+        // Karena Kategori dan Merk bertemu di tabel Inventaris, kita cari Merk
+        // yang secara aktual memiliki barang di Kategori yang dipilih admin.
+        return InventoryBrand::whereHas('inventories', function ($query) {
+            $query->where('category_id', $this->filterCategory);
+        })->get();
+    }
+
+    #[computed]
+    public function activeConditions()
+    {
+        // Mengambil nilai unik: ['good', 'broken', dll] hanya yang ada di database
+        return InventoryItem::select('condition')
+            ->distinct()
+            ->pluck('condition');
     }
 
     public function render()
@@ -138,6 +258,20 @@ class InventoryItemManager extends Component
             $query->where('brand_id', $this->filterBrand);
         }
 
+        if ($this->filterLocation) {
+            if ($this->filterLocation === 'NULL') {
+                // Jika user memilih opsi Gudang/Stok
+                $query->whereNull('inventory_id');
+            } else {
+                // Jika user memilih ruangan spesifik
+                $query->where('inventory_id', $this->filterLocation);
+            }
+        }
+
+        if ($this->filterCondition) {
+            $query->where('condition', $this->filterCondition);
+        }
+
         // Ambil data dengan Search & Pagination
         // $items = InventoryItem::with(['inventory', 'category', 'brand'])
         //     ->where('asset_code', 'like', '%' . $this->search . '%')
@@ -150,6 +284,9 @@ class InventoryItemManager extends Component
             'inventories' => Inventory::orderBy('name')->get(), // Untuk Dropdown Lokasi Meja
             'categories' => InventoryCategory::orderBy('name')->get(),
             'brands' => InventoryBrand::orderBy('name')->get(),
+            'activeConditions' => \App\Models\InventoryItem::select('condition')
+            ->distinct()
+            ->pluck('condition')
         ]);
     }
 
@@ -163,6 +300,27 @@ class InventoryItemManager extends Component
     public function store()
     {
         $this->validate();
+
+        // 1. EKSEKUSI PEMBUATAN KATEGORI BARU
+        if ($this->isNewCategory && !empty($this->new_category_name)) {
+            // Buat kategori di database
+            $category = InventoryCategory::create([
+                'name' => $this->new_category_name
+            ]);
+            // Ambil ID yang baru tercipta dan masukkan ke variabel category_id
+            $this->category_id = $category->id;
+        }
+
+        // 2. EKSEKUSI PEMBUATAN MERK BARU
+        if ($this->isNewBrand && !empty($this->new_brand_name)) {
+            // Buat merk di database
+            $brand = InventoryBrand::create([
+                'name' => $this->new_brand_name,
+                'category_id' => $this->category_id
+            ]);
+            // Ambil ID yang baru tercipta dan masukkan ke variabel brand_id
+            $this->brand_id = $brand->id;
+        }
 
         // 1. PACKING JSON
         // Gabungkan inputan specs menjadi satu array
@@ -225,10 +383,15 @@ class InventoryItemManager extends Component
         $this->openModal();
     }
 
-    public function delete($id)
+    public function delete()
     {
-        InventoryItem::find($id)->delete();
-        session()->flash('message', 'Barang dihapus.');
+        // Validasi ganda untuk memastikan ID benar-benar ada sebelum dihapus
+        if ($this->deleteId) {
+            InventoryItem::findOrFail($this->deleteId)->delete();
+            
+            session()->flash('message', 'Barang berhasil dihapus.');
+            $this->closeDeleteModal(); // Tutup modal setelah berhasil
+        }
     }
 
     public function openModal() { $this->isModalOpen = true; }
@@ -240,36 +403,68 @@ class InventoryItemManager extends Component
             'itemId', 'category_id', 'brand_id', 'inventory_id', 
             'asset_code', 'serial_number', 'asset_type', 'purchase_price',
             'document_number', 'owner_unit', 'purchase_date', 'condition',
-            'spec_cpu', 'spec_ram', 'spec_storage', 'spec_gpu', 'spec_other'
+            'spec_cpu', 'spec_ram', 'spec_storage', 'spec_gpu', 'spec_other',
+            'isNewCategory', 'new_category_name', 'isNewBrand', 'new_brand_name'
         ]);
     }
 
-    // public function openImportModal()
-    // {
-    //     $this->isImportModalOpen = true;
-    // }
+    public function confirmDelete($id)
+    {
+        $item = InventoryItem::findOrFail($id); // Cari datanya dulu
+        
+        $this->deleteId = $id;
+        $this->deleteItemName = $item->item_name; // Simpan namanya untuk ditampilkan di Modal
+        $this->isDeleteModalOpen = true;
+    }
 
-    // public function closeImportModal()
-    // {
-    //     $this->isImportModalOpen = false;
-    //     $this->excelFile = null; // Reset file
-    // }
+    public function closeDeleteModal()
+    {
+        $this->isDeleteModalOpen = false;
+        $this->deleteId = null;
+    }
 
     public function importExcel()
     {
         $this->validate([
-            'excelFile' => 'required|mimes:xlsx,csv|max:2048', // Max 2MB
+            'excelFile' => 'required|mimes:xlsx,csv|max:2048',
         ]);
 
         try {
-            // Jalankan proses import
             Excel::import(new InventoryItemsImport, $this->excelFile);
             
             session()->flash('message', 'Data berhasil diimport dari Excel!');
-            $this->closeImportModal();
+            
+        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+            // 1. TANGKAP ERROR VALIDASI EXCEL (Termasuk Duplikat)
+            $failures = $e->failures();
+            
+            // Ambil error dari baris pertama yang bermasalah agar pesan tidak terlalu panjang
+            if (count($failures) > 0) {
+                $first = $failures[0];
+                $pesan = "Gagal Import! Baris Excel ke-{$first->row()}: {$first->errors()[0]}";
+                session()->flash('error', $pesan);
+            }
+
+         
         } catch (\Exception $e) {
-            // Tangkap error jika format excel salah
-            session()->flash('error', 'Gagal Import: ' . $e->getMessage());
+            // 3. TANGKAP ERROR SISTEM UMUM
+            session()->flash('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
         }
+
+        $this->closeModal();
+    }
+    
+    public function customValidationMessages()
+    {
+        return [
+            'asset_code.unique' => 'Kode Aset ini sudah terdaftar di sistem. Tidak boleh ada duplikat.',
+            'asset_code.required' => 'Kolom Kode Aset tidak boleh kosong.',
+        ];
+    }
+
+    public function resetFilters()
+    {
+        $this->reset(['filterCategory', 'filterBrand', 'filterLocation', 'filterCondition', 'search']);
+        $this->resetPage(); // Selalu reset paginasi ke halaman 1 saat filter diubah
     }
 }

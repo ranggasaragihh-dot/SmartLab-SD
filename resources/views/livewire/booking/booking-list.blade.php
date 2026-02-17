@@ -76,15 +76,31 @@
                                     $bookingData = $bookingsMap[$pc->id] ?? null;
                                     $isLocked = in_array($pc->id, $lockedInventories);
                                     
-                                    // Cek apakah ini bookingan saya
-                                    $isMine = $bookingData && ($bookingData['user_id'] == $currentUserId);
-                                    
-                                    // Ambil detail waktu (Optional, ambil dari collection relation jika perlu detail jam)
-                                    // Kita filter collection bookings yg sudah di-eager load untuk tampilan jam
-                                    $activeBookingDetail = $pc->bookings->where('status', 'booked')->first();
-                                    if(!$activeBookingDetail && $bookingData) {
-                                         $activeBookingDetail = $pc->bookings->where('status', 'active')->first();
+                                    $activeBookingDetail = $pc->bookings
+                                        ->whereIn('status', ['booked', 'active'])
+                                        ->first();
+
+                                    // 2. Deklarasi variabel default (Aman dari null)
+                                    $isMine = false;
+                                    $isStarted = false;
+                                    $isExpired = false;
+
+                                    // 3. Evaluasi HANYA dilakukan jika benar-benar ada booking valid
+                                    if ($activeBookingDetail) {
+                                        $isMine = ($activeBookingDetail->user_id == $currentUserId);
+                                        
+                                        $now = \Carbon\Carbon::now();
+                                        $startTime = \Carbon\Carbon::parse($activeBookingDetail->start_time);
+                                        $endTime = \Carbon\Carbon::parse($activeBookingDetail->end_time);
+
+                                        // Jika jam sekarang sudah melewati/sama dengan start_time, atau statusnya sudah aktif
+                                        $isStarted = $now->gte($startTime) || ($activeBookingDetail->status === 'active');
+                                        
+                                        // Safety lock: Jika karena suatu hal status masih active tapi waktu sudah lewat
+                                        $isExpired = $now->gt($endTime);
                                     }
+                                    
+                                    $isLocked = in_array($pc->id, $lockedInventories);
                                 @endphp
 
                                 <tr class="hover:bg-slate-50 transition-colors duration-200">
@@ -107,19 +123,19 @@
                                     {{-- Status Jadwal --}}
                                     <td class="px-6 py-4 align-middle text-center">
                                         {{-- JIKA ADA BOOKING (ORANG LAIN ATAU SAYA) --}}
-                                        @if($bookingData)
+                                        @if($activeBookingDetail)
                                             <div class="flex flex-col items-center">
                                                 <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-bold {{ $isMine ? 'bg-amber-100 text-amber-600 border border-amber-200' : 'bg-indigo-50 text-indigo-600 border border-indigo-100' }}">
                                                     {{ $isMine ? 'Milik Saya' : 'Terbooking' }}
                                                 </span>
                                                 
-                                                @if($activeBookingDetail)
+                                                
                                                     <span class="text-[10px] text-slate-500 mt-1 font-medium">
                                                         {{ \Carbon\Carbon::parse($activeBookingDetail->start_time)->format('H:i') }}
                                                         - 
                                                         {{ \Carbon\Carbon::parse($activeBookingDetail->end_time)->format('H:i') }}
                                                     </span>
-                                                @endif
+                                                
                                             </div>
                                         
                                         {{-- JIKA LOCKED ADMIN --}}
@@ -142,53 +158,38 @@
 
                                     {{-- Action --}}
                                     <td class="px-6 py-4 align-middle text-right">
-                                        
-                                        {{-- KONDISI 1: JIKA INI BOOKINGAN SAYA --}}
-                                        @if($isMine)
-                                            @php
-                                                // Cek waktu untuk menentukan tombol Merah (Batal) atau Hijau (Selesai)
-                                                $startTime = $activeBookingDetail ? \Carbon\Carbon::parse($activeBookingDetail->start_time) : \Carbon\Carbon::now();
-                                                $isStarted = \Carbon\Carbon::now()->gte($startTime) || ($bookingData['status'] == 'active');
-                                            @endphp
-                                            
-                                            {{-- Jika Belum Mulai: Tombol Batalkan (Merah) --}}
-                                            @if(!$isStarted)
-                                                <button wire:click="clickSeat({{ $pc->id }})"
-                                                        class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-5 py-2.5 rounded-md shadow-sm transition-transform active:scale-95 ml-auto">
-                                                    Batalkan
-                                                </button>
-                                            
-                                            {{-- Jika Sudah Mulai: Tombol Selesai (Hijau) --}}
-                                            @else
-                                                <button wire:click="clickSeat({{ $pc->id }})" 
-                                                        class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-5 py-2.5 rounded-md shadow-sm transition-transform active:scale-95 ml-auto">
+    
+                                        {{-- KONDISI 1: ADA BOOKING VALID & MILIK SAYA --}}
+                                        @if($isMine && !$isExpired)
+                                            @if($isStarted)
+                                                <button wire:click="clickSeat({{ $pc->id }})" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-5 py-2.5 rounded-md shadow-sm transition-transform active:scale-95 ml-auto">
                                                     Selesai
+                                                </button>
+                                            @else
+                                                <button wire:click="clickSeat({{ $pc->id }})" class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-5 py-2.5 rounded-md shadow-sm transition-transform active:scale-95 ml-auto">
+                                                    Batal
                                                 </button>
                                             @endif
 
-                                        {{-- KONDISI 2: LOCKED ADMIN --}}
+                                        {{-- KONDISI 2: LOCKED ADMIN (EVENT) --}}
                                         @elseif($isLocked)
                                             <button disabled class="bg-slate-100 text-slate-400 border border-slate-200 text-xs font-bold px-5 py-2.5 rounded-md cursor-not-allowed ml-auto">
                                                 Event Room
                                             </button>
 
-                                        {{-- KONDISI 3: KOSONG & SEHAT --}}
-                                        @elseif(!$bookingData && $pc->status == 'available')
-                                            <button wire:click="clickSeat({{ $pc->id }})" 
-                                                    class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-5 py-2.5 rounded-md shadow-sm transition-transform active:scale-95 ml-auto">
+                                        {{-- KONDISI 3: BENAR-BENAR KOSONG & SEHAT (TIDAK ADA BOOKING VALID) --}}
+                                        @elseif(!$activeBookingDetail && $pc->status == 'available')
+                                            <button wire:click="clickSeat({{ $pc->id }})" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-5 py-2.5 rounded-md shadow-sm transition-transform active:scale-95 ml-auto">
                                                 Booking
                                             </button>
 
-                                        {{-- KONDISI 4: BOOKING ORANG LAIN / RUSAK --}}
+                                        {{-- KONDISI 4: BOOKING ORANG LAIN ATAU RUSAK --}}
                                         @else
-                                            <button disabled class="text-slate-300 font-bold text-xs cursor-not-allowed px-2">
-                                                @if($bookingData)
-                                                    Full
-                                                @else
-                                                    {{ $pc->status == 'maintenance' ? 'MT' : 'Off' }}
-                                                @endif
+                                            <button disabled class="text-slate-300 font-bold text-xs cursor-not-allowed px-2 ml-auto">
+                                                {{ $activeBookingDetail ? 'Full' : ($pc->status == 'maintenance' ? 'MT' : 'Off') }}
                                             </button>
                                         @endif
+
                                     </td>
                                 </tr>
                                 @endforeach
@@ -199,16 +200,37 @@
                     {{-- B. LIST CARD MOBILE (Optimized) --}}
                     <div class="md:hidden bg-slate-50 border-t border-slate-100 p-4 space-y-3">
                         @foreach($inventories as $pc)
-                        @php
-                            // LOGIKA MOBILE (Sama dengan atas)
-                            $bookingData = $bookingsMap[$pc->id] ?? null;
-                            $isLocked = in_array($pc->id, $lockedInventories);
-                            $isMine = $bookingData && ($bookingData['user_id'] == $currentUserId);
-                            $activeBookingDetail = $pc->bookings->where('status', 'booked')->first();
-                             if(!$activeBookingDetail && $bookingData) {
-                                 $activeBookingDetail = $pc->bookings->where('status', 'active')->first();
-                            }
-                        @endphp
+                            @php
+                                // LOGIKA BARU: Menggunakan Map dari Backend agar Cepat
+                                $bookingData = $bookingsMap[$pc->id] ?? null;
+                                $isLocked = in_array($pc->id, $lockedInventories);
+                                
+                                $activeBookingDetail = $pc->bookings
+                                    ->whereIn('status', ['booked', 'active'])
+                                    ->first();
+
+                                // 2. Deklarasi variabel default (Aman dari null)
+                                $isMine = false;
+                                $isStarted = false;
+                                $isExpired = false;
+
+                                // 3. Evaluasi HANYA dilakukan jika benar-benar ada booking valid
+                                if ($activeBookingDetail) {
+                                    $isMine = ($activeBookingDetail->user_id == $currentUserId);
+                                        
+                                    $now = \Carbon\Carbon::now();
+                                    $startTime = \Carbon\Carbon::parse($activeBookingDetail->start_time);
+                                    $endTime = \Carbon\Carbon::parse($activeBookingDetail->end_time);
+
+                                    // Jika jam sekarang sudah melewati/sama dengan start_time, atau statusnya sudah aktif
+                                    $isStarted = $now->gte($startTime) || ($activeBookingDetail->status === 'active');
+                                        
+                                    // Safety lock: Jika karena suatu hal status masih active tapi waktu sudah lewat
+                                    $isExpired = $now->gt($endTime);
+                                }
+                                    
+                                $isLocked = in_array($pc->id, $lockedInventories);
+                            @endphp
                         
                         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex items-center justify-between gap-3 {{ ($bookingData || $pc->status != 'available') ? 'bg-slate-50' : '' }}">
                             
@@ -228,12 +250,10 @@
                                 {{-- Status Teks Mobile --}}
                                 @if($isMine)
                                     <p class="text-[10px] text-amber-600 font-bold mt-1">Milik Saya</p>
-                                @elseif($bookingData)
+                                @elseif($activeBookingDetail)
                                     <p class="text-[10px] text-indigo-600 font-bold mt-1 truncate">
                                         Booked 
-                                        @if($activeBookingDetail)
                                         s.d {{ \Carbon\Carbon::parse($activeBookingDetail->end_time)->format('H:i') }}
-                                        @endif
                                     </p>
                                 @elseif($isLocked)
                                     <p class="text-[10px] text-red-500 font-bold mt-1 uppercase">LOCKED</p>
@@ -246,12 +266,7 @@
                             
                             {{-- BAGIAN KANAN: Tombol --}}
                             <div class="shrink-0">
-                                @if($isMine)
-                                    @php
-                                        $startTime = $activeBookingDetail ? \Carbon\Carbon::parse($activeBookingDetail->start_time) : \Carbon\Carbon::now();
-                                        $isStarted = \Carbon\Carbon::now()->gte($startTime) || ($bookingData['status'] == 'active');
-                                    @endphp
-                                    
+                                @if($isMine && !$isExpired)
                                     @if(!$isStarted)
                                         <button wire:click="clickSeat({{ $pc->id }})" class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-5 py-2.5 rounded-md shadow-sm">
                                             Batal
@@ -267,14 +282,14 @@
                                         Event
                                     </button>
 
-                                @elseif(!$bookingData && $pc->status == 'available')
+                                @elseif(!$activeBookingDetail && $pc->status == 'available')
                                     <button wire:click="clickSeat({{ $pc->id }})" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-5 py-2.5 rounded-md shadow-sm">
                                         Booking
                                     </button>
 
                                 @else
                                     <button disabled class="text-slate-300 font-bold text-xs cursor-not-allowed px-2">
-                                        @if($bookingData) Full @else Off @endif
+                                        @if($activeBookingDetail) Full @else Off @endif
                                     </button>
                                 @endif
                             </div>

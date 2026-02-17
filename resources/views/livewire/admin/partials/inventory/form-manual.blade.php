@@ -21,21 +21,66 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Kategori</label>
-                        <select wire:model="category_id" class="w-full border-slate-300 rounded-lg focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-sm py-2 px-3 text-slate-700 cursor-pointer">
-                            <option value="">Pilih Kategori...</option>
-                            @foreach($categories as $cat) <option value="{{ $cat->id }}">{{ $cat->name }}</option> @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Merk</label>
-                        <select wire:model="brand_id" class="w-full border-slate-300 rounded-lg focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-sm py-2 px-3 text-slate-700 cursor-pointer">
-                            <option value="">Pilih Merk...</option>
-                            @foreach($brands as $brand) <option value="{{ $brand->id }}">{{ $brand->name }}</option> @endforeach
-                        </select>
-                    </div>
-                </div>
+    
+    {{-- BLOK 1: KATEGORI --}}
+    <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1.5">Kategori</label>
+        
+        @if(!$isNewCategory)
+            {{-- Mode Dropdown (Default) --}}
+            <select wire:model.live="category_id" class="w-full border-slate-300 rounded-lg focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-sm py-2 px-3 text-slate-700 cursor-pointer transition-colors">
+                <option value="">Pilih Kategori...</option>
+                @foreach($categories as $cat) 
+                    <option value="{{ $cat->id }}">{{ $cat->name }}</option> 
+                @endforeach
+                <option disabled>──────────</option>
+                <option value="NEW" class="font-bold text-slate-900 bg-slate-100">+ Tambah Kategori Baru...</option>
+            </select>
+        @else
+            {{-- Mode Input Teks Baru --}}
+            <div class="relative flex items-center">
+                <input type="text" wire:model="new_category_name" placeholder="Ketik nama kategori baru..." class="w-full border-slate-900 ring-1 ring-slate-900 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900 text-sm py-2 pl-3 pr-10 text-slate-900 bg-slate-50 transition-all">
+                <button wire:click="cancelNewCategory" type="button" class="absolute right-2 text-slate-400 hover:text-red-500 p-1 transition-colors" title="Batal tambah kategori">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+        @endif
+        
+        {{-- Validasi Error --}}
+        @error('category_id') <span class="text-red-500 text-[10px] font-bold mt-1 block">{{ $message }}</span> @enderror
+        @error('new_category_name') <span class="text-red-500 text-[10px] font-bold mt-1 block">{{ $message }}</span> @enderror
+    </div>
+
+    {{-- BLOK 2: MERK --}}
+    <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1.5">Merk</label>
+        
+        @if(!$isNewBrand)
+            {{-- Mode Dropdown (Default) --}}
+            <select wire:model.live="brand_id" class="w-full border-slate-300 rounded-lg focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-sm py-2 px-3 text-slate-700 cursor-pointer transition-colors">
+                <option value="">Pilih Merk...</option>
+                @foreach($brands as $brand) 
+                    <option value="{{ $brand->id }}">{{ $brand->name }}</option> 
+                @endforeach
+                <option disabled>──────────</option>
+                <option value="NEW" class="font-bold text-slate-900 bg-slate-100">+ Tambah Merk Baru...</option>
+            </select>
+        @else
+            {{-- Mode Input Teks Baru --}}
+            <div class="relative flex items-center">
+                <input type="text" wire:model="new_brand_name" placeholder="Ketik nama merk baru..." class="w-full border-slate-900 ring-1 ring-slate-900 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900 text-sm py-2 pl-3 pr-10 text-slate-900 bg-slate-50 transition-all">
+                <button wire:click="cancelNewBrand" type="button" class="absolute right-2 text-slate-400 hover:text-red-500 p-1 transition-colors" title="Batal tambah merk">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+        @endif
+
+        {{-- Validasi Error --}}
+        @error('brand_id') <span class="text-red-500 text-[10px] font-bold mt-1 block">{{ $message }}</span> @enderror
+        @error('new_brand_name') <span class="text-red-500 text-[10px] font-bold mt-1 block">{{ $message }}</span> @enderror
+    </div>
+
+</div>
 
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1.5">Lokasi Penempatan</label>

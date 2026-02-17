@@ -9,4 +9,9 @@ class InventoryCategory extends Model
     protected $fillable = [
         'name', 'description'
     ];
+    
+    public function brands()
+    {
+        return $this->hasMany(InventoryBrand::class, 'category_id');
+    }
 }

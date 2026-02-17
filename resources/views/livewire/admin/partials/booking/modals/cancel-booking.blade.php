@@ -33,6 +33,23 @@
                 </div>
             @endif
 
+            <div>
+                    <label for="cancelReason" class="block text-sm font-medium text-gray-700">
+                        Alasan Pembatalan <span class="text-red-500">*</span>
+                    </label>
+                    <textarea 
+                        wire:model="cancelReason" 
+                        id="cancelReason" 
+                        rows="3" 
+                        class="shadow-sm focus:ring-red-500 focus:border-red-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md p-2"
+                        placeholder="Contoh: Mahasiswa tidak hadir / Lab sedang maintenance..."
+                    ></textarea>
+                    
+                    @error('cancelReason') 
+                        <span class="text-red-600 text-xs mt-1 block">{{ $message }}</span> 
+                    @enderror
+                </div>
+
             <p class="text-xs text-slate-500 leading-relaxed text-center px-2">
                 Tindakan ini akan menghapus sesi pengguna secara paksa. Status unit akan segera berubah menjadi <span class="text-red-600 font-bold italic">Cancelled</span>.
             </p>

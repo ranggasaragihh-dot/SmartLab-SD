@@ -18,7 +18,8 @@ class Booking extends Model
         'end_time',
         'check_in_time',
         'status',
-        'purpose'
+        'purpose',
+        'cancel_reason'
     ];
 
     protected $casts = [

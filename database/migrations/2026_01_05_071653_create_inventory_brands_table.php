@@ -13,8 +13,10 @@ return new class extends Migration
     {
         Schema::create('inventory_brands', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique(); // Contoh: "Samsung", "Logitech"
+            $table->foreignId('category_id')->constrained('inventory_categories')->onDelete('cascade');
+            $table->string('name'); // Contoh: "Samsung", "Logitech"
             $table->timestamps();
+            $table->unique(['name', 'category_id']);
         });
     }
 

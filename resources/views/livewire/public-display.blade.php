@@ -165,7 +165,7 @@
                                 
                                 @foreach($cluster->inventory as $unit)
                                     @php
-                                        $booking = $unit->bookings->first();
+                                        $booking = $unit->bookings->filter(function($b) { return in_array($b->status, ['booked', 'active']); })->first();
                                         if ($unit->status == 'broken') {
                                             $bg = 'bg-red-900/20 border-red-800 text-red-500'; $statusText = 'OFF'; $isAvailable = false;
                                         } elseif ($unit->status == 'maintenance') {
@@ -181,7 +181,7 @@
 
                                     <div class="{{ $bg }} border-2 rounded-xl h-full w-full flex flex-col items-center justify-center relative transition-all duration-500 group">
                                         <span class="{{ $fontSize }} font-bold tracking-tight leading-none mb-1 group-hover:scale-110 transition-transform">
-                                            {{ preg_replace('/[^0-9]/', '', $unit->name) ?: $unit->name }}
+                                            {{ $unit->name }}
                                         </span>
                                         <span class="text-[10px] uppercase font-bold tracking-wider opacity-90 bg-black/20 px-2 rounded-full">
                                             {{ $statusText }}

@@ -51,11 +51,8 @@
                         <div class="bg-white relative flex-1 overflow-hidden flex flex-col min-h-[200px]">
                             
                             {{-- Loading Overlay --}}
-                            <div wire:loading wire:target="activeTab, store, update, importExcel" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/80 backdrop-blur-[2px]">
-                                <div class="relative flex items-center justify-center">
-                                    <div class="w-8 h-8 border-4 border-slate-200 rounded-full"></div>
-                                    <div class="absolute w-8 h-8 border-4 border-slate-900 rounded-full border-t-transparent animate-spin"></div>
-                                </div>
+                            <div wire:loading wire:target="activeTab, store, update, importExcel" 
+                                class="absolute inset-0 z-50 bg-white/40 backdrop-blur-[2px] transition-all duration-200">
                             </div>
 
                             {{-- SCROLLABLE BODY --}}

@@ -13,17 +13,9 @@
         {{-- Kita jadikan satu container flex agar rapi sebaris --}}
         <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto items-center justify-end">
             
-            {{-- A. SLOT FILTER (Ditempatkan Paling Kiri dalam Grup Kanan) --}}
-            @if(isset($filters))
-                <div class="w-full sm:w-auto min-w-[160px]"> 
-                    {{-- Render HTML apapun yang dikirim dari Parent View --}}
-                    {!! $filters !!}
-                </div>
-            @endif
-            
-            {{-- B. SEARCH BAR (Tengah) --}}
+            {{-- SEARCH BAR --}}
             @if(isset($searchable) && $searchable)
-                <div class="relative w-full sm:w-64">
+                <div class="relative w-full sm:w-64 shrink-0">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -35,6 +27,14 @@
                         class="w-full pl-9 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all" 
                         placeholder="{{ $searchPlaceholder ?? 'Cari data...' }}"
                     >
+                </div>
+            @endif
+            
+            {{-- FILTER --}}
+            @if(isset($filters))
+                <div class="w-full sm:w-auto shrink-0"> 
+                    {{-- Render HTML apapun yang dikirim dari Parent View --}}
+                    {!! $filters !!}
                 </div>
             @endif
 

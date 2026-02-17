@@ -44,11 +44,8 @@
 
                     {{-- CONTENT AREA --}}
                     <div class="px-6 pb-6 pt-4 bg-white min-h-[300px] relative">
-                        <div wire:loading wire:target="activeTab, store, update, import" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/80 backdrop-blur-[2px] rounded-b-2xl">
-                            <div class="relative flex items-center justify-center">
-                                <div class="w-10 h-10 border-4 border-slate-200 rounded-full"></div>
-                                <div class="absolute w-10 h-10 border-4 border-amber-500 rounded-full border-t-transparent animate-spin"></div>
-                            </div>
+                        <div wire:loading wire:target="activeTab, store, update, import" 
+                            class="absolute inset-0 z-50 bg-white/40 backdrop-blur-sm transition-all duration-200 rounded-b-2xl">
                         </div>
 
                         {{-- INCLUDE FILES --}}

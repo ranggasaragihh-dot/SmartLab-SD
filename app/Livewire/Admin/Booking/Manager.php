@@ -18,6 +18,7 @@ class Manager extends Component
     // ==========================================
     public $clusterId;
     public $cluster;
+    public $cancelReason = '';
     
     // Filter
     public $dateFilter;
@@ -245,14 +246,22 @@ class Manager extends Component
         $this->showCancelModal = true;     
         $this->showCreateModal = false;
         $this->showClusterBookingModal = false;
+        $this->cancelReason = '';
     }
 
     public function confirmCancel()
     {
+        $this->validate([
+            'cancelReason' => 'required|string|min:5',
+        ], [
+            'cancelReason.required' => 'Alasan pembatalan wajib diisi.',
+            'cancelReason.min' => 'Alasan harus jelas (minimal 5 karakter).',
+        ]);
+
         $booking = Booking::find($this->selectedBookingId);
         
         if ($booking) {
-            $booking->update(['status' => 'cancelled']);
+            $booking->update(['status' => 'cancelled', 'cancel_reason' => $this->cancelReason,]);
             session()->flash('message', 'Booking dibatalkan.');
         }
 
@@ -421,7 +430,7 @@ class Manager extends Component
         // (Untuk ditampilkan di alert admin)
         $roomBookings = Booking::where('cluster_id', $this->clusterId)
             ->whereNull('inventory_id') // Ciri booking ruangan
-            ->where('status', '!=', 'cancelled')
+            ->whereIn('status', ['booked', 'active'])
             ->whereDate('start_time', $this->dateFilter)
             ->with('user')
             ->get();
@@ -434,7 +443,7 @@ class Manager extends Component
 
             // Cari booking aktif untuk PC ini
             $pc->activeBooking = Booking::where('inventory_id', $pc->id)
-                ->where('status', '!=', 'cancelled')
+                ->whereIn('status', ['booked', 'active'])
                 ->where('start_time', '<=', $checkTime)
                 ->where('end_time', '>', $checkTime)
                 ->first();
