@@ -13,50 +13,48 @@ class PublicDisplay extends Component
     public function render()
     {
         $now = Carbon::now();
-        // 1. Ambil Data Cluster beserta Inventory & Booking Aktif
-        $clusters = Cluster::with(['inventories' => function($q) use ($now) {
-            $q->with(['bookings' => function($b) use ($now) {
-                // PERBAIKAN: Gunakan whereIn untuk multiple status
-                $b->whereIn('status', ['booked', 'active'])
+
+        // 1. Ambil Data Cluster
+        $clusters = Cluster::with([
+            'inventories' => function($q) use ($now) {
+                $q->with(['bookings' => function($b) use ($now) {
+                    $b->whereIn('status', ['booked', 'active'])
+                      ->where('start_time', '<=', $now)
+                      ->where('end_time', '>', $now);
+                }]);
+            },
+            'bookings' => function($b) use ($now) {
+                $b->whereNull('inventory_id')
+                  ->whereIn('status', ['booked', 'active'])
                   ->where('start_time', '<=', $now)
                   ->where('end_time', '>', $now);
-            }]);
-        }])->get();
+            }
+        ])->get();
 
-        // 2. Logic Tambahan (Sorting & Event Check)
-        foreach($clusters as $cluster) {
-            
-            // A. PERBAIKAN URUTAN (Natural Sort)
-            // Ini solusi agar PC-1, PC-2, PC-10 urut benar.
-            // Kita urutkan collection inventory menggunakan PHP, bukan SQL.
+        // 2. Logic Tambahan & Global Event Check
+        $globalEvent = null;
+
+        $clusters->map(function ($cluster) use (&$globalEvent) {
+            // A. Sort PC
             $sortedInventory = $cluster->inventories->sortBy('name', SORT_NATURAL)->values();
+            $cluster->setRelation('inventory', $sortedInventory);
 
-            // B. DETEKSI EVENT (Mode 1 Ruangan)
-            $activeEvent = null;
-            
-            foreach($sortedInventory as $unit) {
-                // Ambil booking pertama (karena sudah difilter di query atas, ini pasti booking aktif)
-                $booking = $unit->bookings->first();
-                
-                // Cek apakah tipe bookingnya 'event' (bukan booking satuan mahasiswa)
-                if ($booking && (is_null($booking->inventory_id))) {
-                    // Logic ini bisa Anda kustomisasi: jika salah satu unit aktif, 
-                    // apakah dianggap 1 cluster sedang dipakai?
-                    $activeEvent = $booking;
-                    break;
-                }
+            // B. Cek Booking Ruangan per Cluster
+            $cluster->active_room_booking = $cluster->bookings->first();
+
+            // C. LOGIKA PENGUNCIAN GLOBAL
+            // Jika belum ada global event yg terdeteksi, dan cluster ini punya booking ruangan,
+            // Maka jadikan ini sebagai Global Event (Kunci Semua Layar)
+            if (!$globalEvent && $cluster->active_room_booking) {
+                $globalEvent = $cluster->active_room_booking;
             }
 
-            // C. SIMPAN KEMBALI DATA YANG SUDAH DIOLAH
-            // Timpa relasi 'inventory' dengan yang sudah diurutkan agar di View rapi
-            $cluster->setRelation('inventory', $sortedInventory);
-            
-            // Simpan info event ke properti baru
-            $cluster->currentEvent = $activeEvent;
-        }
+            return $cluster;
+        });
 
         return view('livewire.public-display', [
-            'clusters' => $clusters
+            'clusters' => $clusters,
+            'globalEvent' => $globalEvent // Kirim variabel ini ke View
         ]);
     }
 }

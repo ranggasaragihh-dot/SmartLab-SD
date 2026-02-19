@@ -48,7 +48,13 @@
 
                     {{-- Time Picker --}}
                     <div class="relative group">
-                        <input type="time" wire:model.live="timeFilter" class="pl-3 pr-2 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-1 focus:ring-slate-900 outline-none shadow-sm transition hover:border-slate-300 font-medium w-auto">
+                        <select wire:model.live="sessionFilter" 
+                                class="pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-1 focus:ring-slate-900 outline-none shadow-sm transition hover:border-slate-300 font-medium">
+                            <option value="">🕒 Jam Sekarang</option>
+                            <option value="1">Sesi 1 (08:00 - 10:00)</option>
+                            <option value="2">Sesi 2 (10:00 - 12:00)</option>
+                            <option value="3">Sesi 3 (13:00 - 15:00)</option>
+                        </select>
                     </div>
 
                     {{-- Divider --}}

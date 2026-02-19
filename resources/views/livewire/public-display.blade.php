@@ -1,11 +1,14 @@
 <div 
+    {{-- Jika ada Global Event, matikan auto-slide (karena cuma 1 tampilan statis) --}}
     x-data="{ 
         activeSlide: 0, 
         total: {{ $clusters->count() }},
         init() {
-            setInterval(() => {
-                this.activeSlide = (this.activeSlide + 1) % this.total;
-            }, 15000); 
+            @if(!$globalEvent) 
+                setInterval(() => {
+                    this.activeSlide = (this.activeSlide + 1) % this.total;
+                }, 15000); 
+            @endif
         }
     }" 
     class="h-screen w-full flex flex-col relative bg-slate-950 text-white font-sans overflow-hidden"
@@ -26,146 +29,161 @@
         </div>
     </div>
 
-    {{-- CONTENT CAROUSEL --}}
+    {{-- CONTENT AREA --}}
     <div class="flex-1 relative w-full overflow-hidden">
         
-        @foreach($clusters as $index => $cluster)
+        {{-- 🔴 KONDISI 1: JIKA ADA GLOBAL EVENT (SATU LAB DI-BOOKING) --}}
+        @if($globalEvent)
             
-            <div x-show="activeSlide === {{ $index }}"
-                 x-transition:enter="transition ease-out duration-1000"
-                 x-transition:enter-start="opacity-0 scale-95"
-                 x-transition:enter-end="opacity-100 scale-100"
-                 x-transition:leave="transition ease-in duration-300"
-                 x-transition:leave-start="opacity-100 scale-100"
-                 x-transition:leave-end="opacity-0 scale-95"
-                 class="absolute inset-0 flex w-full h-full" 
-            > 
-                {{-- KIRI: INFO & PETA (45%) --}}
-                <div class="w-[45%] flex flex-col h-full border-r border-slate-800 bg-slate-900 relative z-10">
-                    <div class="p-6 bg-slate-800 shadow-xl z-20 shrink-0">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="max-w-[75%]"> 
-            
-                                {{-- Nama Cluster --}}
-                                <h2 class="text-3xl font-extrabold text-white leading-none tracking-tight mb-3">
-                                    {{ $cluster->name }}
-                                </h2>
-
-                                {{-- SMART TAGS (Kegunaan & Spek) --}}
-                                @if($cluster->description)
-                                    <div class="flex flex-wrap gap-2">
-                                        @php
-                                            // Memecah text berdasarkan koma
-                                            $tags = explode(',', $cluster->description);
-                                        @endphp
-
-                                        @foreach($tags as $tag)
-                                            {{-- Style Tag: background agak terang, text normal (tidak uppercase) --}}
-                                            <span class="inline-flex items-center px-2.5 py-1 rounded-md bg-slate-700/80 border border-slate-600 text-slate-200 text-xs font-medium shadow-sm transition-transform hover:scale-105 cursor-default">
-                                                {{-- Dot Accent --}}
-                                                <span class="w-1.5 h-1.5 rounded-full bg-blue-400 mr-2 opacity-75"></span>
-                                                {{ trim($tag) }}
-                                            </span>
-                                        @endforeach
-                                    </div>
-                                @else
-                                    {{-- Fallback jika kosong --}}
-                                    <div class="text-slate-500 text-sm italic">
-                                        General Purpose Lab
-                                    </div>
-                                @endif
-
-                            </div>
-                            <div class="text-right">
-                                <span class="text-4xl font-bold text-blue-500">{{ $cluster->inventory->count() }}</span>
-                                <div class="text-[10px] text-slate-400 uppercase">Total Unit</div>
-                            </div>
-                        </div>
-
-                        @php
-                            $total = $cluster->inventory->count();
-                            $booked = $cluster->inventory->filter(fn($i) => $i->bookings->isNotEmpty())->count();
-                            $broken = $cluster->inventory->whereIn('status', ['broken', 'maintenance'])->count();
-                            $available = $total - $booked - $broken;
-                        @endphp
-                        
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="bg-emerald-900/30 border border-emerald-500/30 px-4 py-3 rounded-lg flex items-center justify-between">
-                                <div>
-                                    <div class="text-2xl font-bold text-white leading-none">{{ $available }}</div>
-                                    <div class="text-[10px] text-emerald-400 font-bold uppercase mt-0.5">Available</div>
-                                </div>
-                                <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                            </div>
-                            <div class="bg-blue-900/30 border border-blue-500/30 px-4 py-3 rounded-lg flex items-center justify-between">
-                                <div>
-                                    <div class="text-2xl font-bold text-white leading-none">{{ $booked }}</div>
-                                    <div class="text-[10px] text-blue-400 font-bold uppercase mt-0.5">Terisi</div>
-                                </div>
-                                <div class="w-2 h-2 rounded-full bg-blue-500"></div>
-                            </div>
-                        </div>
+            <div class="absolute inset-0 w-full h-full bg-slate-900 flex flex-col items-center justify-center z-50">
+                {{-- Background Pattern Animasi --}}
+                <div class="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] animate-pulse"></div>
+                
+                {{-- Container Utama --}}
+                <div class="relative z-10 max-w-4xl w-full text-center space-y-8 px-4">
+                    
+                    {{-- Status Badge --}}
+                    <div class="inline-block">
+                        <span class="px-6 py-2 rounded-full bg-red-600/20 border border-red-500 text-red-400 font-bold tracking-[0.2em] animate-pulse">
+                            ⛔ DO NOT ENTER
+                        </span>
                     </div>
 
-                    <div class="flex-1 bg-slate-800/50 relative overflow-hidden group flex items-center justify-center p-4">
-                        @if($cluster->denah_url)
-                            <img src="{{ $cluster->denah_url }}" class="w-full h-full object-contain transition-transform duration-700 hover:scale-105">
-                        @else
-                            <div class="text-slate-600 flex flex-col items-center opacity-50">
-                                <svg class="w-32 h-32 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="0.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0121 18.382V7.618a1 1 0 01-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
-                                <span class="text-lg font-light tracking-widest">MAP AREA</span>
+                    {{-- Judul Besar --}}
+                    <div>
+                        <h1 class="text-6xl md:text-8xl font-black text-white mb-2 tracking-tight drop-shadow-2xl">
+                            SEDANG DIGUNAKAN
+                        </h1>
+                        <p class="text-2xl text-slate-400 font-light tracking-widest uppercase">
+                            SELURUH AREA LABORATORIUM
+                        </p>
+                    </div>
+
+                    {{-- Detail Event Box --}}
+                    <div class="bg-slate-800/50 backdrop-blur-md border border-slate-700 rounded-3xl p-10 shadow-2xl mx-auto transform transition hover:scale-105 duration-500">
+                        
+                        <h2 class="text-4xl font-bold text-blue-400 mb-6 uppercase">
+                            {{ $globalEvent->purpose ?? 'KEGIATAN AKADEMIK' }}
+                        </h2>
+
+                        <div class="flex flex-col md:flex-row items-center justify-center gap-8 text-xl">
+                            
+                            {{-- Waktu --}}
+                            <div class="flex items-center gap-3 bg-slate-900/80 px-6 py-3 rounded-xl border border-slate-700">
+                                <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span class="font-mono text-white">
+                                    {{ \Carbon\Carbon::parse($globalEvent->start_time)->format('H:i') }}
+                                    - 
+                                    {{ \Carbon\Carbon::parse($globalEvent->end_time)->format('H:i') }}
+                                </span>
                             </div>
-                        @endif
-                        <!-- <div class="absolute bottom-4 left-4 flex gap-2">
-                             <div class="bg-black/60 px-2 py-1 rounded text-[10px] text-white backdrop-blur-sm border border-white/10">PINTU MASUK 🚪</div>
-                        </div> -->
+
+                            {{-- Peminjam --}}
+                            <div class="flex items-center gap-3 bg-slate-900/80 px-6 py-3 rounded-xl border border-slate-700">
+                                <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                <span class="font-bold text-white">
+                                    {{ $globalEvent->user->name ?? 'Fakultas / Prodi' }}
+                                </span>
+                            </div>
+
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                {{-- KANAN: GRID DINAMIS (55%) --}}
-                <div class="w-[55%] h-full p-6 bg-slate-950">
-                    
-                    @if($cluster->currentEvent)
-                        {{-- MODE EVENT --}}
-                        <div class="w-full h-full bg-indigo-900/80 rounded-3xl border-2 border-indigo-500 flex flex-col items-center justify-center text-center p-12 relative overflow-hidden shadow-2xl animate-pulse">
-                            <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')]"></div>
-                            <h2 class="text-5xl font-bold text-white mb-4 drop-shadow-lg">SEDANG DIGUNAKAN</h2>
-                            <h3 class="text-3xl font-bold text-indigo-100 uppercase tracking-wide mb-6">{{ $cluster->currentEvent->description }}</h3>
-                            <div class="flex items-center gap-4 text-2xl text-indigo-200">
-                                <span class="font-mono bg-black/30 px-3 py-1 rounded">{{ \Carbon\Carbon::parse($cluster->currentEvent->start_time)->format('H:i') }}</span>
-                                <span>-</span>
-                                <span class="font-mono bg-black/30 px-3 py-1 rounded">{{ \Carbon\Carbon::parse($cluster->currentEvent->end_time)->format('H:i') }}</span>
+        @else
+        {{-- 🟢 KONDISI 2: NORMAL CAROUSEL (LOOPING SEPERTI BIASA) --}}
+        
+            @foreach($clusters as $index => $cluster)
+                <div x-show="activeSlide === {{ $index }}"
+                     x-transition:enter="transition ease-out duration-1000"
+                     x-transition:enter-start="opacity-0 scale-95"
+                     x-transition:enter-end="opacity-100 scale-100"
+                     x-transition:leave="transition ease-in duration-300"
+                     x-transition:leave-start="opacity-100 scale-100"
+                     x-transition:leave-end="opacity-0 scale-95"
+                     class="absolute inset-0 flex w-full h-full" 
+                > 
+                    {{-- KIRI: INFO & PETA (45%) --}}
+                    <div class="w-[45%] flex flex-col h-full border-r border-slate-800 bg-slate-900 relative z-10">
+                        <div class="p-6 bg-slate-800 shadow-xl z-20 shrink-0">
+                            {{-- ... (Header Info Cluster Tetap Sama) ... --}}
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="max-w-[75%]"> 
+                                    <h2 class="text-3xl font-extrabold text-white leading-none tracking-tight mb-3">{{ $cluster->name }}</h2>
+                                    @if($cluster->description)
+                                        <div class="flex flex-wrap gap-2">
+                                            @foreach(explode(',', $cluster->description) as $tag)
+                                                <span class="inline-flex items-center px-2.5 py-1 rounded-md bg-slate-700/80 border border-slate-600 text-slate-200 text-xs font-medium shadow-sm">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-blue-400 mr-2 opacity-75"></span>{{ trim($tag) }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-4xl font-bold text-blue-500">{{ $cluster->inventory->count() }}</span>
+                                    <div class="text-[10px] text-slate-400 uppercase">Total Unit</div>
+                                </div>
+                            </div>
+
+                            {{-- Statistik Available/Booked --}}
+                            @php
+                                $total = $cluster->inventory->count();
+                                $booked = $cluster->inventory->filter(fn($i) => $i->bookings->isNotEmpty())->count();
+                                $broken = $cluster->inventory->whereIn('status', ['broken', 'maintenance'])->count();
+                                $available = $total - $booked - $broken;
+                            @endphp
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-emerald-900/30 border border-emerald-500/30 px-4 py-3 rounded-lg flex items-center justify-between">
+                                    <div>
+                                        <div class="text-2xl font-bold text-white leading-none">{{ $available }}</div>
+                                        <div class="text-[10px] text-emerald-400 font-bold uppercase mt-0.5">Available</div>
+                                    </div>
+                                    <div class="w-2 h-2 rounded-full bg-emerald-500 {{ $available > 0 ? 'animate-pulse' : '' }}"></div>
+                                </div>
+                                <div class="bg-blue-900/30 border border-blue-500/30 px-4 py-3 rounded-lg flex items-center justify-between">
+                                    <div>
+                                        <div class="text-2xl font-bold text-white leading-none">{{ $booked }}</div>
+                                        <div class="text-[10px] text-blue-400 font-bold uppercase mt-0.5">Terisi</div>
+                                    </div>
+                                    <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                                </div>
                             </div>
                         </div>
-                    @else
-                        {{-- MODE NORMAL --}}
-                        @php
+
+                        {{-- Denah --}}
+                        <div class="flex-1 bg-slate-800/50 relative overflow-hidden group flex items-center justify-center p-4">
+                            @if($cluster->denah_url)
+                                <img src="{{ $cluster->denah_url }}" class="w-full h-full object-contain transition-transform duration-700 hover:scale-105">
+                            @else
+                                <div class="text-slate-600 flex flex-col items-center opacity-50">
+                                    <svg class="w-32 h-32 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="0.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0121 18.382V7.618a1 1 0 01-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+                                    <span class="text-lg font-light tracking-widest">MAP AREA</span>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- KANAN: GRID PC (55%) --}}
+                    <div class="w-[55%] h-full p-6 bg-slate-950">
+                         @php
                             $count = $cluster->inventory->count();
                             $gridCols = 'grid-cols-4'; $cols = 4; $fontSize = 'text-2xl';
-
                             if ($count > 0) {
-                                if ($count <= 6) {
-                                    $cols = 2; $gridCols = 'grid-cols-2'; $fontSize = 'text-6xl';
-                                } elseif ($count <= 12) {
-                                    $cols = 4; $gridCols = 'grid-cols-4'; $fontSize = 'text-5xl';
-                                } elseif ($count <= 20) {
-                                    $cols = 5; $gridCols = 'grid-cols-5'; $fontSize = 'text-3xl';
-                                } else {
-                                    $cols = 8; $gridCols = 'grid-cols-6 md:grid-cols-8'; $fontSize = 'text-xl';
-                                }
+                                if ($count <= 6) { $cols = 2; $gridCols = 'grid-cols-2'; $fontSize = 'text-6xl'; } 
+                                elseif ($count <= 12) { $cols = 4; $gridCols = 'grid-cols-4'; $fontSize = 'text-5xl'; } 
+                                elseif ($count <= 20) { $cols = 5; $gridCols = 'grid-cols-5'; $fontSize = 'text-3xl'; } 
+                                else { $cols = 8; $gridCols = 'grid-cols-6 md:grid-cols-8'; $fontSize = 'text-xl'; }
                             }
-                            
                             $rowCount = max(1, (int) ceil($count / $cols));
                         @endphp
 
-                        {{-- CONTAINER GRID (FIX CSS VARIABLE) --}}
                         <div class="h-full w-full pr-2">
-                            <div class="grid {{ $gridCols }} gap-4 h-full w-full"
-                                 style="--total-rows: {{ $rowCount }}; grid-template-rows: repeat(var(--total-rows), minmax(0, 1fr));">
-                                
+                            <div class="grid {{ $gridCols }} gap-4 h-full w-full" style="--total-rows: {{ $rowCount }}; grid-template-rows: repeat(var(--total-rows), minmax(0, 1fr));">
                                 @foreach($cluster->inventory as $unit)
                                     @php
-                                        $booking = $unit->bookings->filter(function($b) { return in_array($b->status, ['booked', 'active']); })->first();
+                                        $booking = $unit->bookings->first();
                                         if ($unit->status == 'broken') {
                                             $bg = 'bg-red-900/20 border-red-800 text-red-500'; $statusText = 'OFF'; $isAvailable = false;
                                         } elseif ($unit->status == 'maintenance') {
@@ -178,7 +196,6 @@
                                             $bg = 'bg-emerald-600 shadow-lg shadow-emerald-900/50 border-emerald-500 text-white'; $statusText = 'READY'; $isAvailable = true;
                                         }
                                     @endphp
-
                                     <div class="{{ $bg }} border-2 rounded-xl h-full w-full flex flex-col items-center justify-center relative transition-all duration-500 group">
                                         <span class="{{ $fontSize }} font-bold tracking-tight leading-none mb-1 group-hover:scale-110 transition-transform">
                                             {{ $unit->name }}
@@ -193,10 +210,11 @@
                                 @endforeach
                             </div>
                         </div>
-                    @endif
+                    </div>
                 </div>
-            </div>
-        @endforeach
+            @endforeach
+
+        @endif {{-- END IF GLOBAL EVENT --}}
     </div>
 
     {{-- FOOTER --}}

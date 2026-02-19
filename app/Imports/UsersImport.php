@@ -53,7 +53,7 @@ class UsersImport implements OnEachRow, WithHeadingRow, WithValidation
             [
                 'name'          => $data['nama_lengkap'],
                 'nomor_induk'   => $data['nomor_induk'],
-                'password'      => Hash::make('12345678'), // Password Default
+                'password'      => Hash::make((string) $data['nomor_induk']), // Password Default
                 'ta'            => $statusTA,
             ]
         );

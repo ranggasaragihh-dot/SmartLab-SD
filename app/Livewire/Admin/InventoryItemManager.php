@@ -15,6 +15,7 @@ use Livewire\Attributes\Layout;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Http;
 use Livewire\Attributes\Computed;
+use Illuminate\Support\Facades\DB;
 
 #[Layout('layouts.admin')]
 class InventoryItemManager extends Component
@@ -55,8 +56,12 @@ class InventoryItemManager extends Component
 
     public $activeTab = 'manual'; // Default tab adalah 'manual'
 
+    public $quantity = 1; // Default 1
+    public $asset_codes = [''];
+
     // --- VARIABEL FORM (Mapping Kolom Database) ---
     public $category_id, $brand_id, $inventory_id;
+    public $item_name;
     public $asset_code, $serial_number, $asset_type;
     public $purchase_price, $document_number, $owner_unit;
     public $purchase_date, $condition = 'good';
@@ -92,20 +97,36 @@ class InventoryItemManager extends Component
         $this->resetPage();
     }
 
+    public function updatedQuantity($value)
+    {
+        // Validasi minimal 1
+        if ($value < 1) {
+            $this->quantity = 1;
+        }
+
+        // Resize array asset_codes sesuai quantity
+        // array_pad memastikan inputan yang sudah diketik tidak hilang saat quantity ditambah
+        $this->asset_codes = array_pad(array_slice($this->asset_codes, 0, $this->quantity), $this->quantity, '');
+    }
+
     // --- RULES VALIDASI ---
     protected function rules()
     {
         return [
+            'quantity' => 'required|integer|min:1',
             // Validasi Dinamis Kategori
             'category_id'       => $this->isNewCategory ? 'nullable' : 'required',
             'new_category_name' => $this->isNewCategory ? 'required|string|max:255|unique:inventory_categories,name' : 'nullable',
             
             // Validasi Dinamis Merk
+            'item_name'         => 'required|string|max:255',
             'brand_id'          => $this->isNewBrand ? 'nullable' : 'required',
             'new_brand_name'    => $this->isNewBrand ? 'required|string|max:255|unique:inventory_brands,name' : 'nullable',
             'inventory_id'      => 'nullable|exists:inventory,id', // Boleh null (Gudang)
-            'asset_code'        => 'required|unique:inventory_items,asset_code,' . $this->itemId,
+            'asset_code.*'      => 'required|unique:inventory_items,asset_code,' . $this->itemId,
             'serial_number'     => 'nullable',
+            'document_number'   => 'nullable|string|max:255', 
+            'owner_unit'        => 'nullable|string|max:255',
             'purchase_price'    => 'nullable|numeric',
             'condition'         => 'required|in:good,maintenance,broken',
             // Specs opsional
@@ -303,51 +324,64 @@ class InventoryItemManager extends Component
 
         // 1. EKSEKUSI PEMBUATAN KATEGORI BARU
         if ($this->isNewCategory && !empty($this->new_category_name)) {
-            // Buat kategori di database
             $category = InventoryCategory::create([
                 'name' => $this->new_category_name
             ]);
-            // Ambil ID yang baru tercipta dan masukkan ke variabel category_id
             $this->category_id = $category->id;
         }
 
         // 2. EKSEKUSI PEMBUATAN MERK BARU
         if ($this->isNewBrand && !empty($this->new_brand_name)) {
-            // Buat merk di database
             $brand = InventoryBrand::create([
                 'name' => $this->new_brand_name,
                 'category_id' => $this->category_id
             ]);
-            // Ambil ID yang baru tercipta dan masukkan ke variabel brand_id
             $this->brand_id = $brand->id;
         }
 
-        // 1. PACKING JSON
-        // Gabungkan inputan specs menjadi satu array
+        // 3. PACKING JSON
         $specsArray = [
-            'cpu' => $this->spec_cpu,
-            'ram' => $this->spec_ram,
+            'cpu'     => $this->spec_cpu,
+            'ram'     => $this->spec_ram,
             'storage' => $this->spec_storage,
-            'gpu' => $this->spec_gpu,
-            'other' => $this->spec_other,
+            'gpu'     => $this->spec_gpu,
+            'other'   => $this->spec_other,
         ];
 
-        // 2. SIMPAN KE DB
-        InventoryItem::updateOrCreate(['id' => $this->itemId], [
-            'category_id' => $this->category_id,
-            'brand_id'    => $this->brand_id,
-            'inventory_id'=> $this->inventory_id ?: null, // Handle string kosong jadi null
-            'asset_code'  => $this->asset_code,
-            'serial_number'=> $this->serial_number,
-            'asset_type'  => $this->asset_type,
-            'purchase_price' => $this->purchase_price,
-            'document_number'=> $this->document_number,
-            'owner_unit'  => $this->owner_unit,
-            'purchase_date'=> $this->purchase_date,
-            'condition'   => $this->condition,
-            'specifications' => $specsArray, // Simpan sebagai Array (Laravel otomatis convert ke JSON)
-        ]);
+        // 4. EKSEKUSI PENYIMPANAN DATABASE (TRANSACTION)
+        DB::transaction(function () use ($specsArray) {
+            
+            // Loop melalui array asset_codes (hasil input quantity > 1)
+            foreach ($this->asset_codes as $code) {
+                
+                // Skip jika kode kosong
+                if (empty($code)) continue;
 
+                InventoryItem::updateOrCreate(
+                    // KUNCI PENCARIAN (WHERE):
+                    ['asset_code' => $code], 
+
+                    // DATA YANG DISIMPAN/DIUPDATE:
+                    [
+                        'name'            => $this->item_name, // Pastikan field nama barang tersimpan
+                        'category_id'     => $this->category_id,
+                        'brand_id'        => $this->brand_id,
+                        'inventory_id'    => $this->inventory_id ?: null,
+                        'asset_code'      => $code, // PERBAIKAN: Gunakan $code dari loop, bukan $this->asset_code
+                        'serial_number'   => $this->serial_number, // Peringatan: Jika input massal, SN ini akan sama semua
+                        'asset_type'      => $this->asset_type,
+                        'purchase_price'  => $this->purchase_price,
+                        'document_number' => $this->document_number,
+                        'owner_unit'      => $this->owner_unit,
+                        'purchase_date'   => $this->purchase_date,
+                        'condition'       => $this->condition,
+                        'specifications'  => $specsArray,
+                    ]
+                );
+            }
+        });
+
+        // 5. FLASH MESSAGE & RESET
         session()->flash('message', $this->itemId ? 'Barang berhasil diupdate.' : 'Barang berhasil ditambahkan.');
         $this->closeModal();
         $this->resetInputFields();
@@ -359,6 +393,7 @@ class InventoryItemManager extends Component
         $this->itemId = $id;
         
         // Load Data Biasa
+        $this->item_name = $item->item_name;
         $this->category_id = $item->category_id;
         $this->brand_id = $item->brand_id;
         $this->inventory_id = $item->inventory_id;
@@ -400,12 +435,16 @@ class InventoryItemManager extends Component
     private function resetInputFields()
     {
         $this->reset([
-            'itemId', 'category_id', 'brand_id', 'inventory_id', 
+            'itemId', 'item_name', 'category_id', 'brand_id', 'inventory_id', 
             'asset_code', 'serial_number', 'asset_type', 'purchase_price',
             'document_number', 'owner_unit', 'purchase_date', 'condition',
             'spec_cpu', 'spec_ram', 'spec_storage', 'spec_gpu', 'spec_other',
-            'isNewCategory', 'new_category_name', 'isNewBrand', 'new_brand_name'
+            'isNewCategory', 'new_category_name', 'isNewBrand', 'new_brand_name',
+            'quantity', 'asset_codes'
         ]);
+
+        $this->asset_codes = ['']; 
+        $this->quantity = 1;
     }
 
     public function confirmDelete($id)

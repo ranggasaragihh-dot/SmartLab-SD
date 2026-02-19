@@ -64,6 +64,7 @@ class Manager extends Component
     public $showFinishModal = false; // Tambahkan juga ini jaga-jaga untuk modal selesai
 
     public $purpose;
+    public $sessionFilter = '';
 
     // ==========================================
     // LIFECYCLE
@@ -380,87 +381,83 @@ class Manager extends Component
         }
     }
 
+    protected $sessions = [
+        '1' => ['start' => '08:00', 'end' => '09.30'],
+        '2' => ['start' => '10:00', 'end' => '12:30'],
+        '3' => ['start' => '13:00', 'end' => '15:30'],
+    ];
+
     // ==========================================
     // D. RENDER VIEW
     // ==========================================
     #[Layout('layouts.admin')] 
     public function render()
     {
-        // 1. Tentukan Waktu Pengecekan (Real-time atau Filter Manual)
-        $checkTime = $this->timeFilter ? \Carbon\Carbon::parse($this->timeFilter) : now();
+        // 1. Tentukan Waktu Pengecekan secara Sentral (SATU PINTU)
+        // Utamakan Sesi, lalu Time Filter, terakhir Now.
+        if ($this->sessionFilter && isset($this->sessions[$this->sessionFilter])) {
+            $session = $this->sessions[$this->sessionFilter];
+            $sessionStart = \Carbon\Carbon::parse($this->dateFilter . ' ' . $session['start']);
+            $sessionEnd = \Carbon\Carbon::parse($this->dateFilter . ' ' . $session['end']);
+        } else {
+            // Fallback jika tidak ada filter sesi (cek jam sekarang)
+            $sessionStart = $this->timeFilter 
+                ? \Carbon\Carbon::parse($this->dateFilter . ' ' . $this->timeFilter) 
+                : now();
+            $sessionEnd = $sessionStart->copy()->addMinute(); // Titik waktu saja
+        }
 
-        // 2. Query Dasar
+        // 2. Query Inventories (Filter Utama)
         $inventories = Inventory::where('cluster_id', $this->clusterId)
-            ->when($this->statusFilter, function($query) use ($checkTime) {
-                
+        ->when($this->statusFilter, function($query) use ($sessionStart, $sessionEnd) {
+            // Logika Overlap: 
+            // Booking Start < Sesi End AND Booking End > Sesi Start
+            $overlapQuery = function($q) use ($sessionStart, $sessionEnd) {
+                $q->where('start_time', '<', $sessionEnd)
+                  ->where('end_time', '>', $sessionStart)
+                  ->whereIn('status', ['booked', 'active']);
+            };
             switch ($this->statusFilter) {
-                    
-                // KASUS 1: ADMIN MEMILIH "AVAILABLE"
-                // Syarat: Fisik 'available' DAN Tidak ada bokingan di jam itu
                 case 'available':
-                    return $query->where('status', 'available')
-                                ->whereDoesntHave('bookings', function($q) use ($checkTime) {
-                                    $q->where('start_time', '<=', $checkTime)
-                                    ->where('end_time', '>', $checkTime)
-                                    ->whereIn('status', ['booked', 'active']);
-                                });
-
-                // KASUS 2: ADMIN MEMILIH "BOOKED"
-                // Syarat: Fisik 'available' TAPI Sedang ada bokingan di jam itu
+                    return $query->where('status', 'available')->whereDoesntHave('bookings', $overlapQuery);
                 case 'booked':
-                    return $query->where('status', 'available')
-                                ->whereHas('bookings', function($q) use ($checkTime) {
-                                    $q->where('start_time', '<=', $checkTime)
-                                    ->where('end_time', '>', $checkTime)
-                                    ->whereIn('status', ['booked', 'active']);
-                                });
-
-                // KASUS 3: STATUS FISIK LAINNYA
-                // Syarat: Cukup cek kolom status di tabel inventory
+                    return $query->where('status', 'available')->whereHas('bookings', $overlapQuery);
                 case 'broken':
                     return $query->where('status', 'broken');
-                    
                 case 'maintenance':
                     return $query->where('status', 'maintenance');
             }
         })
         ->get();
 
-        // 2. Cek apakah Ruangan SEDANG DIBOOKING FULL hari ini?
-        // (Untuk ditampilkan di alert admin)
+        // 3. Ambil Booking Ruangan (Global untuk cluster ini di waktu tersebut)
         $roomBookings = Booking::where('cluster_id', $this->clusterId)
-            ->whereNull('inventory_id') // Ciri booking ruangan
+            ->whereNull('inventory_id')
             ->whereIn('status', ['booked', 'active'])
-            ->whereDate('start_time', $this->dateFilter)
+            ->whereDate('start_time', $this->dateFilter) // Ambil semua booking ruangan di hari itu
             ->with('user')
             ->get();
 
-        // 3. Mapping Status PC (Time-Aware)
-        foreach ($inventories as $pc) {
-            $checkTime = $this->timeFilter 
-                ? Carbon::parse($this->dateFilter . ' ' . $this->timeFilter)
-                : Carbon::now(); // Jika tidak filter, pakai jam sekarang
+        // Cek apakah di detik $checkTime ini ruangan sedang terpakai secara global
+        // Tentukan apakah dalam RENTANG SESI ini ada booking ruangan
+        $roomBookingNow = $roomBookings->first(function($rb) use ($sessionStart, $sessionEnd) {
+            // Logika Irisan: Booking dimulai sebelum sesi berakhir 
+            // DAN booking berakhir setelah sesi dimulai
+            return $rb->start_time < $sessionEnd && $rb->end_time > $sessionStart;
+        });
 
-            // Cari booking aktif untuk PC ini
-            $pc->activeBooking = Booking::where('inventory_id', $pc->id)
-                ->whereIn('status', ['booked', 'active'])
-                ->where('start_time', '<=', $checkTime)
-                ->where('end_time', '>', $checkTime)
-                ->first();
+        // 4. Mapping Status PC (Gunakan $checkTime yang sudah konsisten!)
+        foreach ($inventories as $pc) {
+        $pc->activeBooking = Booking::where('inventory_id', $pc->id)
+            ->whereIn('status', ['booked', 'active'])
+            ->where('start_time', '<', $sessionEnd) // Booking dimulai sebelum sesi berakhir
+            ->where('end_time', '>', $sessionStart)  // Booking berakhir setelah sesi dimulai
+            ->first();
                 
-            // Jika PC tidak ada booking, CEK APAKAH RUANGANNYA DIBOOKING?
-            // (Agar admin lihat PC ini juga "merah" kalau ruangannya dibooking)
-            if (!$pc->activeBooking) {
-                $roomBookingNow = $roomBookings->first(function($rb) use ($checkTime) {
-                    return $rb->start_time <= $checkTime && $rb->end_time > $checkTime;
-                });
-                
-                if ($roomBookingNow) {
-                    // Kita inject booking ruangan seolah-olah booking PC ini
-                    // Agar di tampilan jadi merah/terisi
-                    $pc->activeBooking = $roomBookingNow; 
-                    $pc->isRoomBlocked = true; // Penanda visual tambahan
-                }
+            // Jika PC bersih, tapi ruangan sedang diblokir, inject data ruangan
+            if (!$pc->activeBooking && $roomBookingNow) {
+                $pc->activeBooking = $roomBookingNow; 
+                $pc->isRoomBlocked = true;
             }
         }
 
