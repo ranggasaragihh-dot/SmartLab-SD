@@ -42,7 +42,14 @@ class InventoryItemsImport implements ToModel, WithStartRow
         $namaBarang  = $this->cleanText($row[1]); 
         $merkName    = $this->cleanText($row[2] ?? 'Tanpa Merk');
         $katName     = $this->cleanText($row[3] ?? 'Umum');
+        $rawType     = $this->cleanText($row[5] ?? '');
         
+        $cleanType = ucwords(strtolower(trim($rawType)));
+
+        if (empty($cleanType)) {
+            $cleanType = 'General';
+        }
+
         // === 2. BERSIHKAN HARGA (PENTING!) ===
         // Mengubah "Rp 5.000.000" atau "5.000.000" menjadi "5000000" (Murni Angka)
         $rawPrice = $row[6] ?? 0;
@@ -152,7 +159,7 @@ class InventoryItemsImport implements ToModel, WithStartRow
             'inventory_id'    => $inventory ? $inventory->id : null, 
 
             'purchase_date'   => $purchaseDate,
-            'asset_type'      => $this->cleanText($row[5] ?? 'Aset Tetap'),
+            'asset_type'      => $cleanType,
             'purchase_price'  => $cleanPrice, // Pakai harga yang sudah dibersihkan
             'condition'       => $this->mapCondition($row[8] ?? 'good'),
             'document_number' => $this->cleanText($row[9] ?? null),

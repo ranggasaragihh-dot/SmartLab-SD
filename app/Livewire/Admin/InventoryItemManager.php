@@ -66,6 +66,10 @@ class InventoryItemManager extends Component
     public $purchase_price, $document_number, $owner_unit;
     public $purchase_date, $condition = 'good';
 
+    public $isNewAssetType = false;
+    public $new_asset_type_name = '';
+
+
     // --- VARIABEL SPESIFIKASI (Pecahan JSON) ---
     // Kita buat properti terpisah agar mudah di-bind ke Input Form
     public $spec_cpu, $spec_ram, $spec_storage, $spec_gpu, $spec_other;
@@ -123,9 +127,11 @@ class InventoryItemManager extends Component
             'brand_id'          => $this->isNewBrand ? 'nullable' : 'required',
             'new_brand_name'    => $this->isNewBrand ? 'required|string|max:255|unique:inventory_brands,name' : 'nullable',
             'inventory_id'      => 'nullable|exists:inventory,id', // Boleh null (Gudang)
-            'asset_code.*'      => 'required|unique:inventory_items,asset_code,' . $this->itemId,
+            'asset_codes.*'     => 'required|unique:inventory_items,asset_code,' . $this->itemId,
             'serial_number'     => 'nullable',
             'document_number'   => 'nullable|string|max:255', 
+            'asset_type'          => $this->isNewAssetType ? 'nullable' : 'required|string',
+            'new_asset_type_name' => $this->isNewAssetType ? 'required|string|max:255' : 'nullable',
             'owner_unit'        => 'nullable|string|max:255',
             'purchase_price'    => 'nullable|numeric',
             'condition'         => 'required|in:good,maintenance,broken',
@@ -249,6 +255,33 @@ class InventoryItemManager extends Component
             ->pluck('condition');
     }
 
+    #[Computed]
+    public function availableAssetTypes()
+    {
+        // Mengambil nilai unik dari kolom asset_type yang sudah ada di database
+        return InventoryItem::whereNotNull('asset_type')
+            ->where('asset_type', '!=', '')
+            ->distinct()
+            ->orderBy('asset_type')
+            ->pluck('asset_type');
+    }
+
+    // 3. LOGIKA KETIKA DROPDOWN DIPILIH
+    public function updatedAssetType($value)
+    {
+        if ($value === 'NEW') {
+            $this->isNewAssetType = true;
+            $this->asset_type = null; 
+        }
+    }
+
+    public function cancelNewAssetType()
+    {
+        $this->isNewAssetType = false;
+        $this->new_asset_type_name = '';
+        $this->asset_type = ''; 
+    }
+
     public function render()
     {
         $query = InventoryItem::query()
@@ -348,36 +381,65 @@ class InventoryItemManager extends Component
             'other'   => $this->spec_other,
         ];
 
+        $finalAssetType = $this->isNewAssetType 
+        ? ucwords(strtolower(trim($this->new_asset_type_name))) 
+        : $this->asset_type;
+
         // 4. EKSEKUSI PENYIMPANAN DATABASE (TRANSACTION)
-        DB::transaction(function () use ($specsArray) {
-            
-            // Loop melalui array asset_codes (hasil input quantity > 1)
-            foreach ($this->asset_codes as $code) {
+        DB::transaction(function () use ($specsArray, $finalAssetType) {
+
+            if ($this->itemId) {
+                $item = InventoryItem::findOrFail($this->itemId);
                 
-                // Skip jika kode kosong
-                if (empty($code)) continue;
+                $item->update([
+                    // Ambil kode baru dari form (selalu di index 0 karena edit cuma 1)
+                    'asset_code'      => $this->asset_codes[0], 
+                    
+                    'item_name'       => $this->item_name,
+                    'category_id'     => $this->category_id,
+                    'brand_id'        => $this->brand_id,
+                    'inventory_id'    => $this->inventory_id ?: null,
+                    'serial_number'   => $this->serial_number,
+                    'asset_type'      => $finalAssetType,
+                    'purchase_price'  => $this->purchase_price,
+                    'document_number' => $this->document_number,
+                    'owner_unit'      => $this->owner_unit,
+                    'purchase_date'   => $this->purchase_date,
+                    'condition'       => $this->condition,
+                    'specifications'  => $specsArray,
+                ]);
 
-                InventoryItem::updateOrCreate(
-                    // KUNCI PENCARIAN (WHERE):
-                    ['asset_code' => $code], 
+            }
+            else{
+                // Loop melalui array asset_codes (hasil input quantity > 1)
+                foreach ($this->asset_codes as $code) {
+                    
+                    // Skip jika kode kosong
+                    if (empty($code)) continue;
 
-                    // DATA YANG DISIMPAN/DIUPDATE:
-                    [
-                        'name'            => $this->item_name, // Pastikan field nama barang tersimpan
-                        'category_id'     => $this->category_id,
-                        'brand_id'        => $this->brand_id,
-                        'inventory_id'    => $this->inventory_id ?: null,
-                        'asset_code'      => $code, // PERBAIKAN: Gunakan $code dari loop, bukan $this->asset_code
-                        'serial_number'   => $this->serial_number, // Peringatan: Jika input massal, SN ini akan sama semua
-                        'asset_type'      => $this->asset_type,
-                        'purchase_price'  => $this->purchase_price,
-                        'document_number' => $this->document_number,
-                        'owner_unit'      => $this->owner_unit,
-                        'purchase_date'   => $this->purchase_date,
-                        'condition'       => $this->condition,
-                        'specifications'  => $specsArray,
-                    ]
-                );
+                    InventoryItem::updateOrCreate(
+                        // KUNCI PENCARIAN (WHERE):
+                        ['asset_code' => $code], 
+
+                        // DATA YANG DISIMPAN/DIUPDATE:
+                        [
+                            'item_name'            => $this->item_name, // Pastikan field nama barang tersimpan
+                            'category_id'     => $this->category_id,
+                            'brand_id'        => $this->brand_id,
+                            'inventory_id'    => $this->inventory_id ?: null,
+                            'asset_code'      => $code, // PERBAIKAN: Gunakan $code dari loop, bukan $this->asset_code
+                            'serial_number'   => $this->serial_number, // Peringatan: Jika input massal, SN ini akan sama semua
+                            'asset_type'      => $this->asset_type,
+                            'purchase_price'  => $this->purchase_price,
+                            'document_number' => $this->document_number,
+                            'asset_type'      => $finalAssetType,
+                            'owner_unit'      => $this->owner_unit,
+                            'purchase_date'   => $this->purchase_date,
+                            'condition'       => $this->condition,
+                            'specifications'  => $specsArray,
+                        ]
+                    );
+                }
             }
         });
 
@@ -392,22 +454,37 @@ class InventoryItemManager extends Component
         $item = InventoryItem::findOrFail($id);
         $this->itemId = $id;
         
-        // Load Data Biasa
+        // 1. Load Data Utama
         $this->item_name = $item->item_name;
         $this->category_id = $item->category_id;
         $this->brand_id = $item->brand_id;
         $this->inventory_id = $item->inventory_id;
-        $this->asset_code = $item->asset_code;
+        
+        // --- PERBAIKAN KRUSIAL 1: KODE ASET ---
+        // Karena store() melooping $this->asset_codes, 
+        // kita harus memasukkan data edit ini ke dalam format array index ke-0
+        $this->quantity = 1; // Paksa quantity jadi 1 saat mode edit
+        $this->asset_codes = [$item->asset_code]; 
+        // --------------------------------------
+
         $this->serial_number = $item->serial_number;
+        
+        // --- PERBAIKAN KRUSIAL 2: TIPE ASET ---
+        // Pastikan state "Tipe Baru" dimatikan agar dropdown berfungsi normal
         $this->asset_type = $item->asset_type;
+        $this->isNewAssetType = false; 
+        $this->new_asset_type_name = '';
+        // --------------------------------------
+
         $this->purchase_price = $item->purchase_price;
         $this->document_number = $item->document_number;
         $this->owner_unit = $item->owner_unit;
+        
         // Format tanggal agar pas di input type="date"
         $this->purchase_date = $item->purchase_date ? $item->purchase_date->format('Y-m-d') : null;
         $this->condition = $item->condition;
 
-        // Load Data JSON (Unpacking)
+        // 2. Load Data JSON (Unpacking Specs)
         $specs = $item->specifications ?? [];
         $this->spec_cpu = $specs['cpu'] ?? '';
         $this->spec_ram = $specs['ram'] ?? '';

@@ -349,14 +349,10 @@ class BookingPage extends Component
             ->orderBy('name')
             ->get();
 
-        // 2. Ambil Inventories
-        $allInventories = Inventory::where('cluster_id', $this->cluster->id)
-            ->orderBy('name', 'asc')
-            ->get();
-
         // 4. Siapkan Data Booking (Transaksi)
         // Logika Waktu: Sepanjang hari dari tanggal yang dipilih
-        $inventories = Inventory::where('cluster_id', $this->cluster->id)
+        $inventories = Inventory::with('item')
+            ->where('cluster_id', $this->cluster->id)
             ->where('status', '!=', 'broken') // Broken tidak usah diload
             ->orderBy('name', 'asc')
             ->get();

@@ -14,6 +14,7 @@ class ClusterManager extends Component
 {
     use WithFileUploads; // Wajib gunakan trait ini
     use WithPagination;
+    protected $paginationTheme = 'tailwind';
 
     // Variabel khusus untuk file upload sementara
     // Jangan dicampur dengan $form agar tidak error saat serialize data

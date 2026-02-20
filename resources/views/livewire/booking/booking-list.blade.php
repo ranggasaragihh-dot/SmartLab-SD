@@ -71,6 +71,7 @@
                             </thead>
                             <tbody class="divide-y divide-slate-100">
                                 @foreach($inventories as $pc)
+                                @dump($pc->item)
                                 @php
                                     // LOGIKA BARU: Menggunakan Map dari Backend agar Cepat
                                     $bookingData = $bookingsMap[$pc->id] ?? null;
@@ -107,7 +108,22 @@
                                     
                                     {{-- Kode & Specs --}}
                                     <td class="px-6 py-4 align-middle font-medium text-slate-700">{{ $pc->name }}</td>
-                                    <td class="px-6 py-4 align-middle text-slate-600">RTX 3060 / 16GB RAM</td>
+                                    <td class="px-6 py-4 align-middle text-slate-600">
+    {{-- CEK 1: Pastikan PC ini punya data fisik barang --}}
+    @if($pc->item && is_array($pc->item->specifications))
+        
+        <div class="flex flex-col gap-0.5 text-xs">
+            {{-- Ekstrak data JSON satu per satu dengan pengaman (?? '-') --}}
+            <div><span class="font-bold text-slate-700">CPU:</span> {{ $pc->item->specifications['cpu'] ?? '-' }}</div>
+            <div><span class="font-bold text-slate-700">RAM:</span> {{ $pc->item->specifications['ram'] ?? '-' }}</div>
+            <div><span class="font-bold text-slate-700">Storage:</span> {{ $pc->item->specifications['storage'] ?? '-' }}</div>
+            <div><span class="font-bold text-slate-700">VGA:</span> {{ $pc->item->specifications['gpu'] ?? '-' }}</div>
+        </div>
+
+    @else
+        <span class="text-xs italic text-slate-400">Spesifikasi tidak tersedia</span>
+    @endif
+</td>
 
                                     {{-- Kondisi Fisik --}}
                                     <td class="px-6 py-4 align-middle text-center">

@@ -16,6 +16,7 @@ use Livewire\Attributes\Title;
 class Inventory extends Component
 {
     use WithPagination;
+    protected $paginationTheme = 'tailwind';
 
     public InventoryForm $form;
 

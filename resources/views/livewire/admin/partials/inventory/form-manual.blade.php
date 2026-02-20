@@ -81,15 +81,51 @@
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Lokasi Penempatan</label>
-                    <div class="relative">
-                        <select wire:model="inventory_id" class="w-full border-slate-300 bg-slate-50/50 rounded-md focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-xs py-1.5 px-2 text-slate-700 font-medium">
-                            <option value="">📦 Di Gudang (Stok Cadangan)</option>
-                            @foreach($inventories as $inv)
-                                <option value="{{ $inv->id }}">🖥️ {{ $inv->name }} ({{ $inv->cluster->name ?? '?' }})</option>
-                            @endforeach
-                        </select>
+                <div class="grid grid-cols-2 gap-4">
+                    {{-- BLOK 3: TIPE ASET --}}
+                    <div class="mb-4 relative">
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Tipe Aset <span class="text-red-500">*</span></label>
+                        
+                        @if(!$isNewAssetType)
+                            {{-- TAMPILAN DROPDOWN NORMAL --}}
+                            <select wire:model.live="asset_type" class="w-full border-slate-300 rounded-lg focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-sm py-2 px-3 text-slate-700 cursor-pointer transition-colors">
+                                <option value="">Pilih Tipe...</option>
+                                
+                                {{-- Loop dari database (Nilai yang sudah pernah diinput) --}}
+                                @foreach($this->availableAssetTypes as $type)
+                                    <option value="{{ $type }}">{{ $type }}</option>
+                                @endforeach
+                                <option disabled>──────────</option>
+                                <option value="NEW" class="font-bold text-slate-900 bg-slate-100">+ Tambah Tipe Baru...</option>
+                            </select>
+                            @error('asset_type') <span class="text-xs font-bold text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                        @else
+                            {{-- TAMPILAN INPUT MANUAL BARU --}}
+                            <div class="flex items-center gap-2">
+                                <input type="text" wire:model="new_asset_type_name" 
+                                    placeholder="Ketik tipe baru..." 
+                                    class="w-full border-blue-300 rounded-lg focus:ring-1 focus:ring-blue-500 text-sm py-2 px-3">
+                                <button type="button" wire:click="cancelNewAssetType" class="p-2 text-slate-400 hover:text-red-500 transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                </button>
+                            </div>
+                            <p class="text-[10px] text-blue-500 mt-1">Sistem akan otomatis merapikan huruf kapital.</p>
+                            @error('new_asset_type_name') <span class="text-xs font-bold text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                        @endif
+                    </div>
+
+                    {{-- BLOK 4: LOKASI --}}
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Lokasi Penempatan</label>
+                        <div class="relative">
+                            <select wire:model="inventory_id" class="w-full border-slate-300 bg-slate-50/50 rounded-lg focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-sm py-2 px-3 text-slate-700 font-medium cursor-pointer">
+                                <option value="">📦 Di Gudang (Stok Cadangan)</option>
+                                @foreach($inventories as $inv)
+                                    <option value="{{ $inv->id }}">🖥️ {{ $inv->name }} ({{ $inv->cluster->name ?? '?' }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        @error('inventory_id') <span class="text-red-500 text-[10px] font-bold mt-1 block">{{ $message }}</span> @enderror
                     </div>
                 </div>
             </div>
@@ -156,6 +192,19 @@
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                     Administrasi
                 </h4>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">No. Dokumen / Invoice</label>
+                        <input type="text" wire:model="document_number" class="w-full border-slate-300 rounded-lg focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-sm py-2 px-3 placeholder-slate-300" placeholder="INV/202X/...">
+                        @error('document_number') <span class="text-xs font-bold text-slate-500 mt-1 block">! {{ $message }}</span> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Unit Pemilik / Dana</label>
+                        <input type="text" wire:model="owner_unit" class="w-full border-slate-300 rounded-lg focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-sm py-2 px-3 placeholder-slate-300" placeholder="Yayasan / Hibah">
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[10px] font-bold text-slate-700 mb-1">Harga Beli</label>
