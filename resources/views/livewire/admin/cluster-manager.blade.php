@@ -1,6 +1,4 @@
 <div class="font-sans text-slate-900">
-
-    {{-- 1. HEADER PAGE --}}
     @include('livewire.admin.partials.header', [
         'title'    => 'Manajemen Cluster Lab',
         'subtitle' => 'Kelola daftar laboratorium, denah, dan aturan akses.',
@@ -10,7 +8,6 @@
         'searchPlaceholder' => 'Cari Nama Lab...'
     ])
 
-    {{-- 2. TABEL DATA --}}
     <div class="bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-sm text-left">
@@ -26,11 +23,8 @@
                 <tbody class="divide-y divide-slate-50">
                     @forelse($clusters as $item)
                         <tr class="hover:bg-slate-50/80 transition-colors group">
-                            
-                            {{-- KOLOM 1: DENAH & NAMA --}}
                             <td class="px-6 py-4">
                                 <div class="flex items-start gap-4">
-                                    {{-- Thumbnail Denah (Lebih Besar & Ada Border) --}}
                                     <div class="relative w-16 h-16 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-amber-400 transition-all"
                                          title="Klik untuk perbesar denah">
                                         @if($item->denah_image)
@@ -42,7 +36,6 @@
                                         @endif
                                     </div>
                                     
-                                    {{-- Nama & Deskripsi --}}
                                     <div class="mt-1">
                                         <div class="text-base font-bold text-slate-900">{{ $item->name }}</div>
                                         <div class="text-xs text-slate-500 mt-0.5 max-w-[200px] truncate">
@@ -52,7 +45,6 @@
                                 </div>
                             </td>
 
-                            {{-- KOLOM 2: TIPE AKSES --}}
                             <td class="px-6 py-4">
                                 @if($item->type == 'public')
                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
@@ -67,7 +59,6 @@
                                 @endif
                             </td>
 
-                            {{-- KOLOM 3: CONFIG DELAY --}}
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-2 text-slate-600 font-medium">
                                     <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -75,7 +66,6 @@
                                 </div>
                             </td>
 
-                            {{-- KOLOM 4: STATUS (Dot Style) --}}
                             <td class="px-6 py-4 text-center">
                                 @if($item->is_active)
                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -90,16 +80,12 @@
                                 @endif
                             </td>
 
-                            {{-- KOLOM 5: AKSI (Icons) --}}
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
-                                    {{-- Edit --}}
                                     <button wire:click="edit({{ $item->id }})" class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-md transition-all" title="Edit Cluster">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                     </button>
                                     
-                                    {{-- Delete --}}
-                                    {{-- Kita pakai confirmDelete untuk memanggil MODAL MERAH yang cantik --}}
                                     <button wire:click="confirmDelete({{ $item->id }})" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all" title="Hapus Cluster">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                     </button>
@@ -120,14 +106,11 @@
             </table>
         </div>
         
-        {{-- Pagination --}}
         <div class="px-6 py-4 border-t border-slate-100 bg-slate-50">
             {{ $clusters->links() }}
         </div>
     </div>
 
-    {{-- 4. MODALS --}}
-    {{-- Pastikan file modal-delete dan modal-form (create/edit) sudah dibuat/diinclude --}}
     @include('livewire.admin.partials.clusterManager.modal')
     @include('livewire.admin.partials.clusterManager.modal-delete')
 </div>

@@ -8,14 +8,12 @@ use Livewire\Attributes\Layout;
 
 class Dashboard extends Component
 {
-    // Menggunakan Layout Admin yang sudah Anda buat
+
     #[Layout('layouts.admin')] 
     public function render()
     {
-        // Mengambil data Cluster dengan perhitungan statistik otomatis
-        // Pastikan relasi 'units' ada di model Cluster
         $clusters = Cluster::withCount([
-            'inventories', // Menghitung total unit (units_count)
+            'inventories',
             'inventories as available_count' => function ($query) {
                 $query->where('status', 'available');
             },

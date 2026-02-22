@@ -27,26 +27,20 @@ class UpdateBookingStatus extends Command
      */
     public function handle()
     {
-        $now = Carbon::now();
+        $now = \Illuminate\Support\Carbon::now();
         $this->info("⏳ Cek status booking pada: " . $now->toDateTimeString());
 
-        // 1. ATURAN NO-SHOW (15 MENIT)
-        // Cari booking berstatus 'booked' (belum check-in)
-        // Yang waktu mulainya sudah lewat 15 menit yang lalu
-        $limitTime = $now->copy()->subMinutes(15);
-
-        $noShowBookings = Booking::where('status', 'booked') // Asumsi 'booked' = belum scan
-            ->where('start_time', '<=', $limitTime)
+        $noShowBookings = Booking::select('bookings.*')
+            ->join('clusters', 'bookings.cluster_id', '=', 'clusters.id')
+            ->where('bookings.status', 'booked')
+            ->whereRaw('DATE_ADD(bookings.start_time, INTERVAL COALESCE(clusters.delay_time, 15) MINUTE) <= ?', [$now])
             ->get();
 
         foreach ($noShowBookings as $booking) {
-            // Batalkan otomatis agar PC bisa dipakai orang lain
             $booking->update(['status' => 'cancelled']);
-            $this->info("❌ Booking ID {$booking->id} HANGUS (No-Show > 15 menit).");
+            $this->info("❌ Booking ID {$booking->id} HANGUS (Melewati batas toleransi lab).");
         }
 
-        // 2. AUTO FINISHED (JIKA WAKTU HABIS)
-        // Berlaku untuk yang statusnya 'active' (sedang main) tapi waktunya habis
         $expiredBookings = Booking::where('status', 'active')
             ->where('end_time', '<=', $now)
             ->get();

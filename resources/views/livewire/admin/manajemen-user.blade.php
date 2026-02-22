@@ -1,23 +1,16 @@
 <div class="font-sans text-slate-900">
-
-    {{-- HEADER DENGAN @INCLUDE --}}
     @include('livewire.admin.partials.header', [
         'title'             => 'Manajemen User',
         'subtitle'          => 'Total ' . $users->total() . ' pengguna terdaftar.',
         'button'            => 'Tambah User',
         'action'            => 'create',
-        
-        // Cukup tambahkan ini agar Search Bar muncul:
         'searchable'        => true,
         'searchPlaceholder' => 'Cari Nama, NPM, atau Email...'
     ])
 
-    {{-- 2. TABLE CONTAINER --}}
     <div class="bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 overflow-hidden">
-            
         <div class="overflow-x-auto">
             <table class="w-full text-sm text-left">
-                {{-- Header Tabel --}}
                 <thead class="bg-slate-50 border-b border-slate-100 text-xs uppercase font-bold text-slate-500 tracking-wider">
                     <tr>
                         <th class="px-6 py-4">Mahasiswa</th>
@@ -28,15 +21,11 @@
                     </tr>
                 </thead>
 
-                {{-- Body Tabel --}}
                 <tbody class="divide-y divide-slate-50">
                     @forelse($users as $user)
                         <tr class="hover:bg-slate-50/80 transition-colors group">
-                                
-                            {{-- Profil --}}
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
-                                    {{-- Avatar Fix: Menggunakan Background Color Solid jika Gradient gagal render --}}
                                     <div class="flex-shrink-0 w-9 h-9 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold ring-2 ring-white shadow-sm">
                                         {{ substr($user->name, 0, 2) }}
                                     </div>
@@ -47,14 +36,12 @@
                                 </div>
                             </td>
 
-                            {{-- NPM --}}
                             <td class="px-6 py-4">
                                 <span class="font-mono text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-1 rounded border border-slate-200">
                                     {{ $user->nomor_induk ?? '-' }}
                                 </span>
                             </td>
 
-                            {{-- Role --}}
                             <td class="px-6 py-4 text-center">
                                 <div class="inline-flex justify-center">
                                     @forelse($user->role_badges as $badge)
@@ -67,7 +54,6 @@
                                 </div>
                             </td>
 
-                            {{-- Status TA --}}
                             <td class="px-6 py-4 text-center">
                                 @if($user->ta == 1)
                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
@@ -79,7 +65,6 @@
                                 @endif
                             </td>
 
-                            {{-- Aksi --}}
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
                                     <button wire:click="edit({{ $user->id }})" class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-md transition-all">
@@ -105,11 +90,9 @@
             </table>
         </div>
             
-        {{-- Footer --}}
         <div class="px-6 py-4 border-t border-slate-100 bg-slate-50">
             {{ $users->links() }}
         </div>
     </div>
         @include('livewire.admin.partials.manajemenUser.modal')
-        <!-- @include('livewire.admin.partials.manajemenUser.delete-modal') -->
 </div>

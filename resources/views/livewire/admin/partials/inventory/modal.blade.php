@@ -1,25 +1,14 @@
 <div>
     @if($isModalOpen)
         @teleport('body')
-        {{-- WRAPPER UTAMA: Fixed Full Screen --}}
         <div class="relative z-[9999]" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            
-            {{-- 1. BACKDROP (Latar Buram) --}}
-            {{-- Fixed inset-0 agar memenuhi layar --}}
             <div wire:click="closeModal" 
                  class="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] transition-opacity" 
                  aria-hidden="true"></div>
 
-            {{-- 2. POSISITING CONTAINER (Flexbox Centering) --}}
-            {{-- pointer-events-none agar klik tembus ke backdrop jika klik di luar modal --}}
             <div class="fixed inset-0 z-10 w-screen overflow-y-auto pointer-events-none">
                 <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
-                    
-                    {{-- 3. MODAL CARD (Konten Asli) --}}
-                    {{-- pointer-events-auto agar modal bisa diklik --}}
                     <div class="pointer-events-auto relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-4xl border border-slate-100 flex flex-col max-h-[90vh]">
-                        
-                        {{-- A. HEADER --}}
                         <div class="px-5 py-3 flex justify-between items-center bg-white border-b border-slate-100 shrink-0">
                             <div>
                                 <h3 class="text-lg font-bold text-slate-900 tracking-tight">
@@ -31,7 +20,6 @@
                             </button>
                         </div>
 
-                        {{-- B. TABS --}}
                         @if(!$itemId)
                             <div class="px-5 py-2 bg-slate-50 border-b border-slate-100 shrink-0">
                                 <div class="flex p-0.5 space-x-1 bg-slate-200/50 rounded-lg border border-slate-200">
@@ -47,15 +35,11 @@
                             </div>
                         @endif
 
-                        {{-- C. CONTENT AREA --}}
                         <div class="bg-white relative flex-1 overflow-hidden flex flex-col min-h-[200px]">
-                            
-                            {{-- Loading Overlay --}}
                             <div wire:loading wire:target="activeTab, store, update, importExcel" 
                                 class="absolute inset-0 z-50 bg-white/40 backdrop-blur-[2px] transition-all duration-200">
                             </div>
 
-                            {{-- SCROLLABLE BODY --}}
                             <div class="flex-1 overflow-y-auto px-5 pt-3 pb-5 scrollbar-thin">
                                 @if($itemId || $activeTab === 'manual')
                                     @include('livewire.admin.partials.inventory.form-manual')
@@ -65,7 +49,6 @@
                             </div>
                         </div>
 
-                        {{-- D. FOOTER --}}
                         <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 shrink-0">
                             <button type="button" wire:click="closeModal" class="px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 hover:text-slate-900 text-xs font-bold transition-all shadow-sm active:scale-95">
                                 Batal
@@ -83,7 +66,6 @@
                                 </button>
                             @endif
                         </div>
-                        
                     </div>
                 </div>
             </div>

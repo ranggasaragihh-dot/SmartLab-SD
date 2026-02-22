@@ -18,12 +18,7 @@
 </head>
 
 <body class="font-sans antialiased bg-gray-100">
-    
-    {{-- HIERARKI 1: Wrapper Paling Luar (Root) --}}
-    {{-- WAJIB: x-data DITARUH DI SINI agar melingkupi Sidebar & Konten --}}
     <div x-data="{ sidebarOpen: false }" class="flex h-screen overflow-hidden">
-
-        {{-- HIERARKI 3: Konten Utama & Header --}}
         <div class="relative flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
             <main>
                 {{ $slot }}

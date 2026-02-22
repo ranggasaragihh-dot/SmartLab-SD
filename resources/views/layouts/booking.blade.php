@@ -7,7 +7,6 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="antialiased h-screen w-screen overflow-hidden bg-gray-100 x-data="{ sidebarOpen: false }">
-    {{-- Slot ini akan diisi oleh Livewire --}}
     {{ $slot }}
 </body>
 </html>

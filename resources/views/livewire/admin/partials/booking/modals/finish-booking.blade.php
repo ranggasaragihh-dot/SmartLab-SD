@@ -1,9 +1,6 @@
 @if($showFinishModal)
 <div class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in zoom-in duration-200">
-    {{-- MODAL CONTAINER: Gunakan rounded-2xl dan border slate halus agar matching --}}
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-100 flex flex-col">
-        
-        {{-- HEADER: Gunakan Header Gelap (Slate-900) agar satu tema dengan Sidebar & Modal Event --}}
         <div class="bg-slate-900 px-5 py-4 flex justify-between items-center shrink-0">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center text-white shrink-0 shadow-lg shadow-emerald-900/20">
@@ -17,7 +14,6 @@
         </div>
 
         <div class="p-6">
-            {{-- INFO BOX: Dibuat lebih padat dan profesional --}}
             @if($selectedBookingData)
                 <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-2 mb-4 shadow-sm">
                     <div class="flex justify-between items-center text-[11px]">
@@ -36,7 +32,6 @@
             </p>
         </div>
 
-        {{-- FOOTER: Gunakan warna tombol Slate & Emerald yang konsisten --}}
         <div class="bg-slate-50 px-6 py-4 flex justify-end gap-3 border-t border-slate-100 shrink-0">
             <button wire:click="$set('showFinishModal', false)" 
                     class="px-5 py-2 text-xs font-bold text-slate-500 hover:text-slate-900 transition-all">

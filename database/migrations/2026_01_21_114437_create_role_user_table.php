@@ -13,12 +13,8 @@ return new class extends Migration
     {
         Schema::create('role_user', function (Blueprint $table) {
             $table->id();
-            // Foreign Key ke Users
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            // Foreign Key ke Roles
             $table->foreignId('role_id')->constrained()->onDelete('cascade');
-            
-            // Mencegah duplikasi data
             $table->unique(['user_id', 'role_id']); 
         });
     }

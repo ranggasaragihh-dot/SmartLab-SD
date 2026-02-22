@@ -24,7 +24,6 @@ class User extends Authenticatable
         'password',
         'nomor_induk',
         'ta',
-        // 'role',
         'is_banned'
     ];
 
@@ -38,14 +37,11 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    // RELASI: User punya banyak Role
     public function roles()
     {
         return $this->belongsToMany(Role::class, 'role_user','user_id', 'role_id');
     }
     
-    // HELPER: Cek apakah user punya role tertentu?
-    // Cara pakai: $user->hasRole('admin')
     public function hasRole($roleName)
     {
         return $this->roles()->where('role', $roleName)->exists();
@@ -55,18 +51,14 @@ class User extends Authenticatable
     {
         return Attribute::make(
             get: function () {
-                // Jika user tidak punya role, return collection kosong
                 if ($this->roles->isEmpty()) {
                     return [];
                 }
 
                 return $this->roles->map(function ($role) {
-                    // dd($role->toArray());
-                    // Handle Enum atau String biasa
                     $roleName = ($role->role instanceof \BackedEnum) ? $role->role->value : $role->role;
-                    $roleName = strtolower($roleName); // Normalisasi ke huruf kecil untuk logika warna
+                    $roleName = strtolower($roleName);
 
-                    // Tentukan class warna (Logika Backend)
                     $badgeClass = match($roleName) {
                         'admin'     => 'bg-purple-100 text-purple-800 border-purple-200',
                         'dosen'     => 'bg-blue-100 text-blue-800 border-blue-200',

@@ -1,5 +1,4 @@
 <div 
-    {{-- Jika ada Global Event, matikan auto-slide (karena cuma 1 tampilan statis) --}}
     x-data="{ 
         activeSlide: 0, 
         total: {{ $clusters->count() }},
@@ -14,7 +13,6 @@
     class="h-screen w-full flex flex-col relative bg-slate-950 text-white font-sans overflow-hidden"
     wire:poll.10s
 >
-    {{-- HEADER --}}
     <div class="h-20 bg-slate-900 border-b border-slate-800 flex justify-between items-center px-8 shadow-lg z-20 shrink-0">
         <div class="flex items-center gap-4">
             <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-xl shadow-blue-500/50 shadow-lg">L</div>
@@ -29,27 +27,17 @@
         </div>
     </div>
 
-    {{-- CONTENT AREA --}}
     <div class="flex-1 relative w-full overflow-hidden">
-        
-        {{-- 🔴 KONDISI 1: JIKA ADA GLOBAL EVENT (SATU LAB DI-BOOKING) --}}
         @if($globalEvent)
-            
             <div class="absolute inset-0 w-full h-full bg-slate-900 flex flex-col items-center justify-center z-50">
-                {{-- Background Pattern Animasi --}}
                 <div class="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] animate-pulse"></div>
-                
-                {{-- Container Utama --}}
                 <div class="relative z-10 max-w-4xl w-full text-center space-y-8 px-4">
-                    
-                    {{-- Status Badge --}}
                     <div class="inline-block">
                         <span class="px-6 py-2 rounded-full bg-red-600/20 border border-red-500 text-red-400 font-bold tracking-[0.2em] animate-pulse">
                             ⛔ DO NOT ENTER
                         </span>
                     </div>
 
-                    {{-- Judul Besar --}}
                     <div>
                         <h1 class="text-6xl md:text-8xl font-black text-white mb-2 tracking-tight drop-shadow-2xl">
                             SEDANG DIGUNAKAN
@@ -59,16 +47,12 @@
                         </p>
                     </div>
 
-                    {{-- Detail Event Box --}}
                     <div class="bg-slate-800/50 backdrop-blur-md border border-slate-700 rounded-3xl p-10 shadow-2xl mx-auto transform transition hover:scale-105 duration-500">
-                        
                         <h2 class="text-4xl font-bold text-blue-400 mb-6 uppercase">
                             {{ $globalEvent->purpose ?? 'KEGIATAN AKADEMIK' }}
                         </h2>
 
                         <div class="flex flex-col md:flex-row items-center justify-center gap-8 text-xl">
-                            
-                            {{-- Waktu --}}
                             <div class="flex items-center gap-3 bg-slate-900/80 px-6 py-3 rounded-xl border border-slate-700">
                                 <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                 <span class="font-mono text-white">
@@ -78,22 +62,18 @@
                                 </span>
                             </div>
 
-                            {{-- Peminjam --}}
                             <div class="flex items-center gap-3 bg-slate-900/80 px-6 py-3 rounded-xl border border-slate-700">
                                 <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                                 <span class="font-bold text-white">
                                     {{ $globalEvent->user->name ?? 'Fakultas / Prodi' }}
                                 </span>
                             </div>
-
                         </div>
                     </div>
                 </div>
             </div>
 
         @else
-        {{-- 🟢 KONDISI 2: NORMAL CAROUSEL (LOOPING SEPERTI BIASA) --}}
-        
             @foreach($clusters as $index => $cluster)
                 <div x-show="activeSlide === {{ $index }}"
                      x-transition:enter="transition ease-out duration-1000"
@@ -104,10 +84,8 @@
                      x-transition:leave-end="opacity-0 scale-95"
                      class="absolute inset-0 flex w-full h-full" 
                 > 
-                    {{-- KIRI: INFO & PETA (45%) --}}
                     <div class="w-[45%] flex flex-col h-full border-r border-slate-800 bg-slate-900 relative z-10">
                         <div class="p-6 bg-slate-800 shadow-xl z-20 shrink-0">
-                            {{-- ... (Header Info Cluster Tetap Sama) ... --}}
                             <div class="flex justify-between items-start mb-4">
                                 <div class="max-w-[75%]"> 
                                     <h2 class="text-3xl font-extrabold text-white leading-none tracking-tight mb-3">{{ $cluster->name }}</h2>
@@ -127,7 +105,6 @@
                                 </div>
                             </div>
 
-                            {{-- Statistik Available/Booked --}}
                             @php
                                 $total = $cluster->inventory->count();
                                 $booked = $cluster->inventory->filter(fn($i) => $i->bookings->isNotEmpty())->count();
@@ -152,7 +129,6 @@
                             </div>
                         </div>
 
-                        {{-- Denah --}}
                         <div class="flex-1 bg-slate-800/50 relative overflow-hidden group flex items-center justify-center p-4">
                             @if($cluster->denah_url)
                                 <img src="{{ $cluster->denah_url }}" class="w-full h-full object-contain transition-transform duration-700 hover:scale-105">
@@ -165,7 +141,6 @@
                         </div>
                     </div>
 
-                    {{-- KANAN: GRID PC (55%) --}}
                     <div class="w-[55%] h-full p-6 bg-slate-950">
                          @php
                             $count = $cluster->inventory->count();
@@ -213,11 +188,9 @@
                     </div>
                 </div>
             @endforeach
-
-        @endif {{-- END IF GLOBAL EVENT --}}
+        @endif
     </div>
 
-    {{-- FOOTER --}}
     <div class="h-10 bg-blue-950 border-t border-blue-900 flex items-center relative overflow-hidden z-20 shrink-0">
         <div class="absolute left-0 top-0 bottom-0 bg-blue-900 px-6 flex items-center font-bold text-xs uppercase tracking-widest z-10 shadow-xl text-blue-200">
             PENGUMUMAN
@@ -225,7 +198,7 @@
         <div class="animate-marquee whitespace-nowrap pl-40 text-sm font-medium text-blue-100 flex gap-24 items-center">
             <span>📢 Harap tidak meninggalkan barang berharga di laboratorium.</span>
             <span>⚡ Dilarang membawa makanan dan minuman.</span>
-            <span>📅 Jadwal Praktikum: Senin - Rabu.</span>
+            <span>📅 Jadwal Praktikum: Senin - Jumat.</span>
             <span>🔧 Laporkan kendala teknis ke Admin.</span>
         </div>
     </div>

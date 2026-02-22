@@ -1,8 +1,6 @@
 @if($showClusterBookingModal)
 <div class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in zoom-in duration-200">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100">
-        
-        {{-- Header Modal: UBAH JADI SLATE-900 (KONSISTEN ADMIN) --}}
         <div class="bg-slate-900 px-6 py-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center text-amber-400">
@@ -27,9 +25,7 @@
             </span>
         </div>
 
-        {{-- Body Modal --}}
         <div class="p-6 space-y-5">
-            {{-- Info Box: UBAH JADI AMBER (WARNA LOGO ATMA-LAB) --}}
             <div class="text-[11px] bg-amber-50 text-amber-800 p-4 rounded-xl border border-amber-100 leading-relaxed flex items-start gap-3 shadow-sm">
                 <svg class="w-5 h-5 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                 <span>
@@ -39,7 +35,6 @@
                 </span>
             </div>
 
-            {{-- Input Jam: UBAH FOCUS RING JADI SLATE --}}
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Jam Mulai</label>
@@ -53,7 +48,6 @@
                 </div>
             </div>
 
-            {{-- Input User (Penanggung Jawab) --}}
             <div class="relative">
                 <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Penanggung Jawab (Dosen/Ketua)</label>
                 
@@ -80,7 +74,6 @@
                             <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                         </div>
 
-                        {{-- Dropdown Search Results --}}
                         @if(!empty($usersList) && strlen($userSearch) > 1)
                             <div class="absolute z-10 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl max-h-56 overflow-y-auto overflow-x-hidden">
                                 <ul class="divide-y divide-slate-100">
@@ -106,14 +99,12 @@
                 @error('selectedTargetUserId') <span class="text-red-500 text-[10px] block mt-1 font-bold italic">{{ $message }}</span> @enderror
             </div>
 
-            {{-- Tujuan --}}
             <div>
                 <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Tujuan / Agenda Acara</label>
                 <input type="text" wire:model="purpose" placeholder="Contoh: Kuliah Pengganti, Sertifikasi BNSP, dsb." class="w-full border-slate-300 rounded-lg text-sm py-2.5 focus:ring-1 focus:ring-slate-900 focus:border-slate-900 font-medium bg-slate-50 placeholder-slate-300">
             </div>
         </div>
 
-        {{-- Footer Modal --}}
         <div class="bg-slate-50 px-6 py-4 flex justify-end gap-3 border-t border-slate-200">
             <button wire:click="$set('showClusterBookingModal', false)" class="px-5 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-200 rounded-xl transition-all active:scale-95">Batal</button>
             <button wire:click="storeBooking" 

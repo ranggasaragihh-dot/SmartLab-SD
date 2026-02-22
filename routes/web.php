@@ -29,21 +29,16 @@ use App\Http\Controllers\InventoryScanController;
 
 Route::get('/display', PublicDisplay::class)->name('public.display');
 
-// 1. ROOT URL: Selalu lempar ke Login
 Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// 2. GUEST: Hanya bisa diakses kalau BELUM login
 Route::middleware('guest')->group(function () {
     Route::get('/login', Login::class)->name('login');
 });
 
-// 3. AUTHENTICATED USER (Mahasiswa & Admin bisa masuk sini)
 Route::middleware('auth')->group(function () {
     
-    // === JARINGS PENGAMAN (THE BOUNCER) ===
-    // Ini PENTING! Jika ada yang nyasar ke '/dashboard', kita arahkan ulang sesuai role.
     Route::get('/dashboard', function () {
         if (Auth::user()->role === 'admin') {
             return redirect()->route('admin.dashboard');
@@ -51,10 +46,8 @@ Route::middleware('auth')->group(function () {
         return redirect()->route('booking.index');
     })->name('dashboard');
 
-    // === FITUR UTAMA MAHASISWA ===
     Route::get('/booking/{clusterId?}', BookingPage::class)->name('booking.index');
     
-    // === FITUR LAINNYA ===
     Route::get('/scan/{qrToken}', [CheckInController::class, 'handleScan'])->name('scan.qr');
     Route::get('/inventory/scan/{asset_code}', [InventoryScanController::class, 'show'])->name('inventory.scan.show');
 
@@ -63,27 +56,21 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// 4. ADMIN ONLY: Hanya Admin yang bisa akses ini
 Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', AdminDashboard::class)->name('dashboard');
     Route::get('/inventory', AdminInventory::class)->name('inventory');
-    Route::get('/lab/{clusterId}', LabManager::class)->name('lab.manager');
     Route::get('/clusters', ClusterManager::class)->name('clusters.index');
 
     Route::get('/inventaris', InventoryItemManager::class)->name('inventaris.index');
 
-    // 2. ROUTE UNTUK MENGELOLA ISI DALAM LAB (YANG SUDAH ADA SEBELUMNYA)
-    // Route::get('/lab/{clusterId}', \App\Livewire\Admin\LabManager::class)->name('lab.manage');
     Route::get('/denah-manager', DenahManager::class)->name('denah-manager');
     Route::get('/manajemen-user', UserManagement::class)->name('manajemen-user');
 
     Route::get('/booking', Dashboard::class)->name('booking.dashboard');
     Route::get('/booking/history', BookingHistory::class)->name('booking.history');
-    // 2. Manager (Detail Lab dengan Dropdown)
     Route::get('/booking/{clusterId}', Manager::class)->name('booking.manage');
 });
 
-// 5. LOGOUT: Wajib Method POST
 Route::post('/logout', function () {
     Auth::logout();
     session()->invalidate();

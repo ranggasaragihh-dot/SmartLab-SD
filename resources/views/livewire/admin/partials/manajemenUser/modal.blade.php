@@ -1,17 +1,11 @@
-{{-- File: resources/views/livewire/admin/partials/manajemenUser/modal.blade.php --}}
-
 <div>
-    {{-- 1. MODAL FORM (INPUT / IMPORT) --}}
     @if($showModal)
         <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            
             <div class="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
                 <div wire:click="closeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] transition-opacity" aria-hidden="true"></div>
                 <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
                 <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl w-full border border-slate-100 relative">
-                    
-                    {{-- HEADER --}}
                     <div class="px-6 pt-6 pb-4 flex justify-between items-start bg-white">
                         <div>
                             <h3 class="text-xl font-bold text-slate-900 tracking-tight">
@@ -26,7 +20,6 @@
                         </button>
                     </div>
 
-                    {{-- TABS (Only on Create) --}}
                     @if(!$isEditMode)
                         <div class="px-6 pb-2">
                             <div class="flex p-1 space-x-1 bg-slate-100/80 rounded-xl border border-slate-200">
@@ -42,13 +35,11 @@
                         </div>
                     @endif
 
-                    {{-- CONTENT AREA --}}
                     <div class="px-6 pb-6 pt-4 bg-white min-h-[300px] relative">
                         <div wire:loading wire:target="activeTab, store, update, import" 
                             class="absolute inset-0 z-50 bg-white/40 backdrop-blur-sm transition-all duration-200 rounded-b-2xl">
                         </div>
 
-                        {{-- INCLUDE FILES --}}
                         @if($isEditMode || $activeTab === 'manual')
                             @include('livewire.admin.partials.manajemenUser.form-manual')
                         @elseif($activeTab === 'import')
@@ -60,9 +51,7 @@
         </div>
     @endif
 
-    {{-- 2. MODAL DELETE --}}
     @if($showDeleteModal)
-        {{-- SEKARANG KITA PANGGIL FILE DELETE DISINI --}}
         @include('livewire.admin.partials.manajemenUser.delete-modal')
     @endif
 </div>

@@ -26,33 +26,28 @@ class Inventory extends Model
     ];
 
     protected $casts = [
-        'is_bookable' => 'boolean', // Pastikan baris ini ada!
+        'is_bookable' => 'boolean',
     ];
 
     protected static function booted()
     {
         static::creating(function ($inventory) {
-            // Jika qr_token tidak diisi manual, buatkan otomatis
             if (empty($inventory->qr_token)) {
-                // Generate string random 32 karakter (unik)
                 $inventory->qr_token = (string) Str::uuid(); 
             }
         });
     }
 
-    // Barang milik satu Lab
     public function cluster(): BelongsTo
     {
         return $this->belongsTo(Cluster::class);
     }
 
-    // Relasi ke Items (Barang yang nempel)
     public function item()
     {
         return $this->hasOne(InventoryItem::class, 'inventory_id');
     }
 
-    // Relasi ke Booking
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
@@ -60,7 +55,6 @@ class Inventory extends Model
 
     public function activeBooking()
     {
-        // Mengambil satu data booking terbaru yang statusnya 'booked' atau 'active'
         return $this->hasOne(Booking::class)->latestOfMany()->where('status', 'booked');
     }
 }

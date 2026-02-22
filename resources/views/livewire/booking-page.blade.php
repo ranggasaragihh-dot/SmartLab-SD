@@ -1,9 +1,7 @@
 <div class="flex h-screen w-full bg-slate-50 overflow-hidden font-sans">
 
-    {{-- 1. SIDEBAR (TIDAK DIUBAH) --}}
     @include('livewire.booking.sidebar')
 
-    {{-- 2. KONTEN UTAMA --}}
     <main class="flex-1 flex flex-col min-w-0 bg-slate-50">
         
         @include('livewire.booking.header')

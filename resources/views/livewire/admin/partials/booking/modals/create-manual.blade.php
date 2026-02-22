@@ -1,8 +1,6 @@
 @if($showCreateModal)
 <div class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in zoom-in duration-200">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 flex flex-col max-h-[90vh]">
-        
-        {{-- Header: UBAH JADI SLATE-900 (KONSISTEN ADMIN) --}}
         <div class="bg-slate-900 px-5 py-4 flex justify-between items-center shrink-0">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center text-white">
@@ -18,15 +16,12 @@
             </button>
         </div>
 
-        {{-- Body --}}
         <div class="p-5 space-y-4 overflow-y-auto">
-            {{-- Info Tanggal: Mengikuti Filter Luar --}}
             <div class="flex items-center gap-2.5 text-[11px] text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
                 <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                 <span class="font-bold uppercase tracking-wide">Jadwal: {{ \Carbon\Carbon::parse($dateFilter)->isoFormat('dddd, D MMMM Y') }}</span>
             </div>
 
-            {{-- Input Jam: UBAH FOCUS RING JADI SLATE --}}
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Jam Mulai</label>
@@ -40,7 +35,6 @@
                 </div>
             </div>
 
-            {{-- Input Mahasiswa / User --}}
             <div class="relative">
                 <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Pilih Mahasiswa / User</label>
                 
@@ -71,7 +65,6 @@
                             <svg class="animate-spin h-4 w-4 text-slate-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                         </div>
 
-                        {{-- Search Results Dropdown --}}
                         @if(!empty($usersList) && strlen($userSearch) > 1)
                             <div class="absolute z-10 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl max-h-48 overflow-y-auto">
                                 <ul class="divide-y divide-slate-100">
@@ -93,7 +86,6 @@
             </div>
         </div>
 
-        {{-- Footer --}}
         <div class="bg-slate-50 px-6 py-4 flex justify-end gap-3 border-t border-slate-100 shrink-0">
             <button wire:click="$set('showCreateModal', false)" class="px-5 py-2 text-xs font-bold text-slate-500 hover:text-slate-900 transition-all">Batal</button>
             <button wire:click="storeBooking" class="px-6 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-lg shadow-slate-200 transition-all transform active:scale-95">Simpan Booking</button>

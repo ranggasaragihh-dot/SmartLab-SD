@@ -14,7 +14,6 @@ class PublicDisplay extends Component
     {
         $now = Carbon::now();
 
-        // 1. Ambil Data Cluster
         $clusters = Cluster::with([
             'inventories' => function($q) use ($now) {
                 $q->with(['bookings' => function($b) use ($now) {
@@ -31,20 +30,13 @@ class PublicDisplay extends Component
             }
         ])->get();
 
-        // 2. Logic Tambahan & Global Event Check
         $globalEvent = null;
 
         $clusters->map(function ($cluster) use (&$globalEvent) {
-            // A. Sort PC
             $sortedInventory = $cluster->inventories->sortBy('name', SORT_NATURAL)->values();
             $cluster->setRelation('inventory', $sortedInventory);
-
-            // B. Cek Booking Ruangan per Cluster
             $cluster->active_room_booking = $cluster->bookings->first();
 
-            // C. LOGIKA PENGUNCIAN GLOBAL
-            // Jika belum ada global event yg terdeteksi, dan cluster ini punya booking ruangan,
-            // Maka jadikan ini sebagai Global Event (Kunci Semua Layar)
             if (!$globalEvent && $cluster->active_room_booking) {
                 $globalEvent = $cluster->active_room_booking;
             }
@@ -53,8 +45,8 @@ class PublicDisplay extends Component
         });
 
         return view('livewire.public-display', [
-            'clusters' => $clusters,
-            'globalEvent' => $globalEvent // Kirim variabel ini ke View
+            'clusters'    => $clusters,
+            'globalEvent' => $globalEvent
         ]);
     }
 }

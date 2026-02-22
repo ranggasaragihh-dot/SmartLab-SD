@@ -7,7 +7,6 @@
      aria-modal="true"
      style="display: none;">
 
-    {{-- Backdrop --}}
     <div x-show="open" 
          x-transition.opacity.duration.300ms
          class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
@@ -17,7 +16,6 @@
         <div class="absolute inset-0 overflow-hidden">
             <div class="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">
                 
-                {{-- Panel Sidebar --}}
                 <div x-show="open" 
                      x-transition:enter="transform transition ease-in-out duration-300" 
                      x-transition:enter-start="translate-x-full" 
@@ -28,8 +26,6 @@
                      class="pointer-events-auto w-screen max-w-md">
                     
                     <div class="flex h-full flex-col overflow-y-auto bg-white shadow-2xl">
-                        
-                        {{-- HEADER SIDEBAR --}}
                         <div class="bg-slate-900 px-6 py-5 shrink-0 border-b border-slate-800">
                             <div class="flex items-start justify-between">
                                 <div>
@@ -44,11 +40,8 @@
                             </div>
                         </div>
 
-                        {{-- BODY CONTENT --}}
                         @if($selectedBooking)
                         <div class="relative flex-1 px-6 py-6 space-y-6">
-
-                            {{-- 1. STATUS BANNER (Dynamic Alert) --}}
                             @if($selectedBooking->status === 'cancelled')
                                 <div class="rounded-xl bg-red-50 border border-red-200 p-4 shadow-sm animate-in fade-in slide-in-from-top-2">
                                     <div class="flex items-start gap-3">
@@ -76,7 +69,6 @@
                                 </div>
                             @endif
 
-                            {{-- 2. INFORMASI USER --}}
                             <div>
                                 <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2.5 flex items-center gap-2">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
@@ -93,7 +85,6 @@
                                 </div>
                             </div>
 
-                            {{-- 3. DETAIL JADWAL & ASET --}}
                             <div>
                                 <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2.5 flex items-center gap-2">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
@@ -129,7 +120,6 @@
                                 </div>
                             </div>
                             
-                            {{-- 4. KETERANGAN / TUJUAN (Jika Ada) --}}
                             @if($selectedBooking->purpose)
                             <div>
                                 <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2.5">Agenda / Tujuan</h4>
@@ -149,7 +139,6 @@
                         </div>
                         @endif
 
-                        {{-- FOOTER SIDEBAR --}}
                         <div class="border-t border-slate-200 px-6 py-4 bg-slate-50 shrink-0">
                             <button @click="open = false" class="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-slate-900/20 hover:bg-slate-800 transition-all active:scale-95">
                                 Tutup Panel

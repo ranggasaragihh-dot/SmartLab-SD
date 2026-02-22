@@ -8,7 +8,6 @@ class Role extends Model
 {
     protected $fillable = ['role'];
 
-    // RELASI: Role dimiliki banyak User
     public function users()
     {
         return $this->belongsToMany(User::class, 'role_user');

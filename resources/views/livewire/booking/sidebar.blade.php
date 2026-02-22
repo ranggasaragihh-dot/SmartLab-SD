@@ -1,18 +1,11 @@
 <div x-data="{ open: false }" @toggle-sidebar.window="open = !open">
-    
-    {{-- 1. BACKDROP GELAP (Mobile Only) --}}
     <div x-show="open" @click="open = false" x-transition.opacity class="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm md:hidden" style="display: none;"></div>
-
-    {{-- 2. SIDEBAR UTAMA --}}
-    {{-- KUNCI 1: Gunakan SATU warna background utama (bg-blue-900) untuk seluruh sidebar --}}
     <aside class="fixed inset-y-0 left-0 z-50 w-64 bg-[#1a237e] text-white flex flex-col transition-transform duration-300 transform 
               -translate-x-full md:translate-x-0 md:static md:h-screen shrink-0 shadow-2xl border-r border-white/10 font-sans"
        :class="open ? 'translate-x-0' : ''">
 
-    {{-- A. HEADER: HANYA LOGO & JUDUL (Clean) --}}
     <div class="relative shrink-0">
         <div class="absolute top-0 left-0 w-full h-1 bg-amber-400 z-20"></div>
-        
         <div class="h-20 flex items-center gap-4 px-6 border-b border-white/5 relative">
             <div class="w-9 h-9 bg-white rounded-lg flex items-center justify-center shadow-lg shrink-0">
                  <img src="{{ asset('images/logo-uajy.png') }}" class="w-6 h-6 object-contain" alt="Logo">
@@ -22,14 +15,12 @@
                 <p class="text-[10px] text-blue-200 uppercase tracking-widest font-medium mt-1">Lab Struktur Data</p>
             </div>
             
-            {{-- Close Button Mobile --}}
             <button @click="open = false" class="md:hidden ml-auto text-blue-300 hover:text-white">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
         </div>
     </div>
 
-    {{-- B. NAVIGASI (Area Tengah Luas) --}}
     <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
         <p class="px-3 text-[10px] font-bold text-blue-300/50 uppercase tracking-widest mb-3 ml-1">
             Daftar Ruangan
@@ -60,12 +51,8 @@
         @endforeach
     </nav>
 
-    {{-- C. FOOTER: PROFILE & LOGOUT MENYATU (Solid & Resmi) --}}
-    {{-- Ini solusi agar tidak "Aneh". Kita buat footer solid di bawah. --}}
     <div class="border-t border-white/5 p-4 bg-black/10">
-        
         <div class="flex items-center justify-between gap-3">
-            {{-- Info User --}}
             <div class="flex items-center gap-3 min-w-0">
                 <div class="relative shrink-0">
                     <div class="w-10 h-10 rounded-full bg-white text-[#1a237e] flex items-center justify-center font-bold border-2 border-amber-400 shadow-sm">
@@ -79,7 +66,6 @@
                 </div>
             </div>
 
-            {{-- Tombol Logout (Compact) --}}
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
                 <button type="submit" 
@@ -90,6 +76,5 @@
             </form>
         </div>
     </div>
-
 </aside>
 </div>

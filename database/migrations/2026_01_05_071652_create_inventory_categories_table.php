@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('inventory_categories', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique(); // Contoh: "Monitor", "PC Unit"
+            $table->string('name')->unique();
             $table->timestamps();
         });
     }

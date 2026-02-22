@@ -1,7 +1,5 @@
 <div class="space-y-6">
-    {{-- HEADER --}}
     <div class="flex flex-col sm:flex-row sm:items-center gap-5">
-        {{-- Tombol Kembali Lingkaran --}}
         <a href="{{ route('admin.dashboard') }}" 
         wire:navigate
         class="group flex items-center justify-center w-10 h-10 rounded-full border border-slate-200 bg-white shadow-sm hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-90">
@@ -22,9 +20,7 @@
         </div>
     </div>
 
-    {{-- FILTER CONTROLS (Wajib Ada) --}}
     <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col lg:flex-row gap-4 items-center">
-        {{-- Pencarian --}}
         <div class="relative flex-1 w-full">
             <input type="text" wire:model.live.debounce.500ms="search" placeholder="Cari Nama User, Email, atau ID Unit..." 
                    class="w-full pl-10 pr-4 py-2 border-slate-200 rounded-xl text-sm focus:ring-1 focus:ring-slate-900 focus:border-slate-900 bg-slate-50 font-medium transition-all">
@@ -33,7 +29,6 @@
             </div>
         </div>
 
-        {{-- Filter Status & Tanggal --}}
         <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
             <select wire:model.live="filterStatus" class="border-slate-200 rounded-xl text-sm py-2 pl-3 pr-8 focus:ring-1 focus:ring-slate-900 bg-slate-50 font-bold text-slate-600 cursor-pointer">
                 <option value="">Semua Status</option>
@@ -46,7 +41,6 @@
         </div>
     </div>
 
-    {{-- TABEL DATA HISTORI --}}
     <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
@@ -63,21 +57,17 @@
                     @forelse($bookings as $booking)
                         <tr wire:click="openDetailSidebar({{ $booking->id }})" 
                             class="hover:bg-slate-50 cursor-pointer transition-colors group {{ $selectedBooking && $selectedBooking->id === $booking->id ? 'bg-slate-100/80 border-l-4 border-slate-900' : 'border-l-4 border-transparent' }}">
-                            {{-- ID Transaksi --}}
                             <td class="px-6 py-4 font-mono text-xs font-bold">
                                 <span class="text-slate-300">#</span><span class="text-slate-900">{{ str_pad($booking->id, 4, '0', STR_PAD_LEFT) }}</span>
                             </td>
                             
-                            {{-- User --}}
                             <td class="px-6 py-4 group-hover:text-slate-900">
                                 <div class="flex items-center gap-3">
-                                    {{-- Avatar simpel --}}
                                     <div class="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] font-black shadow-sm">
                                         {{ strtoupper(substr($booking->user->name ?? 'U', 0, 1)) }}
                                     </div>
                                     <div class="flex flex-col">
                                         <span class="font-bold text-slate-800 text-xs">{{ $booking->user->name ?? 'Unknown' }}</span>
-                                        {{-- Menampilkan NIM (Agar pencarian NIM terlihat hasilnya) --}}
                                         <span class="text-[10px] text-slate-400 font-medium tracking-tight">
                                             {{ $booking->user->nomor_induk ?? $booking->user->email }}
                                         </span>
@@ -85,7 +75,6 @@
                                 </div>
                             </td>
                             
-                            {{-- Unit --}}
                             <td class="px-6 py-4">
                                 @if($booking->type === 'event' || !$booking->inventory_id)
                                     <span class="inline-flex px-2 py-0.5 rounded bg-amber-50 text-amber-700 text-[10px] font-black uppercase tracking-wider border border-amber-100">
@@ -93,10 +82,7 @@
                                     </span>
                                 @else
                                     <div class="flex flex-col">
-                                        {{-- Menampilkan Nama Unit --}}
                                         <span class="font-mono font-bold text-slate-700">{{ $booking->inventory->name ?? 'Unknown' }}</span>
-                                        
-                                        {{-- Menampilkan Kategori Barang & Cluster (Penting untuk Search Context) --}}
                                         <div class="flex items-center gap-1.5 mt-0.5">
                                             <span class="text-[10px] text-blue-600 font-bold bg-blue-50 px-1.5 rounded border border-blue-100 uppercase tracking-tighter">
                                                 {{ $booking->inventory->item->category->name ?? 'Aset' }}
@@ -109,13 +95,11 @@
                                 @endif
                             </td>
                             
-                            {{-- Waktu --}}
                             <td class="px-6 py-4 text-slate-600 text-xs">
                                 <span class="font-bold">{{ \Carbon\Carbon::parse($booking->start_time)->format('d M Y') }}</span>
                                 <span class="text-slate-400 ml-1">({{ \Carbon\Carbon::parse($booking->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($booking->end_time)->format('H:i') }})</span>
                             </td>
                             
-                            {{-- Status --}}
                             <td class="px-6 py-4 text-right">
                                 @php
                                     $statusClass = match($booking->status) {
@@ -147,13 +131,10 @@
             </table>
         </div>
         
-        {{-- Paginasi --}}
         <div class="p-4 border-t border-slate-100 bg-slate-50 shrink-0">
             {{ $bookings->links() }}
         </div>
     </div>
 
-    {{-- PANGGIL KOMPONEN SIDEBAR --}}
     @include('livewire.admin.partials.booking.booking-details-sidebar')
-
 </div>

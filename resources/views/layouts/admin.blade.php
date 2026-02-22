@@ -9,26 +9,12 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    {{-- 
-        ========================================================================
-        KONFIGURASI MENU & STYLE (EDIT DISINI UNTUK MENAMBAH MENU)
-        ========================================================================
-    --}}
     @php
-        // 1. DEFINISI STYLE (Agar tidak menulis class panjang berulang kali)
         $baseClass = "flex items-center px-6 py-3 transition-all duration-200 group border-l-4";
-        
-        // Style saat menu AKTIF (Slate-800 + Border Amber + Teks Putih)
         $activeClass = "bg-slate-800 border-amber-500 text-white";
-        
-        // Style saat menu TIDAK AKTIF (Slate-400 + Hover Effect)
         $inactiveClass = "text-slate-400 hover:bg-slate-800 hover:text-white border-transparent";
-        
-        // Style Icon (Aktif warna Amber, Tidak Aktif warna Slate)
         $iconActive = "text-amber-500";
         $iconInactive = "text-slate-500 group-hover:text-white";
-
-        // 2. DAFTAR MENU (Tambahkan array baru disini untuk menu baru)
         $menus = [
             [
                 'label' => 'Dashboard',
@@ -71,9 +57,6 @@
 
         @include('layouts.sidebar')
 
-        {{-- ================================================= --}}
-        {{--                  KONTEN UTAMA                     --}}
-        {{-- ================================================= --}}
         <div class="flex-1 flex flex-col overflow-hidden relative">
             
             {{-- TOPBAR (Mobile Toggle & User Info) --}}
@@ -111,8 +94,6 @@
 
             @include('layouts.footer')
         </div>
-
     </div>
-
 </body>
 </html>

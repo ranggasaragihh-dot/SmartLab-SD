@@ -1,19 +1,11 @@
 <div class="space-y-4 mb-6 font-sans">
-    
-    {{-- BARIS UTAMA: Flex Container --}}
     <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
-        
-        {{-- 1. BAGIAN KIRI: Judul & Subjudul --}}
         <div class="flex-shrink-0">
             <h1 class="text-2xl font-bold tracking-tight text-slate-900">{{ $title }}</h1>
             <p class="text-sm text-slate-500 mt-1">{{ $subtitle }}</p>
         </div>
 
-        {{-- 2. BAGIAN KANAN: Tools (Filter -> Search -> Tombol) --}}
-        {{-- Kita jadikan satu container flex agar rapi sebaris --}}
         <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto items-center justify-end">
-            
-            {{-- SEARCH BAR --}}
             @if(isset($searchable) && $searchable)
                 <div class="relative w-full sm:w-64 shrink-0">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -30,15 +22,12 @@
                 </div>
             @endif
             
-            {{-- FILTER --}}
             @if(isset($filters))
                 <div class="w-full sm:w-auto shrink-0"> 
-                    {{-- Render HTML apapun yang dikirim dari Parent View --}}
                     {!! $filters !!}
                 </div>
             @endif
 
-            {{-- C. TOMBOL UTAMA (Paling Kanan) --}}
             <button 
                 wire:click="{{ $action }}" 
                 class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 text-sm font-bold text-white bg-slate-900 rounded-lg hover:bg-slate-800 shadow-lg shadow-slate-900/10 hover:shadow-slate-900/20 transition-all whitespace-nowrap gap-2"
@@ -50,7 +39,6 @@
         </div>
     </div>
 
-    {{-- FLASH MESSAGES (Alert System) --}}
     <div class="space-y-2">
         @if (session()->has('message'))
             <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)" 
@@ -71,5 +59,4 @@
             </div>
         @endif
     </div>
-
 </div>

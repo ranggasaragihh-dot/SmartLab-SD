@@ -1,14 +1,5 @@
-{{-- ======================================================================== --}}
-{{-- MODAL 1: FORM BOOKING (CREATE)                                           --}}
-{{-- ======================================================================== --}}
 <div x-data="{ open: @entangle('showBookModal') }"> 
-    {{-- 
-       PERHATIKAN: Div di atas TIDAK BOLEH ada x-show atau style="display:none".
-       Dia hanya bertugas sebagai 'kantong' data.
-    --}}
-
     <template x-teleport="body">
-        {{-- Logika Tampil/Sembunyi pindah ke sini (setelah diteleport) --}}
         <div 
             x-show="open"
             x-cloak
@@ -16,10 +7,8 @@
             x-transition.opacity.duration.300ms
             class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
         >
-            {{-- Klik area gelap untuk tutup --}}
             <div @click="open = false" class="absolute inset-0"></div>
 
-            {{-- KONTEN MODAL --}}
             <div 
                 x-show="open"
                 x-transition:enter="transition ease-out duration-300"
@@ -40,7 +29,6 @@
                         </button>
                     </div>
 
-                    {{-- Form Input --}}
                     <div class="space-y-5">
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Waktu Mulai</label>
@@ -69,10 +57,6 @@
     </template>
 </div>
 
-{{-- ======================================================================== --}}
-{{-- MODAL 2: INFO & AKSI (CANCEL/FINISH) - UNTUK USER PEMILIK BOOKING        --}}
-{{-- ======================================================================== --}}
-{{-- PERBAIKAN: Entangle kedua variabel sekaligus --}}
 <div x-data="{ 
     isCancel: @entangle('showCancelModal'), 
     isFinish: @entangle('showFinishModal') 
@@ -86,7 +70,6 @@
             x-transition.opacity.duration.300ms
             class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
         >
-            {{-- KLIK LATAR UNTUK MENUTUP KEDUANYA --}}
             <div @click="isCancel = false; isFinish = false" class="absolute inset-0"></div>
 
             <div 
@@ -101,10 +84,6 @@
             >
                 @if($selectedBooking)
                     <div class="text-center pt-2">
-                        
-                        {{-- ICON & JUDUL DINAMIS MENGGUNAKAN ALPINE X-SHOW --}}
-                        
-                        {{-- 1. TAMPILAN FINISH (HIJAU) --}}
                         <div x-show="isFinish">
                             <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
                                 <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -115,7 +94,6 @@
                             </p>
                         </div>
 
-                        {{-- 2. TAMPILAN CANCEL (MERAH/AMBER) --}}
                         <div x-show="isCancel">
                             <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
                                 <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -126,7 +104,6 @@
                             </p>
                         </div>
                         
-                        {{-- Info Waktu (Tampil di kedua kondisi) --}}
                         <div class="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-100">
                             <div class="flex justify-between text-sm mb-2">
                                 <span class="text-gray-500">Mulai</span>
@@ -139,9 +116,6 @@
                         </div>
                     </div>
 
-                    {{-- TOMBOL AKSI DINAMIS --}}
-                    
-                    {{-- TOMBOL FINISH (Hanya muncul jika isFinish true) --}}
                     <button 
                         x-show="isFinish"
                         wire:click="finishBooking" 
@@ -155,7 +129,6 @@
                         <span wire:loading wire:target="finishBooking">Memproses...</span>
                     </button>
 
-                    {{-- TOMBOL CANCEL (Hanya muncul jika isCancel true) --}}
                     <button 
                         x-show="isCancel"
                         wire:click="cancelBooking" 
@@ -169,13 +142,10 @@
                         <span wire:loading wire:target="cancelBooking">Memproses...</span>
                     </button>
                     
-                    {{-- TOMBOL KEMBALI (Menutup keduanya) --}}
                     <button @click="isCancel = false; isFinish = false" class="w-full py-2 mt-3 text-xs font-bold text-gray-400 hover:text-gray-600">
                         Batal / Kembali
                     </button>
-
                 @else
-                    {{-- Loading State --}}
                     <div class="flex flex-col items-center justify-center py-8 text-gray-400 animate-pulse">
                         <svg class="w-8 h-8 mb-2" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                         <span class="text-xs">Memuat Data...</span>

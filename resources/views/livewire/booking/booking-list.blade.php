@@ -1,9 +1,5 @@
 <div class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 pb-24"> 
-
-    {{-- CEK APAKAH CLUSTER ADA? --}}
     @if(!$cluster)
-        
-        {{-- TAMPILAN EMPTY STATE --}}
         <div class="flex flex-col items-center justify-center h-64 text-center">
             <div class="bg-slate-100 p-4 rounded-full mb-4">
                 <svg class="w-12 h-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -15,15 +11,9 @@
                 Admin belum menambahkan data Lab atau Ruangan ke dalam sistem.
             </p>
         </div>
-
     @else
-        {{-- WRAPPER UTAMA --}}
         <div class="flex flex-col h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden">
-
-            {{-- SCROLLABLE CONTENT --}}
             <div class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 pb-24"> 
-
-                {{-- ALERT JIKA RUANGAN DI-LOCK ADMIN --}}
                 @if($isRoomLockedByAdmin)
                     <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg shadow-sm flex items-start gap-3">
                         <div class="text-red-500">
@@ -40,7 +30,6 @@
                     </div>
                 @endif
 
-                {{-- INFO CLUSTER --}}
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                     <div class="flex items-center gap-3 mb-2">
                         <span class="px-3 py-1 rounded-md text-xs font-bold bg-green-100 text-green-700 border border-green-200">
@@ -54,10 +43,7 @@
                     </h2>
                 </div>
 
-                {{-- CONTAINER DATA --}}
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    
-                    {{-- A. TABEL DESKTOP --}}
                     <div class="hidden md:block">
                         <table class="w-full text-sm text-left">
                             <thead class="text-sm font-bold text-slate-800 border-b border-slate-200 bg-white">
@@ -71,153 +57,120 @@
                             </thead>
                             <tbody class="divide-y divide-slate-100">
                                 @foreach($inventories as $pc)
-                                @dump($pc->item)
-                                @php
-                                    // LOGIKA BARU: Menggunakan Map dari Backend agar Cepat
-                                    $bookingData = $bookingsMap[$pc->id] ?? null;
-                                    $isLocked = in_array($pc->id, $lockedInventories);
-                                    
-                                    $activeBookingDetail = $pc->bookings
-                                        ->whereIn('status', ['booked', 'active'])
-                                        ->first();
-
-                                    // 2. Deklarasi variabel default (Aman dari null)
-                                    $isMine = false;
-                                    $isStarted = false;
-                                    $isExpired = false;
-
-                                    // 3. Evaluasi HANYA dilakukan jika benar-benar ada booking valid
-                                    if ($activeBookingDetail) {
-                                        $isMine = ($activeBookingDetail->user_id == $currentUserId);
+                                    @php
+                                        $bookingData = $bookingsMap[$pc->id] ?? null;
+                                        $isLocked = in_array($pc->id, $lockedInventories);
                                         
-                                        $now = \Carbon\Carbon::now();
-                                        $startTime = \Carbon\Carbon::parse($activeBookingDetail->start_time);
-                                        $endTime = \Carbon\Carbon::parse($activeBookingDetail->end_time);
+                                        $activeBookingDetail = $pc->bookings
+                                            ->whereIn('status', ['booked', 'active'])
+                                            ->first();
 
-                                        // Jika jam sekarang sudah melewati/sama dengan start_time, atau statusnya sudah aktif
-                                        $isStarted = $now->gte($startTime) || ($activeBookingDetail->status === 'active');
+                                        $isMine = false;
+                                        $isStarted = false;
+                                        $isExpired = false;
+
+                                        if ($activeBookingDetail) {
+                                            $isMine = ($activeBookingDetail->user_id == $currentUserId);
+                                            
+                                            $now = \Carbon\Carbon::now();
+                                            $startTime = \Carbon\Carbon::parse($activeBookingDetail->start_time);
+                                            $endTime = \Carbon\Carbon::parse($activeBookingDetail->end_time);
+
+                                            $isStarted = $now->gte($startTime) || ($activeBookingDetail->status === 'active');
+                                            
+                                            $isExpired = $now->gt($endTime);
+                                        }
                                         
-                                        // Safety lock: Jika karena suatu hal status masih active tapi waktu sudah lewat
-                                        $isExpired = $now->gt($endTime);
-                                    }
-                                    
-                                    $isLocked = in_array($pc->id, $lockedInventories);
-                                @endphp
+                                        $isLocked = in_array($pc->id, $lockedInventories);
+                                    @endphp
 
-                                <tr class="hover:bg-slate-50 transition-colors duration-200">
-                                    
-                                    {{-- Kode & Specs --}}
-                                    <td class="px-6 py-4 align-middle font-medium text-slate-700">{{ $pc->name }}</td>
-                                    <td class="px-6 py-4 align-middle text-slate-600">
-    {{-- CEK 1: Pastikan PC ini punya data fisik barang --}}
-    @if($pc->item && is_array($pc->item->specifications))
-        
-        <div class="flex flex-col gap-0.5 text-xs">
-            {{-- Ekstrak data JSON satu per satu dengan pengaman (?? '-') --}}
-            <div><span class="font-bold text-slate-700">CPU:</span> {{ $pc->item->specifications['cpu'] ?? '-' }}</div>
-            <div><span class="font-bold text-slate-700">RAM:</span> {{ $pc->item->specifications['ram'] ?? '-' }}</div>
-            <div><span class="font-bold text-slate-700">Storage:</span> {{ $pc->item->specifications['storage'] ?? '-' }}</div>
-            <div><span class="font-bold text-slate-700">VGA:</span> {{ $pc->item->specifications['gpu'] ?? '-' }}</div>
-        </div>
+                                    <tr class="hover:bg-slate-50 transition-colors duration-200">
+                                        <td class="px-6 py-4 align-middle font-medium text-slate-700">{{ $pc->name }}</td>
+                                        <td class="px-6 py-4 align-middle text-slate-600">
+                                            @if($pc->item && is_array($pc->item->specifications))
+                                                <div class="flex flex-col gap-0.5 text-xs">
+                                                    <div><span class="font-bold text-slate-700">CPU:</span> {{ $pc->item->specifications['cpu'] ?? '-' }}</div>
+                                                    <div><span class="font-bold text-slate-700">RAM:</span> {{ $pc->item->specifications['ram'] ?? '-' }}</div>
+                                                    <div><span class="font-bold text-slate-700">Storage:</span> {{ $pc->item->specifications['storage'] ?? '-' }}</div>
+                                                    <div><span class="font-bold text-slate-700">VGA:</span> {{ $pc->item->specifications['gpu'] ?? '-' }}</div>
+                                                </div>
+                                            @else
+                                                <span class="text-xs italic text-slate-400">Spesifikasi tidak tersedia</span>
+                                            @endif
+                                        </td>
 
-    @else
-        <span class="text-xs italic text-slate-400">Spesifikasi tidak tersedia</span>
-    @endif
-</td>
+                                        <td class="px-6 py-4 align-middle text-center">
+                                            @if($pc->status == 'broken')
+                                                <span class="inline-block px-3 py-1 rounded-md bg-red-50 text-red-600 text-xs font-bold border border-red-100">Rusak</span>
+                                            @elseif($pc->status == 'maintenance')
+                                                <span class="inline-block px-3 py-1 rounded-md bg-orange-50 text-orange-600 text-xs font-bold border border-orange-100">Perbaikan</span>
+                                            @else
+                                                <span class="text-slate-500 text-xs font-bold">Normal</span>
+                                            @endif
+                                        </td>
 
-                                    {{-- Kondisi Fisik --}}
-                                    <td class="px-6 py-4 align-middle text-center">
-                                        @if($pc->status == 'broken')
-                                            <span class="inline-block px-3 py-1 rounded-md bg-red-50 text-red-600 text-xs font-bold border border-red-100">Rusak</span>
-                                        @elseif($pc->status == 'maintenance')
-                                            <span class="inline-block px-3 py-1 rounded-md bg-orange-50 text-orange-600 text-xs font-bold border border-orange-100">Perbaikan</span>
-                                        @else
-                                            <span class="text-slate-500 text-xs font-bold">Normal</span>
-                                        @endif
-                                    </td>
-
-                                    {{-- Status Jadwal --}}
-                                    <td class="px-6 py-4 align-middle text-center">
-                                        {{-- JIKA ADA BOOKING (ORANG LAIN ATAU SAYA) --}}
-                                        @if($activeBookingDetail)
-                                            <div class="flex flex-col items-center">
-                                                <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-bold {{ $isMine ? 'bg-amber-100 text-amber-600 border border-amber-200' : 'bg-indigo-50 text-indigo-600 border border-indigo-100' }}">
-                                                    {{ $isMine ? 'Milik Saya' : 'Terbooking' }}
-                                                </span>
-                                                
-                                                
-                                                    <span class="text-[10px] text-slate-500 mt-1 font-medium">
-                                                        {{ \Carbon\Carbon::parse($activeBookingDetail->start_time)->format('H:i') }}
-                                                        - 
-                                                        {{ \Carbon\Carbon::parse($activeBookingDetail->end_time)->format('H:i') }}
+                                        <td class="px-6 py-4 align-middle text-center">
+                                            @if($activeBookingDetail)
+                                                <div class="flex flex-col items-center">
+                                                    <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-bold {{ $isMine ? 'bg-amber-100 text-amber-600 border border-amber-200' : 'bg-indigo-50 text-indigo-600 border border-indigo-100' }}">
+                                                        {{ $isMine ? 'Milik Saya' : 'Terbooking' }}
                                                     </span>
-                                                
-                                            </div>
-                                        
-                                        {{-- JIKA LOCKED ADMIN --}}
-                                        @elseif($isLocked)
-                                            <span class="text-xs font-bold text-red-400 uppercase">Locked</span>
+                                                        <span class="text-[10px] text-slate-500 mt-1 font-medium">
+                                                            {{ \Carbon\Carbon::parse($activeBookingDetail->start_time)->format('H:i') }}
+                                                            - 
+                                                            {{ \Carbon\Carbon::parse($activeBookingDetail->end_time)->format('H:i') }}
+                                                        </span>
+                                                </div>
+                                            
+                                            @elseif($isLocked)
+                                                <span class="text-xs font-bold text-red-400 uppercase">Locked</span>
 
-                                        {{-- JIKA TIDAK AVAILABLE (Maintenance/Rusak) --}}
-                                        @elseif($pc->status != 'available')
-                                            <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200">
-                                                Unavailable
-                                            </span>
-                                        
-                                        {{-- JIKA TERSEDIA --}}
-                                        @else
-                                            <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-bold bg-green-100 text-green-700 border border-green-200">
-                                                Tersedia
-                                            </span>
-                                        @endif
-                                    </td>
+                                            @elseif($pc->status != 'available')
+                                                <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200">
+                                                    Unavailable
+                                                </span>
+                                            
+                                            @else
+                                                <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-bold bg-green-100 text-green-700 border border-green-200">
+                                                    Tersedia
+                                                </span>
+                                            @endif
+                                        </td>
 
-                                    {{-- Action --}}
-                                    <td class="px-6 py-4 align-middle text-right">
-    
-                                        {{-- KONDISI 1: ADA BOOKING VALID & MILIK SAYA --}}
-                                        @if($isMine && !$isExpired)
-                                            @if($isStarted)
-                                                <button wire:click="clickSeat({{ $pc->id }})" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-5 py-2.5 rounded-md shadow-sm transition-transform active:scale-95 ml-auto">
-                                                    Selesai
+                                        <td class="px-6 py-4 align-middle text-right">
+                                            @if($isMine && !$isExpired)
+                                                @if($isStarted)
+                                                    <button wire:click="clickSeat({{ $pc->id }})" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-5 py-2.5 rounded-md shadow-sm transition-transform active:scale-95 ml-auto">
+                                                        Selesai
+                                                    </button>
+                                                @else
+                                                    <button wire:click="clickSeat({{ $pc->id }})" class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-5 py-2.5 rounded-md shadow-sm transition-transform active:scale-95 ml-auto">
+                                                        Batal
+                                                    </button>
+                                                @endif
+                                            @elseif($isLocked)
+                                                <button disabled class="bg-slate-100 text-slate-400 border border-slate-200 text-xs font-bold px-5 py-2.5 rounded-md cursor-not-allowed ml-auto">
+                                                    Event Room
+                                                </button>
+                                            @elseif(!$activeBookingDetail && $pc->status == 'available')
+                                                <button wire:click="clickSeat({{ $pc->id }})" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-5 py-2.5 rounded-md shadow-sm transition-transform active:scale-95 ml-auto">
+                                                    Booking
                                                 </button>
                                             @else
-                                                <button wire:click="clickSeat({{ $pc->id }})" class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-5 py-2.5 rounded-md shadow-sm transition-transform active:scale-95 ml-auto">
-                                                    Batal
+                                                <button disabled class="text-slate-300 font-bold text-xs cursor-not-allowed px-2 ml-auto">
+                                                    {{ $activeBookingDetail ? 'Full' : ($pc->status == 'maintenance' ? 'MT' : 'Off') }}
                                                 </button>
                                             @endif
-
-                                        {{-- KONDISI 2: LOCKED ADMIN (EVENT) --}}
-                                        @elseif($isLocked)
-                                            <button disabled class="bg-slate-100 text-slate-400 border border-slate-200 text-xs font-bold px-5 py-2.5 rounded-md cursor-not-allowed ml-auto">
-                                                Event Room
-                                            </button>
-
-                                        {{-- KONDISI 3: BENAR-BENAR KOSONG & SEHAT (TIDAK ADA BOOKING VALID) --}}
-                                        @elseif(!$activeBookingDetail && $pc->status == 'available')
-                                            <button wire:click="clickSeat({{ $pc->id }})" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-5 py-2.5 rounded-md shadow-sm transition-transform active:scale-95 ml-auto">
-                                                Booking
-                                            </button>
-
-                                        {{-- KONDISI 4: BOOKING ORANG LAIN ATAU RUSAK --}}
-                                        @else
-                                            <button disabled class="text-slate-300 font-bold text-xs cursor-not-allowed px-2 ml-auto">
-                                                {{ $activeBookingDetail ? 'Full' : ($pc->status == 'maintenance' ? 'MT' : 'Off') }}
-                                            </button>
-                                        @endif
-
-                                    </td>
-                                </tr>
+                                        </td>
+                                    </tr>
                                 @endforeach
                             </tbody>
                         </table>
                     </div>
 
-                    {{-- B. LIST CARD MOBILE (Optimized) --}}
                     <div class="md:hidden bg-slate-50 border-t border-slate-100 p-4 space-y-3">
                         @foreach($inventories as $pc)
                             @php
-                                // LOGIKA BARU: Menggunakan Map dari Backend agar Cepat
                                 $bookingData = $bookingsMap[$pc->id] ?? null;
                                 $isLocked = in_array($pc->id, $lockedInventories);
                                 
@@ -225,12 +178,10 @@
                                     ->whereIn('status', ['booked', 'active'])
                                     ->first();
 
-                                // 2. Deklarasi variabel default (Aman dari null)
                                 $isMine = false;
                                 $isStarted = false;
                                 $isExpired = false;
 
-                                // 3. Evaluasi HANYA dilakukan jika benar-benar ada booking valid
                                 if ($activeBookingDetail) {
                                     $isMine = ($activeBookingDetail->user_id == $currentUserId);
                                         
@@ -238,19 +189,13 @@
                                     $startTime = \Carbon\Carbon::parse($activeBookingDetail->start_time);
                                     $endTime = \Carbon\Carbon::parse($activeBookingDetail->end_time);
 
-                                    // Jika jam sekarang sudah melewati/sama dengan start_time, atau statusnya sudah aktif
                                     $isStarted = $now->gte($startTime) || ($activeBookingDetail->status === 'active');
-                                        
-                                    // Safety lock: Jika karena suatu hal status masih active tapi waktu sudah lewat
                                     $isExpired = $now->gt($endTime);
                                 }
-                                    
                                 $isLocked = in_array($pc->id, $lockedInventories);
                             @endphp
                         
                         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex items-center justify-between gap-3 {{ ($bookingData || $pc->status != 'available') ? 'bg-slate-50' : '' }}">
-                            
-                            {{-- BAGIAN KIRI --}}
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2 mb-1">
                                     <h3 class="font-bold text-slate-800 text-lg leading-none">{{ $pc->name }}</h3>
@@ -263,7 +208,6 @@
 
                                 <p class="text-[10px] text-slate-500 font-medium truncate">RTX 3060 / 16GB RAM</p>
 
-                                {{-- Status Teks Mobile --}}
                                 @if($isMine)
                                     <p class="text-[10px] text-amber-600 font-bold mt-1">Milik Saya</p>
                                 @elseif($activeBookingDetail)
@@ -280,7 +224,6 @@
                                 @endif
                             </div>
                             
-                            {{-- BAGIAN KANAN: Tombol --}}
                             <div class="shrink-0">
                                 @if($isMine && !$isExpired)
                                     @if(!$isStarted)
@@ -292,32 +235,25 @@
                                             Selesai
                                         </button>
                                     @endif
-
                                 @elseif($isLocked)
                                     <button disabled class="bg-slate-100 text-slate-400 border border-slate-200 text-[10px] font-bold px-3 py-2 rounded-md cursor-not-allowed">
                                         Event
                                     </button>
-
                                 @elseif(!$activeBookingDetail && $pc->status == 'available')
                                     <button wire:click="clickSeat({{ $pc->id }})" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-5 py-2.5 rounded-md shadow-sm">
                                         Booking
                                     </button>
-
                                 @else
                                     <button disabled class="text-slate-300 font-bold text-xs cursor-not-allowed px-2">
                                         @if($activeBookingDetail) Full @else Off @endif
                                     </button>
                                 @endif
                             </div>
-
                         </div>
                         @endforeach
                     </div>
-
                 </div>
-
                 <div class="pt-2"></div>
-
             </div>
         </div>
     @endif

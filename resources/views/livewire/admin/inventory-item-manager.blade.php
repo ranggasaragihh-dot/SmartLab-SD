@@ -1,6 +1,4 @@
 <div class="font-sans text-slate-900">
-
-    {{-- 1. Panggil Komponen Header Universal --}}
     @include('livewire.admin.partials.header', [
         'title'             => 'Manajemen Aset Fisik',
         'subtitle'          => 'Database inventaris & perlengkapan lab.',
@@ -9,7 +7,6 @@
         'searchable'        => true,
         'searchPlaceholder' => 'Cari aset...',
         
-        // KUNCI KONSISTENSI: Kita kirimkan dropdown filter lewat slot ini
         'filters' => view('livewire.admin.partials.inventory.filter-popover', [
             'categories'      => $categories,
             'brands'          => $brands,
@@ -17,17 +14,14 @@
             'filterBrand'     => $filterBrand,
             'filterLocation'  => $filterLocation,
             'filterCondition' => $filterCondition,
-            'availableBrands' => $this->availableBrands // Alirkan data reaktif ke sini
+            'availableBrands' => $this->availableBrands
         ])->render()
     ])
 
-    {{-- 2. TABLE CONTAINER (Menggunakan styling bayangan biru persis seperti Manajemen User) --}}
     <div class="bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 overflow-hidden mt-6">
 
         <div class="overflow-x-auto">
             <table class="w-full text-sm text-left">
-                
-                {{-- Header Tabel --}}
                 <thead class="bg-slate-50 border-b border-slate-100 text-xs uppercase font-bold text-slate-500 tracking-wider">
                     <tr>
                         <th class="px-6 py-4">Kode Aset</th>
@@ -39,25 +33,20 @@
                     </tr>
                 </thead>
 
-                {{-- Body Tabel --}}
                 <tbody class="divide-y divide-slate-50">
                     @forelse($items as $item)
                         <tr class="hover:bg-slate-50/80 transition-colors group">
-                            
-                            {{-- Kode Aset (Mengadopsi style NPM) --}}
                             <td class="px-6 py-4 align-top">
                                 <span class="font-mono text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-1 rounded border border-slate-200">
                                     {{ $item->asset_code }}
                                 </span>
                             </td>
 
-                            {{-- Info Barang --}}
                             <td class="px-6 py-4 align-top">
                                 <div class="font-bold text-slate-800 truncate">{{ $item->brand->name ?? 'No Brand' }}</div>
                                 <div class="text-xs text-slate-500 truncate">{{ $item->category->name ?? 'Uncategorized' }}</div>
                             </td>
 
-                            {{-- Lokasi Fisik --}}
                             <td class="px-6 py-4 align-top">
                                 @if($item->inventory)
                                     <div class="font-bold text-slate-800 text-sm truncate">
@@ -71,7 +60,6 @@
                                 @endif
                             </td>
 
-                            {{-- Spesifikasi --}}
                             <td class="px-6 py-4 align-top">
                                 @php
                                     $specs = $item->specifications ?? [];
@@ -102,7 +90,6 @@
                                 @endif
                             </td>
 
-                            {{-- Kondisi (Mengadopsi style Status TA: ada titik warnanya) --}}
                             <td class="px-6 py-4 align-top text-center">
                                 @if($item->condition == 'good')
                                     <span class="text-xs text-slate-400 font-medium">Baik</span>
@@ -119,7 +106,6 @@
                                 @endif
                             </td>
 
-                            {{-- Aksi (Mengadopsi style tombol Aksi User) --}}
                             <td class="px-6 py-4 align-top text-right">
                                 <div class="flex items-center justify-end gap-2">
                                     <button wire:click="edit({{ $item->id }})" class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-md transition-all" title="Edit Data">
@@ -145,15 +131,12 @@
             </table>
         </div>
             
-        {{-- Footer --}}
         <div class="px-6 py-4 border-t border-slate-100 bg-slate-50">
             {{ $items->links() }}
         </div>
     </div>
     
-    {{-- Modal Includes --}}
     @include('livewire.admin.partials.inventory.modal')
     @include('livewire.admin.partials.inventory.delete-modal') 
     @include('livewire.admin.partials.inventory.modal-qr')
-
 </div>

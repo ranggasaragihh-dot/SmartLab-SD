@@ -12,8 +12,6 @@ use Livewire\Component;
 #[Layout('layouts.guest')] 
 class Login extends Component
 {
-    // 1. GANTI PROPERTI EMAIL JADI NOMOR INDUK
-    // Hapus validasi 'email' karena nomor induk biasanya string/angka biasa
     #[Validate('required|string')] 
     public string $nomor_induk = '';
 
@@ -24,23 +22,16 @@ class Login extends Component
 
     public function login()
     {
-        // 2. VALIDASI VARIABEL DI ATAS
         $this->validate();
-        // dd("Input Masuk:", $this->nomor_induk, $this->password);
 
-        // 3. COBA LOGIN (Gunakan key 'nomor_induk' sesuai kolom database)
         if (! Auth::attempt(['nomor_induk' => $this->nomor_induk, 'password' => $this->password], $this->remember)) {
-            
-            // Jika gagal, lempar error validasi ke field nomor_induk
             throw ValidationException::withMessages([
                 'nomor_induk' => trans('auth.failed'),
             ]);
         }
 
-        // 4. JIKA SUKSES, BERSIHKAN RATE LIMITER & REGENERATE SESSION
         Session::regenerate();
 
-        // 5. REDIRECT SESUAI ROLE
         /** @var \App\Models\User $user */
         $user = Auth::user();
         

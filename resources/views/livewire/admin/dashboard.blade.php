@@ -1,17 +1,12 @@
 <div class="space-y-6">
-    {{-- HEADER --}}
     <div class="flex items-center justify-between">
         <h1 class="text-2xl font-black text-slate-900 tracking-tight">Dashboard Overview</h1>
-        {{-- Tanggal Live / Info --}}
         <div class="text-sm font-medium text-slate-500 bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
             {{ \Carbon\Carbon::now()->isoFormat('dddd, D MMMM Y') }}
         </div>
     </div>
 
-    {{-- 1. STATS CARDS (Dengan Konteks & Tema Slate) --}}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        {{-- Card 1: Booking Hari Ini --}}
         <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center gap-4">
             <div class="p-3.5 rounded-xl bg-slate-900 text-white shadow-md">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
@@ -20,13 +15,11 @@
                 <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Booking Hari Ini</p>
                 <div class="flex items-baseline gap-2 mt-0.5">
                     <h3 class="text-2xl font-black text-slate-900">{{ $stats['today_bookings'] }}</h3>
-                    {{-- KONTEKS TAMBAHAN (Sesuaikan dengan data riil dari backend) --}}
                     <span class="text-[10px] font-medium text-slate-500">Total Sesi</span>
                 </div>
             </div>
         </div>
 
-        {{-- Card 2: Sesi Aktif --}}
         <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center gap-4">
             <div class="p-3.5 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -40,9 +33,7 @@
             </div>
         </div>
 
-        {{-- Card 3: PC Maintenance --}}
         <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center gap-4">
-            {{-- Gunakan Amber jika ada maintenance, Slate jika 0 --}}
             <div class="p-3.5 rounded-xl {{ $stats['maintenance_pc'] > 0 ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-slate-50 text-slate-400 border-slate-100' }} border">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
             </div>
@@ -57,7 +48,6 @@
             </div>
         </div>
 
-        {{-- Card 4: Total Booking --}}
         <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center gap-4">
             <div class="p-3.5 rounded-xl bg-slate-50 text-slate-600 border border-slate-200">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
@@ -69,7 +59,6 @@
         </div>
     </div>
 
-    {{-- 2. RECENT ACTIVITY TABLE (Interactive & Clickable) --}}
     <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white">
             <h3 class="font-black text-slate-800 tracking-tight">Aktivitas Terbaru</h3>
@@ -92,11 +81,9 @@
                 </thead>
                 <tbody class="text-sm divide-y divide-slate-50">
                     @forelse($recentBookings as $booking)
-                        {{-- PERBAIKAN FATAL: Baris tabel sekarang bisa di-klik dan memicu Sidebar --}}
                         <tr wire:click="openDetailSidebar({{ $booking->id }})" 
                             class="hover:bg-slate-50 cursor-pointer transition-colors group">
                             
-                            {{-- User --}}
                             <td class="px-6 py-3.5 font-bold text-slate-800 group-hover:text-slate-900">
                                 <div class="flex items-center gap-3">
                                     <div class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-xs">
@@ -106,7 +93,6 @@
                                 </div>
                             </td>
                             
-                            {{-- Unit (Penanganan Logika Event vs Manual) --}}
                             <td class="px-6 py-3.5">
                                 @if($booking->type === 'event' || !$booking->inventory_id)
                                     <span class="inline-flex px-2 py-0.5 rounded bg-amber-50 text-amber-700 text-[10px] font-black uppercase tracking-wider border border-amber-100">
@@ -117,12 +103,10 @@
                                 @endif
                             </td>
                             
-                            {{-- Waktu --}}
                             <td class="px-6 py-3.5 text-slate-500 text-xs font-medium">
                                 {{ \Carbon\Carbon::parse($booking->start_time)->format('d M Y, H:i') }}
                             </td>
                             
-                            {{-- Status --}}
                             <td class="px-6 py-3.5 text-right">
                                 @php
                                     $statusClass = match($booking->status) {
@@ -150,8 +134,5 @@
         </div>
     </div>
 
-    {{-- COMPONENT SIDEBAR DETAIL --}}
-    {{-- Pisahkan pemanggilan file agar rapi dan tidak numpuk di dashboard --}}
     @include('livewire.admin.partials.booking.booking-details-sidebar')
-
 </div>

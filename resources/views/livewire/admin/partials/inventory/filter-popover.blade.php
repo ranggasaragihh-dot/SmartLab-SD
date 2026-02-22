@@ -1,17 +1,12 @@
-{{-- Pindahkan @click.away ke kontainer induk ini --}}
 <div x-data="{ openFilter: false }" @click.away="openFilter = false" class="relative">
-    
-    {{-- 1. TOMBOL TRIGGER --}}
     <button 
         @click="openFilter = !openFilter" 
         type="button" 
-        {{-- Fokus warna diubah ke amber-500 --}}
         class="flex items-center gap-2 bg-white border border-slate-300 text-slate-700 text-sm font-bold rounded-lg px-4 py-2 hover:bg-slate-50 focus:border-amber-500 focus:ring-2 focus:ring-amber-500 transition-all shadow-sm"
     >
         <svg class="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
         <span>Filter</span>
         
-        {{-- BADGE INDIKATOR --}}
         @php
             $activeCount = 0;
             if(!empty($filterCategory)) $activeCount++;
@@ -27,7 +22,6 @@
         @endif
     </button>
 
-    {{-- 2. PANEL POPOVER --}}
     <div 
         x-show="openFilter" 
         x-transition:enter="transition ease-out duration-200"
@@ -39,7 +33,6 @@
         style="display: none;" 
         class="absolute right-0 sm:right-auto sm:left-0 top-full mt-2 w-72 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] border border-slate-200 z-50 overflow-hidden"
     >
-        {{-- Header Panel --}}
         <div class="px-4 py-3 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
             <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider">Parameter Filter</h3>
             @if($activeCount > 0)
@@ -49,10 +42,7 @@
             @endif
         </div>
 
-        {{-- Isi Filter (Fokus warna diubah ke amber-500) --}}
         <div class="p-4 space-y-4">
-            
-            {{-- Dropdown Kategori --}}
             <div>
                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Kategori Aset</label>
                 <select wire:model.live="filterCategory" class="w-full text-sm border-slate-300 rounded-md focus:ring-slate-900 focus:border-slate-900 shadow-sm py-1.5 px-3">
@@ -63,7 +53,6 @@
                 </select>
             </div>
 
-            {{-- Dropdown Merk (Dependent) --}}
             <div class="mt-4">
                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Merk / Pabrikan</label>
                 
@@ -78,14 +67,12 @@
                         <option value="">Semua Merk</option>
                     @endif
                     
-                    {{-- HAPUS $this-> DI SINI. Cukup panggil variabel $availableBrands --}}
                     @foreach($availableBrands as $brand) 
                         <option value="{{ $brand->id }}">{{ $brand->name }}</option> 
                     @endforeach
                 </select>
             </div>
 
-            {{-- Dropdown Lokasi --}}
             <div>
                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Lokasi Ruangan</label>
                 <select wire:model.live="filterLocation" class="w-full text-sm border-slate-300 rounded-md focus:ring-amber-500 focus:border-amber-500 shadow-sm py-1.5 px-3">
@@ -99,7 +86,6 @@
                 </select>
             </div>
 
-            {{-- Dropdown Kondisi --}}
             <div>
                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Kondisi Fisik</label>
                 <select wire:model.live="filterCondition" class="w-full text-sm border-slate-300 rounded-md focus:ring-amber-500 focus:border-amber-500 shadow-sm py-1.5 px-3">

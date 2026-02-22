@@ -1,30 +1,16 @@
 <div class="flex flex-col h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden">
-
-    {{-- ====================================================================== --}}
-    {{-- BAGIAN 2: MAIN CONTENT (UNIFIED CARD) --}}
-    {{-- ====================================================================== --}}
     <div class="flex-1 px-6 pb-6 overflow-hidden flex flex-col"> 
-        
-        {{-- UNIFIED CARD CONTAINER --}}
         <div class="bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col h-full overflow-hidden">
-            
-            {{-- A. CARD HEADER & TOOLBAR (Sticky di dalam Card) --}}
             <div class="p-4 border-b border-slate-200 bg-white z-20 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shrink-0">
-                
-                {{-- KIRI: Identitas Cluster --}}
                 <div class="flex items-center gap-4">
-                    
-                    {{-- TOMBOL KEMBALI (Menyatu dalam Header) --}}
                     <a href="{{ route('admin.booking.dashboard') }}" 
                        class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-50 border border-slate-200 text-slate-500 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all"
                        title="Kembali ke Dashboard">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                     </a>
 
-                    {{-- GARIS PEMISAH VERTIKAL --}}
                     <div class="h-8 w-px bg-slate-200 hidden sm:block"></div>
 
-                    {{-- INFO CLUSTER --}}
                     <div>
                         <div class="flex items-center gap-3">
                             <h1 class="text-xl font-bold text-slate-900 tracking-tight">Cluster {{ $cluster->name }}</h1>
@@ -38,15 +24,11 @@
                     </div>
                 </div>
 
-                {{-- KANAN: Filter Controls Group --}}
                 <div class="flex flex-wrap items-center gap-2">
-                    
-                    {{-- Date Picker --}}
                     <div class="relative group">
                         <input type="date" wire:model.live="dateFilter" class="pl-3 pr-2 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-1 focus:ring-slate-900 outline-none shadow-sm transition hover:border-slate-300 font-medium w-auto">
                     </div>
 
-                    {{-- Time Picker --}}
                     <div class="relative group">
                         <select wire:model.live="sessionFilter" 
                                 class="pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-1 focus:ring-slate-900 outline-none shadow-sm transition hover:border-slate-300 font-medium">
@@ -57,10 +39,8 @@
                         </select>
                     </div>
 
-                    {{-- Divider --}}
                     <div class="h-8 w-px bg-slate-200 mx-1 hidden sm:block"></div>
 
-                    {{-- Status Dropdown --}}
                     <select wire:model.live="statusFilter" class="pl-3 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm cursor-pointer font-medium">
                         <option value="">Semua Status</option>
                         <option value="available">Available</option>
@@ -69,7 +49,6 @@
                         <option value="maintenance">Maintenance</option>
                     </select>
 
-                    {{-- Primary Action --}}
                     <button wire:click="$set('showClusterBookingModal', true)" 
                         class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md shadow-slate-200 transition-all flex items-center gap-2 ml-2 transform active:scale-95">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
@@ -78,7 +57,6 @@
                 </div>
             </div>
 
-            {{-- B. CARD BODY (TABEL SCROLLABLE) --}}
             <div class="flex-1 overflow-auto bg-white relative">
                 <table class="w-full text-left border-collapse">
                     <thead class="bg-slate-50/80 sticky top-0 z-10 backdrop-blur-sm shadow-sm">
@@ -92,24 +70,18 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100 text-sm">
                         @forelse($inventories as $pc)
-                        
-                        {{-- Logika Style Baris: Jika Booked -> Highlight Biru --}}
                         <tr class="transition-colors group {{ $pc->activeBooking ? 'bg-slate-50/80 border-l-4 border-l-slate-900' : 'hover:bg-slate-50/50 border-l-4 border-l-transparent' }}">
-                            
-                            {{-- Kolom 1: Unit ID --}}
                             <td class="px-6 py-4 align-middle">
                                 <span class="w-10 h-10 rounded-lg {{ $pc->activeBooking ? 'bg-slate-900 text-white shadow-md' : 'bg-white border-slate-200 text-slate-500' }} border flex items-center justify-center font-mono font-bold text-sm transition-all">
                                     {{ substr($pc->name, -2) }}
                                 </span>
                             </td>
 
-                            {{-- Kolom 2: Info --}}
                             <td class="px-6 py-4 align-middle">
                                 <div class="font-bold text-slate-700">{{ $pc->name }}</div>
                                 <div class="text-xs text-slate-400 font-mono mt-0.5">{{ $pc->specs ?? 'Standard Configuration' }}</div>
                             </td>
 
-                            {{-- Kolom 3: Kondisi (Badge) --}}
                             <td class="px-6 py-4 align-middle text-center">
                                 @if($pc->status == 'broken')
                                     <span class="inline-flex px-2 py-1 rounded bg-red-50 text-red-600 text-[10px] font-bold border border-red-100 uppercase tracking-wide">Rusak</span>
@@ -120,15 +92,12 @@
                                 @endif
                             </td>
 
-                            {{-- Kolom 4: Status Jadwal --}}
                             <td class="px-6 py-4 align-middle">
                                 @if($pc->activeBooking)
                                     <div class="flex items-start gap-3">
-                                        {{-- Indikator Warna Tipe Booking --}}
                                         <div class="w-1 h-8 rounded-full {{ $pc->activeBooking->type == 'event' ? 'bg-purple-500' : 'bg-slate-400' }}"></div>
                                         <div>
                                             <div class="font-bold text-slate-800 flex items-center gap-2 {{ $pc->activeBooking->type == 'event' ? 'text-purple-800' : 'text-slate-800' }}">
-                                                {{ $pc->activeBooking->user->name ?? 'User' }}
                                                 @if($pc->activeBooking->type == 'event')
                                                     <span class="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-black uppercase tracking-tighter">EVENT RUANGAN</span>
                                                 @endif
@@ -150,7 +119,6 @@
                                 @endif
                             </td>
 
-                            {{-- Kolom 5: Kontrol --}}
                             <td class="px-6 py-4 align-middle text-right">
                                 @if($pc->activeBooking)
                                     <div class="flex items-center justify-end gap-1.5">
@@ -182,21 +150,14 @@
                 </table>
             </div>
 
-            {{-- C. FOOTER (PAGINATION) --}}
             <div class="p-4 border-t border-slate-200 bg-slate-50 text-xs text-slate-500 flex justify-between items-center shrink-0">
                 <span>Menampilkan <strong>{{ $inventories->count() }}</strong> unit</span>
-                {{-- Jika ada pagination link, render di sini --}}
             </div>
-
         </div>
-        {{-- END UNIFIED CARD --}}
-
     </div>
 
-    {{-- Modals --}}
     @include('livewire.admin.partials.booking.modals.create-manual')
     @include('livewire.admin.partials.booking.modals.create-cluster-booking')
     @include('livewire.admin.partials.booking.modals.cancel-booking')
     @include('livewire.admin.partials.booking.modals.finish-booking')
-
 </div>

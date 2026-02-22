@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Inventory;
 use App\Services\BookingService;
 use Exception;
 
@@ -27,7 +26,7 @@ class LabController extends Controller
     {
         $request->validate([
             'user_id' => 'required',
-            'qr_token' => 'required', // Token dari tabel Inventory
+            'qr_token' => 'required',
         ]);
 
         try {
@@ -45,7 +44,7 @@ class LabController extends Controller
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage() // Misal: "Belum waktunya"
+                'message' => $e->getMessage()
             ], 400);
         }
     }
@@ -57,7 +56,6 @@ class LabController extends Controller
      */
     public function getPcStatus($inventoryId)
     {
-        // Langsung tanya Service: "Saya harus ngapain? LOCK atau UNLOCK?"
         $response = $this->bookingService->getPcCommand($inventoryId);
         
         return response()->json($response);

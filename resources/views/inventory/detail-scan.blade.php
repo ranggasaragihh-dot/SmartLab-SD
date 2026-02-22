@@ -5,22 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sertifikat Aset - SISTRUK</title>
     
-    {{-- KUNCI UTAMA: Pemanggil Tailwind CSS (Vite) --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
-    {{-- Jika Anda pakai Laravel Mix versi lama, gunakan: --}}
     {{-- <link href="{{ asset('css/app.css') }}" rel="stylesheet"> --}}
 </head>
 <body class="antialiased bg-slate-50">
 
-    {{-- PASTE KODE KARTU ASET SAYA DI SINI --}}
     <div class="max-w-md mx-auto min-h-screen bg-slate-50 p-4 sm:p-6 flex flex-col justify-center font-sans relative">
          <div class="max-w-md mx-auto min-h-screen bg-slate-50 p-4 sm:p-6 flex flex-col justify-center font-sans">
     
             {{-- KARTU INFORMASI UTAMA --}}
             <div class="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden">
-                
-                {{-- HEADER: Identitas Aset (Dark Mode untuk Kontras) --}}
                 <div class="bg-slate-900 p-6 text-center relative overflow-hidden">
                     {{-- Aksen Latar Belakang --}}
                     <div class="absolute -top-10 -right-10 w-32 h-32 bg-slate-800 rounded-full blur-2xl opacity-50"></div>
@@ -36,12 +31,10 @@
                     </div>
                 </div>
 
-                {{-- SOROTAN UTAMA: Status & Lokasi (Informasi Operasional Terpenting) --}}
+                {{-- Status & Lokasi --}}
                 <div class="grid grid-cols-2 divide-x divide-slate-100 border-b border-slate-100 bg-slate-50/50">
                     <div class="p-4 flex flex-col items-center justify-center">
                         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Status Fisik</span>
-                        
-                        {{-- Logika Warna Semantik (Pastikan kondisi Anda disesuaikan) --}}
                         @php
                             $cond = strtolower($item->condition);
                             $badgeStyle = match(true) {
@@ -64,7 +57,6 @@
                     </div>
                 </div>
 
-                {{-- DETAIL TEKNIS: Grid Bersih --}}
                 <div class="p-6 space-y-4">
                     <div class="flex justify-between items-center pb-3 border-b border-slate-50 border-dashed">
                         <span class="text-xs font-bold text-slate-500 flex items-center gap-2">
@@ -77,7 +69,7 @@
                     <div class="flex justify-between items-center">
                         <span class="text-xs font-bold text-slate-500 flex items-center gap-2">
                             <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
-                            Merk / Pabrikan
+                            Merk
                         </span>
                         <span class="text-sm font-bold text-slate-900 text-right">{{ $item->brand->name }}</span>
                     </div>
@@ -85,6 +77,5 @@
             </div>
         </div>
     </div>
-
 </body>
 </html>
