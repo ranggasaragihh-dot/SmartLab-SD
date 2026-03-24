@@ -16,7 +16,7 @@
                 </div>
 
                 <h1 class="text-2xl font-bold text-white tracking-tight">
-                    ATMA-LAB
+                    LAB SD
                 </h1>
 
                 <p class="text-blue-100/80 text-xs font-medium mt-1 mb-4">
@@ -29,7 +29,7 @@
                         <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
                     </span>
                     <span class="text-[10px] font-bold text-white tracking-wider uppercase">
-                        SISTRUK <span class="text-blue-200 font-normal capitalize">Edition</span>
+                        LABSD <span class="text-blue-200 font-normal capitalize">Edition</span>
                     </span>
                 </div>
             </div>
@@ -110,7 +110,7 @@
             </form>
 
             <div class="mt-8 text-center text-xs text-gray-400">
-                &copy; {{ date('Y') }} Informatika UAJY | Powered by SISTRUK Engine.
+                &copy; {{ date('Y') }} Informatika UAJY | Powered by LABSD Engine.
             </div>
         </div>
     </div>

@@ -13,7 +13,7 @@
                     </div>
 
                     <div class="leading-tight z-10">
-                        <h1 class="font-bold text-lg tracking-tight text-white">ATMA-LAB</h1>
+                        <h1 class="font-bold text-lg tracking-tight text-white">LAB SD</h1>
                         <div class="flex items-center gap-1.5">
                             <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
                             <p class="text-[10px] text-slate-300 uppercase tracking-widest font-bold">Administrator</p>

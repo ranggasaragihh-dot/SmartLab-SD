@@ -16,7 +16,7 @@
                     Audit Log
                 </span>
             </h1>
-            <p class="text-sm text-slate-500 font-medium mt-0.5">Kelola dan audit seluruh data reservasi ATMA-LAB.</p>
+            <p class="text-sm text-slate-500 font-medium mt-0.5">Kelola dan audit seluruh data reservasi LAB SD.</p>
         </div>
     </div>
 

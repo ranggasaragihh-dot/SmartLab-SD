@@ -8,9 +8,10 @@ use Illuminate\Support\Facades\Hash;
 use Maatwebsite\Excel\Concerns\OnEachRow;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Row;
 
-class UsersImport implements OnEachRow, WithHeadingRow, WithValidation
+class UsersImport implements OnEachRow, WithHeadingRow, WithValidation, WithChunkReading
 {
     public function onRow(Row $row)
     {
@@ -38,19 +39,20 @@ class UsersImport implements OnEachRow, WithHeadingRow, WithValidation
         $inputTA = strtolower(trim($data['ambil_ta'] ?? ''));
         $statusTA = in_array($inputTA, ['ya', 'yes', '1', 'true']);
 
-        $user = User::firstOrCreate(
-            ['email' => $data['email']],
-            [
-                'name'          => $data['nama_lengkap'],
-                'nomor_induk'   => $data['nomor_induk'],
-                'password'      => Hash::make((string) $data['nomor_induk']),
-                'ta'            => $statusTA,
-            ]
-        );
+        $user = User::firstOrNew(['nomor_induk' => trim($data['nomor_induk'])]);
+        $inputEmail = trim($data['email'] ?? '');
+        $user->email = ($inputEmail === '') ? null : $inputEmail;
+        $user->name = $data['nama_lengkap'];
+        $user->ta = $statusTA;
+
+        if (!$user->exists) {
+            $user->password = Hash::make((string) $data['nomor_induk']);
+        }
+        $user->save();
 
         $roleDB = Role::where('role', $targetRoleName)->first();
         if ($roleDB) {
-            $user->roles()->syncWithoutDetaching([$roleDB->id]);
+            $user->roles()->sync([$roleDB->id]);
         }
     }
 
@@ -58,9 +60,14 @@ class UsersImport implements OnEachRow, WithHeadingRow, WithValidation
     {
         return [
             'nama_lengkap' => 'required',
-            'email'        => 'required|email',
+            'email'        => 'nullable|email',
             'nomor_induk'  => 'required',
             'role'         => 'nullable|string',
         ];
+    }
+
+    public function chunkSize(): int
+    {
+        return 500; 
     }
 }

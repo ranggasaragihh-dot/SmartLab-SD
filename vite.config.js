@@ -5,7 +5,7 @@ export default defineConfig({
     server: {
         host: '0.0.0.0',
         hmr: {
-            host: '10.31.252.204', // Ganti dengan IP Laptop Anda
+            host: 'localhost', // Ganti dengan IP Laptop Anda
         },
     },
     plugins: [

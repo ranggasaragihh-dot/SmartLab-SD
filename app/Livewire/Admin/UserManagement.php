@@ -88,6 +88,7 @@ class UserManagement extends Component
         ]);
 
         try {
+            set_time_limit(300);
             Excel::import(new UsersImport, $this->importFile);
             
             $this->showImportModal = false;

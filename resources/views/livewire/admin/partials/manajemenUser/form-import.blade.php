@@ -15,7 +15,7 @@
             </ul>
         </div>
     </div>
-
+    @if(!$importFile)
     <div 
         x-data="{ isDropping: false }"
         @dragover.prevent="isDropping = true"
@@ -47,7 +47,7 @@
         </div>
     </div>
 
-    @if($importFile)
+    @else
         <div class="animate-fade-in-up bg-emerald-50 border border-emerald-100 rounded-lg p-3 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="p-2 bg-white rounded-md border border-emerald-100 text-emerald-600">

@@ -17,11 +17,8 @@ class Inventory extends Model
     protected $fillable = [
         'cluster_id',
         'name',
-        'brand',
         'qr_token',
         'status',
-        'admin_override',
-        'mac_address',
         'is_bookable',
     ];
 

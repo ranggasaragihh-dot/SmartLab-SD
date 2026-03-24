@@ -11,7 +11,7 @@
                  <img src="{{ asset('images/logo-uajy.png') }}" class="w-6 h-6 object-contain" alt="Logo">
             </div>
             <div class="flex flex-col justify-center">
-                <h1 class="font-extrabold text-lg tracking-wide leading-none font-sans">SISTRUK</h1>
+                <h1 class="font-extrabold text-lg tracking-wide leading-none font-sans">LAB SD</h1>
                 <p class="text-[10px] text-blue-200 uppercase tracking-widest font-medium mt-1">Lab Struktur Data</p>
             </div>
             
