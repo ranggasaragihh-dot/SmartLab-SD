@@ -3,12 +3,60 @@
 namespace App\Services;
 
 use App\Models\Booking;
+use App\Models\Cluster;
 use App\Models\Inventory;
 use Carbon\Carbon;
 use Exception;
 
 class BookingService
 {
+    public function expireUnattendedBookings(?Carbon $now = null): int
+    {
+        $now ??= Carbon::now();
+        $cancelledCount = 0;
+
+        foreach (Cluster::query()->get(['id', 'delay_time']) as $cluster) {
+            $graceMinutes = (int) ($cluster->delay_time ?? 15);
+            $deadline = $now->copy()->subMinutes($graceMinutes);
+
+            $cancelledCount += Booking::query()
+                ->where('cluster_id', $cluster->id)
+                ->where('status', 'booked')
+                ->whereNull('check_in_time')
+                ->where('start_time', '<=', $deadline)
+                ->update([
+                    'status' => 'cancelled',
+                    'cancel_reason' => 'Terlambat Check-in',
+                    'updated_at' => $now,
+                ]);
+        }
+
+        return $cancelledCount;
+    }
+
+    public function completeExpiredSessions(?Carbon $now = null): int
+    {
+        $now ??= Carbon::now();
+
+        return Booking::query()
+            ->where('status', 'active')
+            ->where('end_time', '<=', $now)
+            ->update([
+                'status' => 'completed',
+                'updated_at' => $now,
+            ]);
+    }
+
+    public function synchronizeExpiredBookings(?Carbon $now = null): array
+    {
+        $now ??= Carbon::now();
+
+        return [
+            'cancelled' => $this->expireUnattendedBookings($now),
+            'completed' => $this->completeExpiredSessions($now),
+        ];
+    }
+
     public function isSlotAvailable($inventoryId, $clusterId, $startTime, $endTime)
     {
         return ! Booking::where('status', '!=', 'cancelled')
@@ -57,12 +105,14 @@ class BookingService
     public function processCheckIn($userId, $qrToken)
     {
         $now = Carbon::now();
+        $this->synchronizeExpiredBookings($now);
         $pc = Inventory::where('qr_token', $qrToken)->first();
         if (!$pc) {
             throw new Exception("QR Code tidak valid.");
         }
 
-        $booking = Booking::where('user_id', $userId)
+        $booking = Booking::with('cluster')
+            ->where('user_id', $userId)
             ->whereIn('status', ['booked', 'active'])
             ->where(function ($query) use ($pc) {
                 $query->where('inventory_id', $pc->id)
@@ -73,20 +123,17 @@ class BookingService
             })
             ->orderBy('start_time', 'asc')
             ->get()
-            ->filter(function ($b) use ($now) {
-                return $now->lt(Carbon::parse($b->end_time));
-            })
-            ->first();
+            ->first(function ($booking) use ($now) {
+                $startTime = Carbon::parse($booking->start_time);
+                $endTime = Carbon::parse($booking->end_time);
+                $earlyCheckInMinutes = (int) ($booking->cluster->early_checkin_minutes ?? 10);
+
+                return $now->greaterThanOrEqualTo($startTime->copy()->subMinutes($earlyCheckInMinutes))
+                    && $now->lt($endTime);
+            });
 
         if (!$booking) {
-            throw new Exception("Anda tidak memiliki jadwal di PC/Ruangan ini, atau jadwal sudah berakhir.");
-        }
-
-        $startTime = Carbon::parse($booking->start_time);
-        
-        if ($now->lessThan($startTime->copy()->subMinutes(15))) {
-            $waitMinutes = $now->diffInMinutes($startTime);
-            throw new Exception("Terlalu cepat! Jadwal Anda baru mulai {$waitMinutes} menit lagi.");
+            throw new Exception('QR tidak sesuai dengan reservasi aktif Anda, atau pemindaian dilakukan di luar rentang waktu check-in.');
         }
 
         if ($booking->status === 'booked') {
@@ -106,8 +153,8 @@ class BookingService
     {
         $booking = Booking::find($bookingId);
 
-        if (!$booking || $booking->user_id !== $userId) {
-            throw new Exception("Akses ditolak.");
+        if (!$booking || $booking->status !== 'active' || (int) $booking->user_id !== (int) $userId) {
+            throw new Exception('Akses ditolak atau booking tidak aktif.');
         }
 
         $booking->update(['status' => 'completed']);

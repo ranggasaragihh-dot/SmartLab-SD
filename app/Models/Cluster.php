@@ -15,6 +15,7 @@ class Cluster extends Model
         'name',
         'denah_image',
         'delay_time',
+        'early_checkin_minutes',
         'description',
         'type',
         'is_active',
@@ -25,6 +26,7 @@ class Cluster extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'delay_time' => 'integer',
+        'early_checkin_minutes' => 'integer',
         'max_duration_minutes' => 'integer',
     ];
 

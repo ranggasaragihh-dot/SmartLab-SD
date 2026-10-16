@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\BookingService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class CheckInController extends Controller
@@ -19,9 +20,10 @@ class CheckInController extends Controller
         try {
             $result = $this->bookingService->processCheckIn(Auth::id(), $qrToken);
             $booking = $result['booking'];
-            $pc = $result['scanned_pc'];
 
-            $message = "Check-in Berhasil! PC {$pc->name} Unlocked.";
+            $message = Carbon::now()->lt($booking->start_time)
+                ? 'Check-in berhasil. PC akan terbuka pukul ' . $booking->start_time->format('H:i') . '.'
+                : 'Check-in berhasil. PC terbuka.';
             if (!$booking->inventory_id) {
                 $message .= " (Akses Full Ruangan)";
             }
