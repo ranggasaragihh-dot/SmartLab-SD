@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class PcStatusTest extends TestCase
@@ -127,6 +128,55 @@ class PcStatusTest extends TestCase
                 'command' => 'IGNORE',
                 'message' => 'PC Not Found',
             ]);
+    }
+
+    public function test_status_polling_updates_pc_last_seen_at(): void
+    {
+        $this->getJson("/api/pc-status/{$this->firstPc->id}")
+            ->assertOk();
+
+        $this->assertDatabaseHas('inventory', [
+            'id' => $this->firstPc->id,
+            'last_seen_at' => '2026-10-17 10:00:00',
+        ]);
+    }
+
+    public function test_status_polling_within_thirty_seconds_does_not_update_last_seen_at(): void
+    {
+        $this->getJson("/api/pc-status/{$this->firstPc->id}")
+            ->assertOk();
+        Carbon::setTestNow(Carbon::parse('2026-10-17 10:00:20', 'Asia/Jakarta'));
+
+        $this->getJson("/api/pc-status/{$this->firstPc->id}")
+            ->assertOk();
+
+        $this->assertDatabaseHas('inventory', [
+            'id' => $this->firstPc->id,
+            'last_seen_at' => '2026-10-17 10:00:00',
+        ]);
+    }
+
+    public function test_unknown_pc_poll_does_not_create_an_inventory_record(): void
+    {
+        $this->getJson('/api/pc-status/999999')
+            ->assertNotFound();
+
+        $this->assertDatabaseCount('inventory', 2);
+        $this->assertDatabaseMissing('inventory', ['id' => 999999]);
+    }
+
+    public function test_admin_pc_list_shows_online_and_offline_badges(): void
+    {
+        $this->actingAs($this->user);
+
+        Livewire::test(\App\Livewire\Admin\Booking\Manager::class, ['clusterId' => $this->cluster->id])
+            ->assertSee('Offline')
+            ->assertSee('Belum pernah terhubung');
+
+        $this->firstPc->update(['last_seen_at' => Carbon::now()]);
+
+        Livewire::test(\App\Livewire\Admin\Booking\Manager::class, ['clusterId' => $this->cluster->id])
+            ->assertSee('Online');
     }
 
     private function createPc(string $name): Inventory

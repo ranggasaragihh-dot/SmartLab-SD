@@ -1,4 +1,4 @@
-<div class="flex flex-col h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden">
+<div wire:poll.30s class="flex flex-col h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden">
     <div class="flex-1 px-6 pb-6 overflow-hidden flex flex-col"> 
         <div class="bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col h-full overflow-hidden">
             <div class="p-4 border-b border-slate-200 bg-white z-20 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shrink-0">
@@ -80,6 +80,23 @@
                             <td class="px-6 py-4 align-middle">
                                 <div class="font-bold text-slate-700">{{ $pc->name }}</div>
                                 <div class="text-xs text-slate-400 font-mono mt-0.5">{{ $pc->specs ?? 'Standard Configuration' }}</div>
+                                <div class="mt-2">
+                                    @if($pc->last_seen_at && $pc->last_seen_at->greaterThanOrEqualTo(now()->subSeconds(30)))
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                                            <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                                            Online
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">
+                                            <span class="h-1.5 w-1.5 rounded-full bg-slate-400"></span>
+                                            Offline
+                                        </span>
+                                        <div class="mt-0.5 text-[10px] text-slate-400">
+                                            Terakhir terlihat:
+                                            {{ $pc->last_seen_at?->format('d/m/Y H:i:s') ?? 'Belum pernah terhubung' }}
+                                        </div>
+                                    @endif
+                                </div>
                             </td>
 
                             <td class="px-6 py-4 align-middle text-center">

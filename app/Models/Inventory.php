@@ -20,10 +20,12 @@ class Inventory extends Model
         'qr_token',
         'status',
         'is_bookable',
+        'last_seen_at',
     ];
 
     protected $casts = [
         'is_bookable' => 'boolean',
+        'last_seen_at' => 'datetime',
     ];
 
     protected static function booted()
