@@ -7,6 +7,7 @@ use App\Models\Cluster;
 use App\Models\Inventory;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\DB;
 
 class BookingService
 {
@@ -59,47 +60,52 @@ class BookingService
 
     public function isSlotAvailable($inventoryId, $clusterId, $startTime, $endTime)
     {
-        return ! Booking::where('status', '!=', 'cancelled')
-            ->where('status', '!=', 'rejected')
-            ->where('status', '!=', 'completed')
+        return ! Booking::query()
+            ->whereNotIn('status', ['cancelled', 'rejected', 'completed'])
             ->where(function ($query) use ($inventoryId, $clusterId) {
-                
-                if ($inventoryId) {
+                if ($inventoryId !== null) {
                     $query->where('inventory_id', $inventoryId)
-                          ->orWhere(function($sub) use ($clusterId) {
-                              $sub->where('cluster_id', $clusterId)
-                                  ->whereNull('inventory_id');
-                          });
-                } 
-                else {
+                        ->orWhere(function ($subquery) use ($clusterId) {
+                            $subquery->where('cluster_id', $clusterId)
+                                ->whereNull('inventory_id');
+                        });
+                } else {
                     $query->where('cluster_id', $clusterId);
                 }
             })
-            ->where(function ($q) use ($startTime, $endTime) {
-                $q->whereBetween('start_time', [$startTime, $endTime])
-                  ->orWhereBetween('end_time', [$startTime, $endTime])
-                  ->orWhere(function ($sub) use ($startTime, $endTime) {
-                       $sub->where('start_time', '<', $startTime)
-                           ->where('end_time', '>', $endTime);
-                  });
-            })
+            ->where('start_time', '<', $endTime)
+            ->where('end_time', '>', $startTime)
             ->exists();
     }
 
     public function createBooking($userId, $inventoryId, $clusterId, $start, $end)
     {
-        if (!$this->isSlotAvailable($inventoryId, $clusterId, $start, $end)) {
-            throw new Exception("Gagal! Jadwal bentrok dengan pengguna lain atau ruangan sedang digunakan.");
-        }
+        return DB::transaction(function () use ($userId, $inventoryId, $clusterId, $start, $end) {
+            Cluster::query()
+                ->whereKey($clusterId)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        return Booking::create([
-            'user_id'      => $userId,
-            'cluster_id'   => $clusterId,
-            'inventory_id' => $inventoryId,
-            'start_time'   => $start,
-            'end_time'     => $end,
-            'status'       => 'booked',
-        ]);
+            if ($inventoryId !== null) {
+                Inventory::query()
+                    ->whereKey($inventoryId)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+            }
+
+            if (!$this->isSlotAvailable($inventoryId, $clusterId, $start, $end)) {
+                throw new Exception("Gagal! Jadwal bentrok dengan pengguna lain atau ruangan sedang digunakan.");
+            }
+
+            return Booking::create([
+                'user_id' => $userId,
+                'cluster_id' => $clusterId,
+                'inventory_id' => $inventoryId,
+                'start_time' => $start,
+                'end_time' => $end,
+                'status' => 'booked',
+            ]);
+        });
     }
 
     public function processCheckIn($userId, $qrToken)

@@ -9,7 +9,7 @@ use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
+use App\Services\BookingService;
 
 #[Layout('layouts.booking')]
 class BookingPage extends Component
@@ -164,32 +164,31 @@ class BookingPage extends Component
             return;
         }
 
-        DB::beginTransaction();
-
+        $bookingService = app(BookingService::class);
         try {
-            if (!$this->isSlotAvailable($start, $end)) {
-                DB::rollBack();
-                $this->addError('start_time', 'Slot baru saja diambil orang lain atau tidak tersedia.');
-                return;
-            }
-
-            Booking::create([
-                'user_id'      => Auth::id(),
-                'cluster_id'   => $this->cluster->id,
-                'inventory_id' => $this->selectedInventoryId,
-                'start_time'   => $this->start_time,
-                'end_time'     => $this->end_time,
-                'status'       => 'booked',
-            ]);
-
-            DB::commit();
+            $bookingService->createBooking(
+                Auth::id(),
+                $this->selectedInventoryId,
+                $this->cluster->id,
+                $this->start_time,
+                $this->end_time,
+            );
 
             session()->flash('success', 'Booking berhasil!');
             $this->showBookModal = false;
             $this->reset(['start_time', 'end_time']);
 
         } catch (\Exception $e) {
-            DB::rollBack();
+            if (!$bookingService->isSlotAvailable(
+                $this->selectedInventoryId,
+                $this->cluster->id,
+                $start,
+                $end,
+            )) {
+                $this->addError('start_time', 'Slot baru saja diambil orang lain atau tidak tersedia.');
+                return;
+            }
+
             session()->flash('error', 'Gagal menyimpan: ' . $e->getMessage());
         }
     }
@@ -238,30 +237,6 @@ class BookingPage extends Component
             session()->flash('success', 'Check-in Berhasil!');
             $this->resetModals(); 
         }
-    }
-
-    private function isSlotAvailable($start, $end)
-    {
-        $user = Auth::user();
-        $delay = (int)($this->cluster->delay_time_minutes ?? 0);
-        
-        $startWithBuffer = $start->copy()->subMinutes($delay);
-        $endWithBuffer = $end->copy()->addMinutes($delay);
-
-        return ! Booking::where('cluster_id', $this->cluster->id)
-            ->whereIn('status', ['booked', 'active'])
-            ->where(function ($query) use ($user) {
-                $query->where('inventory_id', $this->selectedInventoryId); 
-                $isImmune = ($this->cluster->type === 'private' && (int)$user->ta === 1);
-                if (!$isImmune) {
-                    $query->orWhereNull('inventory_id'); 
-                }
-            })
-            ->where(function ($q) use ($startWithBuffer, $endWithBuffer) {
-                $q->where('start_time', '<', $endWithBuffer)
-                  ->where('end_time', '>', $startWithBuffer);
-            })
-            ->exists();
     }
 
     public function render()
