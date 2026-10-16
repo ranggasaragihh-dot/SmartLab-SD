@@ -114,28 +114,38 @@ class BookingService
         return $booking;
     }
 
-    public function getPcCommand($inventoryId)
+    public function getPcCommand($inventoryId): array
     {
         $inventory = Inventory::find($inventoryId);
-        
-        if (!$inventory || empty($inventory->mac_address)) {
-            return ['command' => 'IGNORE']; 
+
+        if (!$inventory) {
+            return [
+                'command' => 'IGNORE',
+                'message' => 'PC Not Found',
+            ];
         }
 
         $now = Carbon::now();
 
-        $hasActiveSession = Booking::where('status', 'active')
+        $activeBooking = Booking::with('user:id,name')
+            ->where('status', 'active')
             ->where('start_time', '<=', $now)
             ->where('end_time', '>', $now)
-            ->where(function($q) use ($inventory) {
-                $q->where('inventory_id', $inventory->id)
-                  ->orWhere(function($sub) use ($inventory) {
-                      $sub->where('cluster_id', $inventory->cluster_id)
-                          ->whereNull('inventory_id');
-                  });
+            ->where(function ($query) use ($inventory) {
+                $query->where('inventory_id', $inventory->id)
+                    ->orWhere(function ($subquery) use ($inventory) {
+                        $subquery->where('cluster_id', $inventory->cluster_id)
+                            ->whereNull('inventory_id');
+                    });
             })
-            ->exists();
+            ->orderBy('end_time')
+            ->first();
 
-        return $hasActiveSession ? ['command' => 'UNLOCK'] : ['command' => 'LOCK'];
+        return [
+            'command' => $activeBooking ? 'UNLOCK' : 'LOCK',
+            'user' => $activeBooking?->user?->name,
+            'end_time' => $activeBooking?->end_time?->format('Y-m-d H:i:s'),
+            'server_time' => $now->format('Y-m-d H:i:s'),
+        ];
     }
 }
