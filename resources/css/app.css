@@ -2,30 +2,52 @@
 @tailwind components;
 @tailwind utilities;
 
-/* resources/css/app.css */
-
-@media (max-width: 768px) {
-    /* Paksa semua tabel bisa di-scroll horizontal */
-    table {
-        display: block;
-        width: 100%;
-        overflow-x: auto;
-        white-space: nowrap; /* Mencegah teks turun baris bikin tabel jelek */
+@layer base {
+    html {
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
     }
 
-    /* Kecilkan font di HP agar muat lebih banyak */
-    td, th {
-        font-size: 0.75rem; /* Text XS */
-        padding: 0.5rem;    /* Padding lebih rapat */
+    body {
+        min-height: 100vh;
     }
 
-    /* Sembunyikan kolom ID atau Created At secara otomatis (opsional) */
-    /* Asumsi kolom ke-1 adalah ID */
-    th:nth-child(1), td:nth-child(1) {
-        display: none;
+    input,
+    select,
+    textarea,
+    button {
+        font: inherit;
     }
 }
 
-[x-cloak] { 
-    display: none !important; 
+@layer utilities {
+    .pt-safe {
+        padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
+    }
+
+    .pb-safe {
+        padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+    }
+
+    .h-screen-dvh {
+        height: 100vh;
+        height: 100dvh;
+    }
+}
+
+@media (max-width: 768px) {
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="search"],
+    input[type="number"],
+    input[type="tel"],
+    select,
+    textarea {
+        font-size: 16px;
+    }
+}
+
+[x-cloak] {
+    display: none !important;
 }

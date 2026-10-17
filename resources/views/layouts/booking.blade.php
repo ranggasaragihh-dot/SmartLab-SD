@@ -1,12 +1,10 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    @include('components.layouts.head')
     <title>SmartLab Booking</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="antialiased h-screen w-screen overflow-hidden bg-gray-100 x-data="{ sidebarOpen: false }">
+<body class="antialiased min-h-screen bg-gray-100">
     {{ $slot }}
 </body>
 </html>
