@@ -48,14 +48,14 @@
 
 <body class="bg-gray-100 font-sans antialiased" x-data="{ sidebarOpen: false }">
 
-    <div class="flex h-screen overflow-hidden">
+    <div class="flex h-dvh overflow-hidden">
 
         @include('layouts.sidebar')
 
         <div class="flex-1 flex flex-col overflow-hidden relative">
             
             {{-- TOPBAR (Mobile Toggle & User Info) --}}
-            <header class="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6 shadow-sm z-10">
+            <header class="min-h-16 shrink-0 bg-white border-b border-gray-200 flex items-center justify-between px-4 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)] pb-3 shadow-sm z-10 md:h-16 md:min-h-0 md:px-6 md:py-0">
                 
                 {{-- Tombol Hamburger (Mobile Only) --}}
                 <button @click="sidebarOpen = !sidebarOpen" class="md:hidden text-gray-500 focus:outline-none">
@@ -83,7 +83,7 @@
             </header>
 
             {{-- MAIN SLOT --}}
-            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-6">
+            <main class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-4 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] md:p-6">
                 {{-- Overlay Mobile --}}
                 <div x-show="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 z-40 bg-black bg-opacity-50 md:hidden" style="display: none;"></div>
                 

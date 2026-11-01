@@ -49,7 +49,7 @@
                         <option value="maintenance">Maintenance</option>
                     </select>
 
-                    <button wire:click="$set('showClusterBookingModal', true)" 
+                    <button wire:click="openEventModal" 
                         class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md shadow-slate-200 transition-all flex items-center gap-2 ml-2 transform active:scale-95">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                         <span class="hidden sm:inline">Book 1 Ruangan (Event)</span>
@@ -139,9 +139,11 @@
                             <td class="px-6 py-4 align-middle text-right">
                                 @if($pc->activeBooking)
                                     <div class="flex items-center justify-end gap-1.5">
-                                        <button wire:click="openFinishModal({{ $pc->activeBooking->id }})" class="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-bold hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition-all shadow-sm">
-                                            Finish
-                                        </button>
+                                        @if($pc->activeBooking->status === 'active')
+                                            <button wire:click="openFinishModal({{ $pc->activeBooking->id }})" class="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-bold hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition-all shadow-sm">
+                                                Finish
+                                            </button>
+                                        @endif
                                         <button wire:click="openCancelModal({{ $pc->activeBooking->id }})" class="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-bold hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all shadow-sm">
                                             Cancel
                                         </button>

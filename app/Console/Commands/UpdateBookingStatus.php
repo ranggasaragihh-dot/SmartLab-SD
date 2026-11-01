@@ -4,7 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
-use App\Models\Booking;
+use App\Services\BookingService;
 
 class UpdateBookingStatus extends Command
 {
@@ -25,29 +25,13 @@ class UpdateBookingStatus extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(BookingService $bookingService)
     {
-        $now = \Illuminate\Support\Carbon::now();
-        $this->info("⏳ Cek status booking pada: " . $now->toDateTimeString());
+        $now = Carbon::now();
+        $this->info('Cek status booking pada: ' . $now->toDateTimeString());
 
-        $noShowBookings = Booking::select('bookings.*')
-            ->join('clusters', 'bookings.cluster_id', '=', 'clusters.id')
-            ->where('bookings.status', 'booked')
-            ->whereRaw('DATE_ADD(bookings.start_time, INTERVAL COALESCE(clusters.delay_time, 15) MINUTE) <= ?', [$now])
-            ->get();
-
-        foreach ($noShowBookings as $booking) {
-            $booking->update(['status' => 'cancelled']);
-            $this->info("❌ Booking ID {$booking->id} HANGUS (Melewati batas toleransi lab).");
-        }
-
-        $expiredBookings = Booking::where('status', 'active')
-            ->where('end_time', '<=', $now)
-            ->get();
-
-        foreach ($expiredBookings as $booking) {
-            $booking->update(['status' => 'completed']);
-            $this->info("✅ Booking ID {$booking->id} SELESAI (Waktu Habis).");
-        }
+        $updatedCounts = $bookingService->synchronizeExpiredBookings($now);
+        $this->info("{$updatedCounts['cancelled']} booking no-show dibatalkan.");
+        $this->info("{$updatedCounts['completed']} sesi aktif diselesaikan.");
     }
 }

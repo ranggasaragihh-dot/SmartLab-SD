@@ -2,17 +2,16 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CheckInController;
 
 // Livewire Components
 use App\Livewire\Pages\Auth\Login;
+use App\Livewire\Pages\AccountSettings;
+use App\Livewire\Pages\QrScanner;
 use App\Livewire\BookingPage;
 use App\Livewire\Admin\Dashboard as AdminDashboard;
 use App\Livewire\Admin\Inventory as AdminInventory;
-use App\Livewire\Admin\LabManager;
 use App\Livewire\Admin\ClusterManager;
-use App\Livewire\Admin\DenahManager;
 use App\Livewire\Admin\UserManagement;
 use App\Livewire\Admin\Booking\Dashboard;
 use App\Livewire\Admin\Booking\Manager;
@@ -40,20 +39,19 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     
     Route::get('/dashboard', function () {
-        if (Auth::user()->role === 'admin') {
+        if (Auth::user()->hasRole('admin')) {
             return redirect()->route('admin.dashboard');
         }
         return redirect()->route('booking.index');
     })->name('dashboard');
 
     Route::get('/booking/{clusterId?}', BookingPage::class)->name('booking.index');
+    Route::get('/qr-scanner', QrScanner::class)->name('booking.qr-scanner');
     
     Route::get('/scan/{qrToken}', [CheckInController::class, 'handleScan'])->name('scan.qr');
     Route::get('/inventory/scan/{asset_code}', [InventoryScanController::class, 'show'])->name('inventory.scan.show');
 
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::get('/profile', AccountSettings::class)->name('profile.edit');
 });
 
 Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(function () {
@@ -63,7 +61,6 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
 
     Route::get('/inventaris', InventoryItemManager::class)->name('inventaris.index');
 
-    Route::get('/denah-manager', DenahManager::class)->name('denah-manager');
     Route::get('/manajemen-user', UserManagement::class)->name('manajemen-user');
 
     Route::get('/booking', Dashboard::class)->name('booking.dashboard');

@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Booking;
+use App\Services\BookingService;
 use Livewire\Attributes\Layout;
 
 #[Layout('layouts.admin')]
@@ -34,6 +35,8 @@ class BookingHistory extends Component
 
     public function render()
     {
+        app(BookingService::class)->synchronizeExpiredBookings();
+
         $searchTerm = '%' . $this->search . '%';
 
         $query = Booking::with(['user', 'inventory.item.category', 'inventory.cluster'])
@@ -41,6 +44,7 @@ class BookingHistory extends Component
                 $q->where(function($sub) use ($searchTerm) {
                     $sub->where('id', 'like', $searchTerm)
                         ->orWhereRaw("CASE WHEN inventory_id IS NULL THEN 'event' ELSE '' END LIKE ?", [$searchTerm])
+                        ->orWhereHas('cluster', fn ($c) => $c->where('name', 'like', $searchTerm))
                         ->orWhereHas('user', function($u) use ($searchTerm) {
                             $u->where('name', 'like', $searchTerm)
                             ->orWhere('nomor_induk', 'like', $searchTerm);

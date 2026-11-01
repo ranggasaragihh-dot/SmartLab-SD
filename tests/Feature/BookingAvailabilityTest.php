@@ -86,6 +86,73 @@ class BookingAvailabilityTest extends TestCase
         $this->assertDatabaseCount('bookings', 1);
     }
 
+    public function test_booking_time_selects_only_render_available_options(): void
+    {
+        [$cluster, $inventory, , $user, $bookingDate] = $this->createBookingScenario();
+
+        $component = Livewire::actingAs($user)
+            ->test(BookingPage::class)
+            ->set('filterDate', $bookingDate)
+            ->call('clickSeat', $inventory->id)
+            ->set('start_hour', '10')
+            ->set('start_minute', '00');
+
+        preg_match('/<select wire:model\.live="end_hour"[^>]*>(.*?)<\/select>/s', $component->html(), $endHourSelect);
+        $this->assertCount(2, $endHourSelect);
+        preg_match_all('/<option value="([^"]+)"/', $endHourSelect[1], $options);
+
+        $this->assertSame(['10', '11', '12'], $options[1]);
+        $this->assertStringNotContainsString('disabled', $endHourSelect[1]);
+    }
+
+    public function test_booking_time_options_and_help_text_follow_cluster_settings(): void
+    {
+        [$cluster, $inventory, , $user, $bookingDate] = $this->createBookingScenario();
+        $cluster->update([
+            'delay_time' => 7,
+            'min_duration_minutes' => 45,
+            'max_duration_minutes' => 90,
+        ]);
+
+        $component = Livewire::actingAs($user)
+            ->test(BookingPage::class)
+            ->set('filterDate', $bookingDate)
+            ->call('clickSeat', $inventory->id)
+            ->set('start_hour', '10')
+            ->set('start_minute', '00')
+            ->assertSee('Durasi booking: 45-90 menit. Maksimal keterlambatan: 7 menit.');
+
+        preg_match('/<select wire:model\.live="end_hour"[^>]*>(.*?)<\/select>/s', $component->html(), $endHourSelect);
+        preg_match_all('/<option value="([^"]+)"/', $endHourSelect[1], $hourOptions);
+        $this->assertSame(['10', '11'], $hourOptions[1]);
+
+        $component->set('end_hour', '10');
+        preg_match('/<select wire:model="end_minute"[^>]*>(.*?)<\/select>/s', $component->html(), $endMinuteSelect);
+        preg_match_all('/<option value="([^"]+)"/', $endMinuteSelect[1], $minuteOptions);
+        $this->assertSame(array_map(
+            fn (int $minute): string => str_pad((string) $minute, 2, '0', STR_PAD_LEFT),
+            range(45, 59),
+        ), $minuteOptions[1]);
+
+        $component->set('end_minute', '30')
+            ->call('createBooking')
+            ->assertHasErrors('end_time')
+            ->assertSee('Minimal durasi booking: 45 menit.')
+            ->assertSet('showBookModal', true);
+
+        $component->set('end_hour', '11')
+            ->set('end_minute', '31')
+            ->call('createBooking')
+            ->assertHasErrors('end_time')
+            ->assertSee('Maksimal durasi booking: 90 menit.')
+            ->assertSet('showBookModal', true);
+
+        $component->set('end_minute', '30')
+            ->call('createBooking')
+            ->assertHasNoErrors()
+            ->assertSet('showBookModal', false);
+    }
+
     public function test_booking_starting_when_another_booking_ends_is_available(): void
     {
         [$cluster, $inventory, $firstUser, , $bookingDate] = $this->createBookingScenario();

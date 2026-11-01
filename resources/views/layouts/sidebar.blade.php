@@ -1,4 +1,4 @@
-<aside class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white transition-transform duration-300 transform md:relative md:translate-x-0 border-r border-slate-800 shadow-xl font-sans"
+<aside class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)] text-white transition-transform duration-300 transform md:relative md:translate-x-0 border-r border-slate-800 shadow-xl font-sans"
             :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
                             
             <div class="flex flex-col h-full">
@@ -36,11 +36,11 @@
                         $isActive = request()->routeIs($menu['route']);
                     @endphp
 
-                    <a href="{{ route($menu['route']) }}" wire:navigate
+                        <a href="{{ route($menu['route']) }}"
                     class="group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 border-l-4 
                     {{ $isActive 
                             ? 'bg-slate-800 text-white border-amber-500 shadow-lg' 
-                            : 'border-transparent text-slate-400 hover:bg-slate-800 hover:text-white hover:translate-x-1' 
+                            : 'border-transparent text-slate-400 hover:bg-slate-800 hover:text-white'
                     }}">
                         <svg class="w-5 h-5 mr-3 transition-colors {{ $isActive ? 'text-amber-500' : 'text-slate-500 group-hover:text-slate-300' }}" 
                             fill="none" stroke="currentColor" viewBox="0 0 24 24">

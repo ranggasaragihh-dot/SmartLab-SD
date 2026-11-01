@@ -7,7 +7,7 @@
 <body class="bg-gray-100 font-sans antialiased text-slate-900">
 
     <nav class="bg-white shadow mb-8">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+        <div class="max-w-7xl mx-auto px-4 pt-[calc(env(safe-area-inset-top,0px)+1rem)] pb-4 flex justify-between items-center">
             <div class="text-xl font-bold text-blue-600">Smart Lab UAJY</div>
 
             @auth

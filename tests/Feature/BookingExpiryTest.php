@@ -37,7 +37,7 @@ class BookingExpiryTest extends TestCase
 
         $this->assertSame(1, $cancelledCount);
         $this->assertSame('cancelled', $lateBooking->fresh()->status);
-        $this->assertSame('Terlambat Check-in', $lateBooking->fresh()->cancel_reason);
+        $this->assertSame('Tidak melakukan check in', $lateBooking->fresh()->cancel_reason);
         $this->assertSame('booked', $withinGraceBooking->fresh()->status);
         $this->assertSame('active', $checkedInBooking->fresh()->status);
     }
@@ -73,14 +73,21 @@ class BookingExpiryTest extends TestCase
         [$cluster, $inventory, $user, $now] = $this->createScenario();
         $booking = $this->createBooking($cluster, $inventory, $user, $now->copy()->subMinutes(5));
 
-        Livewire::actingAs($user)
+        $component = Livewire::actingAs($user)
             ->test(BookingPage::class)
             ->call('clickSeat', $inventory->id)
             ->assertSet('showFinishModal', false)
-            ->assertSet('showCancelModal', false)
-            ->set('selectedBookingId', $booking->id)
-            ->call('finishBooking')
-            ->assertSet('showFinishModal', false);
+            // Belum check-in: yang ditawarkan adalah pembatalan, bukan menyelesaikan sesi.
+            ->assertSet('showCancelModal', true);
+
+        // selectedBookingId terkunci: browser tidak bisa menyuntikkan booking lain.
+        try {
+            $component->set('selectedBookingId', $booking->id);
+            $this->fail('selectedBookingId seharusnya tidak bisa diubah dari client.');
+        } catch (\Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException) {
+        }
+
+        $component->call('finishBooking')->assertSet('showFinishModal', false);
 
         $this->assertSame('booked', $booking->fresh()->status);
         $this->assertNull($booking->fresh()->check_in_time);

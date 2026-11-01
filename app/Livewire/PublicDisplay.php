@@ -17,16 +17,20 @@ class PublicDisplay extends Component
         $clusters = Cluster::with([
             'inventories' => function($q) use ($now) {
                 $q->with(['bookings' => function($b) use ($now) {
-                    $b->whereIn('status', ['booked', 'active'])
-                      ->where('start_time', '<=', $now)
-                      ->where('end_time', '>', $now);
+                    $b->where('status', 'active')
+                      ->whereNotNull('check_in_time')
+                      ->where('check_in_time', '<=', $now)
+                      ->where('end_time', '>', $now)
+                      ->with('user');
                 }]);
             },
             'bookings' => function($b) use ($now) {
                 $b->whereNull('inventory_id')
-                  ->whereIn('status', ['booked', 'active'])
-                  ->where('start_time', '<=', $now)
-                  ->where('end_time', '>', $now);
+                  ->where('status', 'active')
+                  ->whereNotNull('check_in_time')
+                  ->where('check_in_time', '<=', $now)
+                  ->where('end_time', '>', $now)
+                  ->with('user');
             }
         ])->get();
 

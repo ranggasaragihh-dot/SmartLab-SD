@@ -18,6 +18,7 @@ class Cluster extends Model
         'early_checkin_minutes',
         'description',
         'type',
+        'requires_ta',
         'is_active',
         'min_duration_minutes',
         'max_duration_minutes',
@@ -25,6 +26,7 @@ class Cluster extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'requires_ta' => 'boolean',
         'delay_time' => 'integer',
         'early_checkin_minutes' => 'integer',
         'max_duration_minutes' => 'integer',
@@ -40,10 +42,15 @@ class Cluster extends Model
         return $this->hasMany(Booking::class);
     }
 
+    public function canBeBookedBy(User $user): bool
+    {
+        return !$this->requires_ta || ($user->hasRole('student') && (bool) $user->ta);
+    }
+
     public function getDenahUrlAttribute()
     {
         return $this->denah_image 
-            ? Storage::url($this->denah_image) 
+            ? Storage::disk('public')->url($this->denah_image) 
             : asset('images/default-denah.jpg');
     }
 }

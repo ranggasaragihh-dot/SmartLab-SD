@@ -7,6 +7,7 @@ use Livewire\Form;
 use App\Models\Inventory;
 use App\Models\InventoryItem;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class InventoryForm extends Form
 {
@@ -16,14 +17,13 @@ class InventoryForm extends Form
     #[Validate('required|exists:clusters,id')]
     public $cluster_id = '';
 
-    #[Validate('required|string|max:255')]
     public $name = '';
 
     #[Validate('required|in:available,maintenance,broken')]
     public $status = 'available';
 
     #[Validate('required|in:0,1')]
-    public $is_bookable = 0;
+    public $is_bookable = 1;
 
     public $qr_token = '';
 
@@ -42,6 +42,18 @@ class InventoryForm extends Form
 
         $currentItem = InventoryItem::where('inventory_id', $inventory->id)->first();
         $this->selected_item_id = $currentItem ? $currentItem->id : '';
+    }
+
+    protected function rules()
+    {
+        return [
+            'name' => ['required', 'string', 'max:255', Rule::unique('inventory', 'name')->ignore($this->id)],
+        ];
+    }
+
+    protected function messages()
+    {
+        return ['name.unique' => 'Nama unit ini sudah dipakai.'];
     }
 
     public function save()

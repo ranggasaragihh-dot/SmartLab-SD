@@ -65,6 +65,7 @@
                 @error('password') <p class="mt-1 text-xs text-red-600 font-medium">{{ $message }}</p> @enderror
             </div>
 
+            @if($isStudentRoleSelected)
             <div class="col-span-2 md:col-span-1">
                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Status Tugas Akhir</label>
                 <div class="relative">
@@ -77,13 +78,14 @@
                     </div>
                 </div>
             </div>
+            @endif
 
             <div class="col-span-2">
                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Role Pengguna</label>
                 <div class="flex flex-wrap gap-2">
                     @foreach($allRoles as $role)
                         <label class="cursor-pointer relative group">
-                            <input type="checkbox" value="{{ $role->id }}" wire:model="selectedRoles" class="peer sr-only">
+                            <input type="radio" name="selectedRole" value="{{ $role->id }}" wire:click="selectRole({{ $role->id }})" @checked(in_array((string) $role->id, $selectedRoles, true)) class="peer sr-only">
                             <div class="px-4 py-2 rounded-lg border-2 text-sm font-bold transition-all duration-200 select-none flex items-center gap-2
                                 bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50
                                 peer-checked:bg-amber-400 peer-checked:border-amber-500 peer-checked:text-slate-900 peer-checked:shadow-sm">

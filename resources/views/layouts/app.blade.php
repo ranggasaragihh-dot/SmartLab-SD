@@ -6,8 +6,8 @@
 </head>
 
 <body class="font-sans antialiased bg-gray-100 text-slate-900">
-    <div x-data="{ sidebarOpen: false }" class="flex min-h-screen overflow-hidden">
-        <div class="relative flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
+    <div x-data="{ sidebarOpen: false }" class="flex min-h-[100dvh] overflow-x-hidden md:overflow-hidden">
+        <div class="relative flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">
             <main>
                 {{ $slot }}
             </main>

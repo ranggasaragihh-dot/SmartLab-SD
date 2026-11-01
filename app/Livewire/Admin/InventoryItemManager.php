@@ -459,8 +459,9 @@ class InventoryItemManager extends Component
         ]);
 
         try {
-            Excel::import(new InventoryItemsImport, $this->excelFile);
-            
+            // Semua baris tersimpan atau tidak sama sekali (DPPL: bulk insert jika tidak ada anomali).
+            DB::transaction(fn () => Excel::import(new InventoryItemsImport, $this->excelFile));
+
             session()->flash('message', 'Data berhasil diimport dari Excel!');
             
         } catch (ValidationException $e) {

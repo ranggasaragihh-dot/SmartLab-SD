@@ -1,7 +1,7 @@
 <div x-data="{ open: false }" @toggle-sidebar.window="open = !open">
     <div x-show="open" @click="open = false" x-transition.opacity class="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm md:hidden" style="display: none;"></div>
-    <aside class="fixed inset-y-0 left-0 z-50 w-64 bg-[#1a237e] text-white flex flex-col transition-transform duration-300 transform 
-              -translate-x-full md:translate-x-0 md:static md:h-screen shrink-0 shadow-2xl border-r border-white/10 font-sans"
+    <aside class="fixed inset-y-0 left-0 z-50 w-64 bg-[#1a237e] pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)] text-white flex flex-col transition-transform duration-300 transform
+              -translate-x-full md:translate-x-0 md:static md:h-dvh shrink-0 shadow-2xl border-r border-white/10 font-sans"
        :class="open ? 'translate-x-0' : ''">
 
     <div class="relative shrink-0">
@@ -22,6 +22,11 @@
     </div>
 
     <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+        <a href="{{ route('booking.qr-scanner') }}" @click="open = false" class="flex items-center gap-3 rounded-xl border-l-4 px-4 py-3 text-sm font-bold transition {{ request()->routeIs('booking.qr-scanner') ? 'border-amber-400 bg-white/10 text-white' : 'border-transparent text-blue-200 hover:bg-white/5 hover:text-white' }}">
+            <svg class="h-5 w-5 shrink-0 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h5v5H4zM15 4h5v5h-5zM4 15h5v5H4zM15 15h2v2h-2zM19 15v2m-4 3h2m2-3h1v3h-3"/></svg>
+            QR Scanner
+        </a>
+
         <p class="px-3 text-[10px] font-bold text-blue-300/50 uppercase tracking-widest mb-3 ml-1">
             Daftar Ruangan
         </p>
@@ -65,6 +70,10 @@
                     <p class="text-[10px] text-blue-200 truncate font-mono mt-0.5">{{ Auth::user()->nomor_induk ?? '2107xxxx' }}</p>
                 </div>
             </div>
+
+            <a href="{{ route('profile.edit') }}" title="Pengaturan akun" aria-label="Pengaturan akun" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-blue-300 transition hover:bg-white/10 hover:text-white">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M10.3 4.3c.4-1.7 2.9-1.7 3.4 0a1.7 1.7 0 002.5 1.1c1.6-.9 3.3.8 2.4 2.4a1.7 1.7 0 001.1 2.5c1.7.4 1.7 2.9 0 3.4a1.7 1.7 0 00-1.1 2.5c.9 1.6-.8 3.3-2.4 2.4a1.7 1.7 0 00-2.5 1.1c-.5 1.7-3 1.7-3.4 0a1.7 1.7 0 00-2.5-1.1c-1.6.9-3.3-.8-2.4-2.4a1.7 1.7 0 00-1.1-2.5c-1.7-.5-1.7-3 0-3.4a1.7 1.7 0 001.1-2.5c-.9-1.6.8-3.3 2.4-2.4a1.7 1.7 0 002.5-1.1z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </a>
 
             <form method="POST" action="{{ route('logout') }}">
                 @csrf

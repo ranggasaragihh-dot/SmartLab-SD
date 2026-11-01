@@ -29,6 +29,7 @@ class ClusterManager extends Component
     public $form = [
         'name' => '',
         'type' => 'public', 
+        'requires_ta' => false,
         'description' => '',
         'is_active' => true,
         'delay_time' => 15,
@@ -60,6 +61,7 @@ class ClusterManager extends Component
         $this->form = [
             'name' => $data->name,
             'type' => $data->type,
+            'requires_ta' => $data->requires_ta,
             'description' => $data->description,
             'is_active' => $data->is_active ? 1 : 0, 
             'delay_time' => $data->delay_time ?? 15,
@@ -76,6 +78,7 @@ class ClusterManager extends Component
         $this->validate([
             'form.name' => 'required|string|max:50',
             'form.type' => 'required|in:public,private',
+            'form.requires_ta' => 'required|boolean',
             'form.description' => 'nullable|string|max:255',
             'form.is_active' => 'boolean',
             'form.delay_time' => 'required|integer|min:1',
@@ -155,6 +158,7 @@ class ClusterManager extends Component
         $this->form = [
             'name' => '',
             'type' => 'public',
+            'requires_ta' => false,
             'description' => '',
             'is_active' => true,
             'delay_time' => 15,

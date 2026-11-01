@@ -3,7 +3,7 @@
         activeSlide: 0, 
         total: {{ $clusters->count() }},
         init() {
-            @if(!$globalEvent) 
+            @if(!$globalEvent && $clusters->count() > 1)
                 setInterval(() => {
                     this.activeSlide = (this.activeSlide + 1) % this.total;
                 }, 15000); 
@@ -68,6 +68,11 @@
                                     {{ $globalEvent->user->name ?? 'Fakultas / Prodi' }}
                                 </span>
                             </div>
+
+                            <div x-data="bookingCountdown('{{ $globalEvent->end_time->toIso8601String() }}')" x-init="start()" class="rounded-xl border border-amber-500/30 bg-amber-500/10 px-6 py-3 text-center">
+                                <div class="text-xs font-bold uppercase tracking-widest text-amber-300">Sisa waktu</div>
+                                <div x-text="formatted" class="font-mono text-2xl font-bold tabular-nums text-white"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -82,10 +87,10 @@
                      x-transition:leave="transition ease-in duration-300"
                      x-transition:leave-start="opacity-100 scale-100"
                      x-transition:leave-end="opacity-0 scale-95"
-                     class="absolute inset-0 flex w-full h-full" 
+                     class="absolute inset-0 flex h-full w-full flex-col"
                 > 
-                    <div class="w-[45%] flex flex-col h-full border-r border-slate-800 bg-slate-900 relative z-10">
-                        <div class="p-6 bg-slate-800 shadow-xl z-20 shrink-0">
+                    <div class="relative z-10 w-full shrink-0 border-b border-slate-800 bg-slate-900">
+                        <div class="bg-slate-800 p-4 shadow-xl md:p-6">
                             <div class="flex justify-between items-start mb-4">
                                 <div class="max-w-[75%]"> 
                                     <h2 class="text-3xl font-extrabold text-white leading-none tracking-tight mb-3">{{ $cluster->name }}</h2>
@@ -129,19 +134,9 @@
                             </div>
                         </div>
 
-                        <div class="flex-1 bg-slate-800/50 relative overflow-hidden group flex items-center justify-center p-4">
-                            @if($cluster->denah_url)
-                                <img src="{{ $cluster->denah_url }}" class="w-full h-full object-contain transition-transform duration-700 hover:scale-105">
-                            @else
-                                <div class="text-slate-600 flex flex-col items-center opacity-50">
-                                    <svg class="w-32 h-32 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="0.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0121 18.382V7.618a1 1 0 01-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
-                                    <span class="text-lg font-light tracking-widest">MAP AREA</span>
-                                </div>
-                            @endif
-                        </div>
                     </div>
 
-                    <div class="w-[55%] h-full p-6 bg-slate-950">
+                    <div class="min-h-0 w-full flex-1 bg-slate-950 p-4 md:p-6">
                          @php
                             $count = $cluster->inventory->count();
                             $gridCols = 'grid-cols-4'; $cols = 4; $fontSize = 'text-2xl';
@@ -165,7 +160,7 @@
                                             $bg = 'bg-amber-900/20 border-amber-800 text-amber-500'; $statusText = 'MAINT'; $isAvailable = false;
                                         } elseif ($booking) {
                                             $bg = 'bg-blue-600 shadow-lg shadow-blue-900/50 border-blue-500 text-white'; 
-                                            $statusText = \Carbon\Carbon::parse($booking->end_time)->format('H:i'); 
+                                            $statusText = 'DIPAKAI';
                                             $isAvailable = false;
                                         } else {
                                             $bg = 'bg-emerald-600 shadow-lg shadow-emerald-900/50 border-emerald-500 text-white'; $statusText = 'READY'; $isAvailable = true;
@@ -178,6 +173,29 @@
                                         <span class="text-[10px] uppercase font-bold tracking-wider opacity-90 bg-black/20 px-2 rounded-full">
                                             {{ $statusText }}
                                         </span>
+                                        @if($booking)
+                                            @php
+                                                $remainingSeconds = max(0, now()->diffInSeconds($booking->end_time, false));
+                                                $remainingTime = sprintf(
+                                                    '%02d:%02d:%02d',
+                                                    intdiv($remainingSeconds, 3600),
+                                                    intdiv($remainingSeconds % 3600, 60),
+                                                    $remainingSeconds % 60,
+                                                );
+                                            @endphp
+                                            <span class="mt-1 max-w-full truncate px-2 text-center text-xs font-semibold text-white/90">
+                                                {{ $booking->user->name }}
+                                            </span>
+                                            <div wire:ignore wire:key="booking-countdown-{{ $booking->id }}" class="mt-2 flex items-center gap-2 rounded-full border border-white/20 bg-slate-950/35 px-3 py-1.5" aria-label="Sisa waktu penggunaan">
+                                                <span class="text-[9px] font-bold uppercase tracking-wider text-white/75">Sisa</span>
+                                                <span
+                                                    x-data="bookingCountdown({{ $booking->end_time->getTimestamp() * 1000 }})"
+                                                    x-init="start()"
+                                                    x-text="formatted"
+                                                    class="font-mono text-sm font-extrabold tabular-nums text-white"
+                                                >{{ $remainingTime }}</span>
+                                            </div>
+                                        @endif
                                         @if($isAvailable)
                                             <div class="absolute top-2 right-2 w-1.5 h-1.5 bg-white rounded-full animate-ping"></div>
                                         @endif

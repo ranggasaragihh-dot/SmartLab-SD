@@ -70,7 +70,7 @@
                                 <ul class="divide-y divide-slate-100">
                                     @foreach($usersList as $user)
                                     <li>
-                                        <button wire:click="selectUser({{ $user->id }}, '{{ $user->name }}')" 
+                                        <button wire:click="selectUser({{ $user->id }})"
                                                 class="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition-all flex flex-col group">
                                             <span class="text-xs font-bold text-slate-700 group-hover:text-slate-900">{{ $user->name }}</span>
                                             <span class="text-[10px] text-slate-400">{{ $user->email }}</span>

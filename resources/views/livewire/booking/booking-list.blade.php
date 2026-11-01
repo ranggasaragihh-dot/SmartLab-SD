@@ -1,4 +1,16 @@
 <div class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 pb-24"> 
+    @if (session('success'))
+        <div role="status" class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if (session('error'))
+        <div role="alert" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+            {{ session('error') }}
+        </div>
+    @endif
+
     @if(!$cluster)
         <div class="flex flex-col items-center justify-center h-64 text-center">
             <div class="bg-slate-100 p-4 rounded-full mb-4">
@@ -12,7 +24,7 @@
             </p>
         </div>
     @else
-        <div class="flex flex-col h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden">
+        <div class="flex min-h-full flex-col bg-slate-50 font-sans text-slate-900 md:h-full md:min-h-0 md:overflow-hidden">
             <div class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 pb-24"> 
                 @if($isRoomLockedByAdmin)
                     <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg shadow-sm flex items-start gap-3">
@@ -22,11 +34,24 @@
                             </svg>
                         </div>
                         <div>
-                            <h3 class="text-red-800 font-bold">Lab Ditutup</h3>
-                            <p class="text-red-700 text-sm mt-1">
-                                Lab sedang digunakan untuk: <span class="font-bold">{{ $lockReason }}</span>.
-                            </p>
+                            <h3 class="text-red-800 font-bold">Akses Cluster Terbatas</h3>
+                            <p class="text-red-700 text-sm mt-1">{{ $lockReason }}</p>
                         </div>
+                    </div>
+                @endif
+
+                @if($roomEvents->isNotEmpty())
+                    <div role="status" class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg shadow-sm">
+                        <h3 class="text-amber-800 font-bold">Ruangan dipakai untuk event</h3>
+                        <ul class="text-amber-700 text-sm mt-1 space-y-0.5">
+                            @foreach($roomEvents as $event)
+                                <li>
+                                    <span class="font-bold">{{ $event->start_time->format('H:i') }} - {{ $event->end_time->format('H:i') }}</span>
+                                    : {{ $event->purpose ?: 'Kegiatan khusus' }}
+                                </li>
+                            @endforeach
+                        </ul>
+                        <p class="text-amber-700 text-xs mt-1">PC di ruangan ini tidak dapat dibooking pada jam tersebut.</p>
                     </div>
                 @endif
 
@@ -58,30 +83,24 @@
                             <tbody class="divide-y divide-slate-100">
                                 @foreach($inventories as $pc)
                                     @php
-                                        $bookingData = $bookingsMap[$pc->id] ?? null;
+                                        $bookingData = $bookingsMap->get($pc->id, collect());
                                         $isLocked = in_array($pc->id, $lockedInventories);
-                                        
-                                        $activeBookingDetail = $pc->bookings
-                                            ->whereIn('status', ['booked', 'active'])
-                                            ->first();
 
-                                        $isMine = false;
-                                        $isStarted = false;
+                                        $myBookingDetail = $bookingData->firstWhere('user_id', $currentUserId);
+                                        $isMine = $myBookingDetail !== null;
+                                        $isCheckedIn = false;
+                                        $isAwaitingCheckIn = false;
                                         $isExpired = false;
 
-                                        if ($activeBookingDetail) {
-                                            $isMine = ($activeBookingDetail->user_id == $currentUserId);
-                                            
+                                        if ($myBookingDetail) {
                                             $now = \Carbon\Carbon::now();
-                                            $startTime = \Carbon\Carbon::parse($activeBookingDetail->start_time);
-                                            $endTime = \Carbon\Carbon::parse($activeBookingDetail->end_time);
+                                            $startTime = \Carbon\Carbon::parse($myBookingDetail->start_time);
+                                            $endTime = \Carbon\Carbon::parse($myBookingDetail->end_time);
 
-                                            $isStarted = $now->gte($startTime) || ($activeBookingDetail->status === 'active');
-                                            
+                                            $isCheckedIn = $myBookingDetail->status === 'active' && $myBookingDetail->check_in_time !== null;
+                                            $isAwaitingCheckIn = $myBookingDetail->status === 'booked' && $now->gte($startTime);
                                             $isExpired = $now->gt($endTime);
                                         }
-                                        
-                                        $isLocked = in_array($pc->id, $lockedInventories);
                                     @endphp
 
                                     <tr class="hover:bg-slate-50 transition-colors duration-200">
@@ -110,16 +129,16 @@
                                         </td>
 
                                         <td class="px-6 py-4 align-middle text-center">
-                                            @if($activeBookingDetail)
+                                            @if($bookingData->isNotEmpty())
                                                 <div class="flex flex-col items-center">
-                                                    <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-bold {{ $isMine ? 'bg-amber-100 text-amber-600 border border-amber-200' : 'bg-indigo-50 text-indigo-600 border border-indigo-100' }}">
-                                                        {{ $isMine ? 'Milik Saya' : 'Terbooking' }}
-                                                    </span>
-                                                        <span class="text-[10px] text-slate-500 mt-1 font-medium">
-                                                            {{ \Carbon\Carbon::parse($activeBookingDetail->start_time)->format('H:i') }}
-                                                            - 
-                                                            {{ \Carbon\Carbon::parse($activeBookingDetail->end_time)->format('H:i') }}
+                                                    @foreach($bookingData as $scheduledBooking)
+                                                        <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-bold {{ $scheduledBooking->user_id == $currentUserId ? 'bg-amber-100 text-amber-600 border border-amber-200' : 'bg-indigo-50 text-indigo-600 border border-indigo-100' }}">
+                                                            {{ $scheduledBooking->user_id == $currentUserId ? 'Milik Saya' : 'Terbooking' }}
                                                         </span>
+                                                        <span class="text-[10px] text-slate-500 mt-1 mb-1 font-medium">
+                                                            {{ \Carbon\Carbon::parse($scheduledBooking->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($scheduledBooking->end_time)->format('H:i') }}
+                                                        </span>
+                                                    @endforeach
                                                 </div>
                                             
                                             @elseif($isLocked)
@@ -139,10 +158,19 @@
 
                                         <td class="px-6 py-4 align-middle text-right">
                                             @if($isMine && !$isExpired)
-                                                @if($isStarted)
+                                                @if($isCheckedIn)
                                                     <button wire:click="clickSeat({{ $pc->id }})" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-5 py-2.5 rounded-md shadow-sm transition-transform active:scale-95 ml-auto">
                                                         Selesai
                                                     </button>
+                                                @elseif($isAwaitingCheckIn)
+                                                    <div class="flex items-center justify-end gap-2">
+                                                        <span class="inline-flex rounded-md bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700" title="Scan QR di meja untuk check-in">
+                                                            Scan QR
+                                                        </span>
+                                                        <button wire:click="clickSeat({{ $pc->id }})" class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-4 py-2.5 rounded-md shadow-sm">
+                                                            Batal
+                                                        </button>
+                                                    </div>
                                                 @else
                                                     <button wire:click="clickSeat({{ $pc->id }})" class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-5 py-2.5 rounded-md shadow-sm transition-transform active:scale-95 ml-auto">
                                                         Batal
@@ -152,13 +180,13 @@
                                                 <button disabled class="bg-slate-100 text-slate-400 border border-slate-200 text-xs font-bold px-5 py-2.5 rounded-md cursor-not-allowed ml-auto">
                                                     Event Room
                                                 </button>
-                                            @elseif(!$activeBookingDetail && $pc->status == 'available')
+                                            @elseif($pc->status == 'available')
                                                 <button wire:click="clickSeat({{ $pc->id }})" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-5 py-2.5 rounded-md shadow-sm transition-transform active:scale-95 ml-auto">
                                                     Booking
                                                 </button>
                                             @else
                                                 <button disabled class="text-slate-300 font-bold text-xs cursor-not-allowed px-2 ml-auto">
-                                                    {{ $activeBookingDetail ? 'Full' : ($pc->status == 'maintenance' ? 'MT' : 'Off') }}
+                                                    {{ $pc->status == 'maintenance' ? 'MT' : 'Off' }}
                                                 </button>
                                             @endif
                                         </td>
@@ -171,31 +199,27 @@
                     <div class="md:hidden bg-slate-50 border-t border-slate-100 p-4 space-y-3">
                         @foreach($inventories as $pc)
                             @php
-                                $bookingData = $bookingsMap[$pc->id] ?? null;
+                                $bookingData = $bookingsMap->get($pc->id, collect());
                                 $isLocked = in_array($pc->id, $lockedInventories);
-                                
-                                $activeBookingDetail = $pc->bookings
-                                    ->whereIn('status', ['booked', 'active'])
-                                    ->first();
 
-                                $isMine = false;
-                                $isStarted = false;
+                                $myBookingDetail = $bookingData->firstWhere('user_id', $currentUserId);
+                                $isMine = $myBookingDetail !== null;
+                                $isCheckedIn = false;
+                                $isAwaitingCheckIn = false;
                                 $isExpired = false;
 
-                                if ($activeBookingDetail) {
-                                    $isMine = ($activeBookingDetail->user_id == $currentUserId);
-                                        
+                                if ($myBookingDetail) {
                                     $now = \Carbon\Carbon::now();
-                                    $startTime = \Carbon\Carbon::parse($activeBookingDetail->start_time);
-                                    $endTime = \Carbon\Carbon::parse($activeBookingDetail->end_time);
+                                    $startTime = \Carbon\Carbon::parse($myBookingDetail->start_time);
+                                    $endTime = \Carbon\Carbon::parse($myBookingDetail->end_time);
 
-                                    $isStarted = $now->gte($startTime) || ($activeBookingDetail->status === 'active');
+                                    $isCheckedIn = $myBookingDetail->status === 'active' && $myBookingDetail->check_in_time !== null;
+                                    $isAwaitingCheckIn = $myBookingDetail->status === 'booked' && $now->gte($startTime);
                                     $isExpired = $now->gt($endTime);
                                 }
-                                $isLocked = in_array($pc->id, $lockedInventories);
                             @endphp
                         
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex items-center justify-between gap-3 {{ ($bookingData || $pc->status != 'available') ? 'bg-slate-50' : '' }}">
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex items-center justify-between gap-3 {{ ($bookingData->isNotEmpty() || $pc->status != 'available') ? 'bg-slate-50' : '' }}">
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2 mb-1">
                                     <h3 class="font-bold text-slate-800 text-lg leading-none">{{ $pc->name }}</h3>
@@ -206,15 +230,23 @@
                                     @endif
                                 </div>
 
-                                <p class="text-[10px] text-slate-500 font-medium truncate">RTX 3060 / 16GB RAM</p>
+                                @php $specs = ($pc->item && is_array($pc->item->specifications)) ? $pc->item->specifications : []; @endphp
+                                <p class="text-[10px] text-slate-500 font-medium truncate">
+                                    {{ collect([$specs['cpu'] ?? null, $specs['ram'] ?? null, $specs['gpu'] ?? null])->filter()->implode(' / ') ?: 'Spesifikasi tidak tersedia' }}
+                                </p>
 
                                 @if($isMine)
-                                    <p class="text-[10px] text-amber-600 font-bold mt-1">Milik Saya</p>
-                                @elseif($activeBookingDetail)
-                                    <p class="text-[10px] text-indigo-600 font-bold mt-1 truncate">
-                                        Booked 
-                                        s.d {{ \Carbon\Carbon::parse($activeBookingDetail->end_time)->format('H:i') }}
-                                    </p>
+                                    @foreach($bookingData->where('user_id', $currentUserId) as $mySchedule)
+                                        <p class="mt-1 text-[10px] font-bold text-amber-600">
+                                            Milik Saya: {{ \Carbon\Carbon::parse($mySchedule->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($mySchedule->end_time)->format('H:i') }}
+                                        </p>
+                                    @endforeach
+                                @elseif($bookingData->isNotEmpty())
+                                    @foreach($bookingData as $scheduledBooking)
+                                        <p class="text-[10px] text-indigo-600 font-bold mt-1 truncate">
+                                            Terbooking {{ \Carbon\Carbon::parse($scheduledBooking->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($scheduledBooking->end_time)->format('H:i') }}
+                                        </p>
+                                    @endforeach
                                 @elseif($isLocked)
                                     <p class="text-[10px] text-red-500 font-bold mt-1 uppercase">LOCKED</p>
                                 @elseif($pc->status == 'available')
@@ -226,26 +258,33 @@
                             
                             <div class="shrink-0">
                                 @if($isMine && !$isExpired)
-                                    @if(!$isStarted)
-                                        <button wire:click="clickSeat({{ $pc->id }})" class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-5 py-2.5 rounded-md shadow-sm">
-                                            Batal
-                                        </button>
-                                    @else
+                                    @if($isCheckedIn)
                                         <button wire:click="clickSeat({{ $pc->id }})" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-5 py-2.5 rounded-md shadow-sm">
                                             Selesai
+                                        </button>
+                                    @elseif($isAwaitingCheckIn)
+                                        <div class="flex flex-col items-end gap-1">
+                                            <span class="text-[10px] font-bold text-amber-700">Scan QR</span>
+                                            <button wire:click="clickSeat({{ $pc->id }})" class="bg-red-500 hover:bg-red-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-md shadow-sm">
+                                                Batal
+                                            </button>
+                                        </div>
+                                    @else
+                                        <button wire:click="clickSeat({{ $pc->id }})" class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-5 py-2.5 rounded-md shadow-sm">
+                                            Batal
                                         </button>
                                     @endif
                                 @elseif($isLocked)
                                     <button disabled class="bg-slate-100 text-slate-400 border border-slate-200 text-[10px] font-bold px-3 py-2 rounded-md cursor-not-allowed">
                                         Event
                                     </button>
-                                @elseif(!$activeBookingDetail && $pc->status == 'available')
+                                @elseif($pc->status == 'available')
                                     <button wire:click="clickSeat({{ $pc->id }})" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-5 py-2.5 rounded-md shadow-sm">
                                         Booking
                                     </button>
                                 @else
                                     <button disabled class="text-slate-300 font-bold text-xs cursor-not-allowed px-2">
-                                        @if($activeBookingDetail) Full @else Off @endif
+                                        Off
                                     </button>
                                 @endif
                             </div>

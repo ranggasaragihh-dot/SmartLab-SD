@@ -13,6 +13,19 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         //
+        $middleware->trustProxies(at: '*');
+        // Menghilangkan pengecekan CSRF khusus untuk rute logout
+    $middleware->validateCsrfTokens(except: [
+        'logout', 
+        'http://127.0.0',
+        'localhost/logout'
+    ]);
+        $middleware->web(prepend: [
+            \App\Http\Middleware\ForceHttpsForAppUrl::class,
+        ]);
+        $middleware->web(append: [
+            \App\Http\Middleware\EnsureUserIsActive::class,
+        ]);
         $middleware->alias([
         'isAdmin' => \App\Http\Middleware\IsAdmin::class,
     ]);

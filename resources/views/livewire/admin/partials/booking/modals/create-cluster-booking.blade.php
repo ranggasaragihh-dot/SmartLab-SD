@@ -79,7 +79,7 @@
                                 <ul class="divide-y divide-slate-100">
                                     @foreach($usersList as $user)
                                     <li>
-                                        <button wire:click="selectUser({{ $user->id }}, '{{ $user->name }}')" 
+                                        <button wire:click="selectUser({{ $user->id }})"
                                                 class="w-full text-left px-4 py-3 hover:bg-slate-50 transition-all flex items-center gap-3 group">
                                             <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500 group-hover:bg-slate-900 group-hover:text-white">
                                                 {{ substr($user->name, 0, 1) }}
@@ -102,16 +102,36 @@
             <div>
                 <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Tujuan / Agenda Acara</label>
                 <input type="text" wire:model="purpose" placeholder="Contoh: Kuliah Pengganti, Sertifikasi BNSP, dsb." class="w-full border-slate-300 rounded-lg text-sm py-2.5 focus:ring-1 focus:ring-slate-900 focus:border-slate-900 font-medium bg-slate-50 placeholder-slate-300">
+                @error('purpose') <span class="text-red-500 text-[10px] block mt-1 font-bold italic">{{ $message }}</span> @enderror
             </div>
+
+            @if(!empty($eventConflicts))
+                <div role="alert" class="text-xs bg-red-50 text-red-800 p-4 rounded-xl border border-red-200">
+                    <strong class="block uppercase font-black mb-1">Konflik jadwal: {{ count($eventConflicts) }} booking individu</strong>
+                    <ul class="space-y-0.5 mb-2">
+                        @foreach($eventConflicts as $conflict)
+                            <li>{{ $conflict['unit'] }} &middot; {{ $conflict['user'] }} &middot; {{ $conflict['time'] }} ({{ $conflict['status'] }})</li>
+                        @endforeach
+                    </ul>
+                    Jika dilanjutkan, booking di atas akan <strong>dibatalkan</strong> dan alasannya tercatat di riwayat.
+                </div>
+            @endif
         </div>
 
         <div class="bg-slate-50 px-6 py-4 flex justify-end gap-3 border-t border-slate-200">
             <button wire:click="$set('showClusterBookingModal', false)" class="px-5 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-200 rounded-xl transition-all active:scale-95">Batal</button>
-            <button wire:click="storeBooking" 
-                class="px-6 py-2.5 text-sm font-bold text-white rounded-xl shadow-lg shadow-slate-200 transition-all bg-slate-900 hover:bg-slate-800 transform active:scale-95 flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                Simpan Reservasi Event
-            </button>
+            @if(!empty($eventConflicts))
+                <button wire:click="storeEventBooking(true)" wire:loading.attr="disabled"
+                    class="px-6 py-2.5 text-sm font-bold text-white rounded-xl shadow-lg transition-all bg-red-600 hover:bg-red-700 transform active:scale-95">
+                    Lanjutkan &amp; Batalkan {{ count($eventConflicts) }} Booking
+                </button>
+            @else
+                <button wire:click="storeEventBooking" wire:loading.attr="disabled"
+                    class="px-6 py-2.5 text-sm font-bold text-white rounded-xl shadow-lg shadow-slate-200 transition-all bg-slate-900 hover:bg-slate-800 transform active:scale-95 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    Simpan Reservasi Event
+                </button>
+            @endif
         </div>
     </div>
 </div>

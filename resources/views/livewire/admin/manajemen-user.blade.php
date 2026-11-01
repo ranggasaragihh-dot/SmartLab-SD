@@ -30,7 +30,12 @@
                                         {{ substr($user->name, 0, 2) }}
                                     </div>
                                     <div class="min-w-0">
-                                        <div class="font-bold text-slate-800 truncate">{{ $user->name }}</div>
+                                        <div class="font-bold text-slate-800 truncate">
+                                            {{ $user->name }}
+                                            @if($user->is_banned)
+                                                <span class="ml-1 px-1.5 py-0.5 text-[10px] font-bold uppercase rounded bg-red-50 text-red-600 border border-red-100">Nonaktif</span>
+                                            @endif
+                                        </div>
                                         <div class="text-xs text-slate-500 truncate">{{ $user->email }}</div>
                                     </div>
                                 </div>
@@ -72,6 +77,12 @@
                                     </button>
                                         
                                     @if($user->id !== auth()->id())
+                                        <button wire:click="toggleActive({{ $user->id }})"
+                                            wire:confirm="{{ $user->is_banned ? 'Aktifkan kembali akun ' . $user->name . '?' : 'Nonaktifkan akun ' . $user->name . '? User tidak akan bisa login dan booking yang belum dimulai dibatalkan.' }}"
+                                            title="{{ $user->is_banned ? 'Aktifkan akun' : 'Nonaktifkan akun' }}"
+                                            class="px-2 py-1 text-[10px] font-bold rounded-md border transition-all {{ $user->is_banned ? 'text-emerald-600 border-emerald-200 hover:bg-emerald-50' : 'text-slate-500 border-slate-200 hover:text-red-600 hover:bg-red-50' }}">
+                                            {{ $user->is_banned ? 'Aktifkan' : 'Nonaktifkan' }}
+                                        </button>
                                         <button wire:click="confirmDelete({{ $user->id }})" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                         </button>

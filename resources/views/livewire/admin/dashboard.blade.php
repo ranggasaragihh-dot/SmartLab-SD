@@ -109,16 +109,28 @@
                             
                             <td class="px-6 py-3.5 text-right">
                                 @php
-                                    $statusClass = match($booking->status) {
-                                        'active' => 'bg-emerald-50 text-emerald-700 border-emerald-100',
-                                        'booked' => 'bg-slate-100 text-slate-700 border-slate-200',
-                                        'cancelled' => 'bg-red-50 text-red-700 border-red-100',
-                                        'finished' => 'bg-slate-50 text-slate-400 border-slate-100',
+                                    $displayStatus = match (true) {
+                                        $booking->status === 'booked'
+                                            && $booking->check_in_time === null
+                                            && \Carbon\Carbon::now()->gte(\Carbon\Carbon::parse($booking->start_time)) => 'Menunggu Check-in',
+                                        $booking->status === 'booked' => 'Booked',
+                                        $booking->status === 'active' => 'Active',
+                                        $booking->status === 'completed' => 'Completed',
+                                        $booking->status === 'cancelled' => 'Cancelled',
+                                        default => ucfirst($booking->status),
+                                    };
+
+                                    $statusClass = match($displayStatus) {
+                                        'Active' => 'bg-emerald-50 text-emerald-700 border-emerald-100',
+                                        'Booked' => 'bg-slate-100 text-slate-700 border-slate-200',
+                                        'Menunggu Check-in' => 'bg-amber-50 text-amber-700 border-amber-100',
+                                        'Cancelled' => 'bg-red-50 text-red-700 border-red-100',
+                                        'Completed' => 'bg-slate-50 text-slate-500 border-slate-200',
                                         default => 'bg-slate-50 text-slate-500 border-slate-200'
                                     };
                                 @endphp
                                 <span class="px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider border {{ $statusClass }}">
-                                    {{ $booking->status }}
+                                    {{ $displayStatus }}
                                 </span>
                             </td>
                         </tr>
@@ -132,6 +144,16 @@
                 </tbody>
             </table>
         </div>
+
+        @if ($recentBookings->hasPages())
+            <div class="flex flex-col gap-3 border-t border-slate-100 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <p class="text-xs font-medium text-slate-500">
+                    Menampilkan {{ $recentBookings->firstItem() }}-{{ $recentBookings->lastItem() }}
+                    dari {{ $recentBookings->total() }} aktivitas
+                </p>
+                {{ $recentBookings->onEachSide(1)->links() }}
+            </div>
+        @endif
     </div>
 
     @include('livewire.admin.partials.booking.booking-details-sidebar')

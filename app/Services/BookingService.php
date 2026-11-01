@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Booking;
 use App\Models\Cluster;
 use App\Models\Inventory;
+use App\Models\User;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -27,7 +28,7 @@ class BookingService
                 ->where('start_time', '<=', $deadline)
                 ->update([
                     'status' => 'cancelled',
-                    'cancel_reason' => 'Terlambat Check-in',
+                    'cancel_reason' => 'Tidak melakukan check in',
                     'updated_at' => $now,
                 ]);
         }
@@ -78,19 +79,45 @@ class BookingService
             ->exists();
     }
 
+    public function userHasOverlappingBooking($userId, $startTime, $endTime): bool
+    {
+        return Booking::query()
+            ->where('user_id', $userId)
+            ->whereIn('status', ['booked', 'active'])
+            ->where('start_time', '<', $endTime)
+            ->where('end_time', '>', $startTime)
+            ->exists();
+    }
+
     public function createBooking($userId, $inventoryId, $clusterId, $start, $end)
     {
         return DB::transaction(function () use ($userId, $inventoryId, $clusterId, $start, $end) {
-            Cluster::query()
+            $cluster = Cluster::query()
                 ->whereKey($clusterId)
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            $user = User::findOrFail($userId);
+            if (!$cluster->canBeBookedBy($user)) {
+                throw new Exception('Cluster ini hanya dapat dibooking oleh mahasiswa yang sudah mengambil TA.');
+            }
+
             if ($inventoryId !== null) {
-                Inventory::query()
+                $inventory = Inventory::query()
                     ->whereKey($inventoryId)
                     ->lockForUpdate()
                     ->firstOrFail();
+
+                if ((int) $inventory->cluster_id !== (int) $cluster->id) {
+                    throw new Exception('Unit tidak berada di cluster ini.');
+                }
+                if (in_array($inventory->status, ['broken', 'maintenance']) || !$inventory->is_bookable) {
+                    throw new Exception('Unit ini sedang tidak dapat digunakan.');
+                }
+            }
+
+            if ($this->userHasOverlappingBooking($userId, $start, $end)) {
+                throw new Exception('Anda sudah punya booking lain di jam tersebut. Satu orang hanya dapat memakai satu PC dalam waktu yang sama.');
             }
 
             if (!$this->isSlotAvailable($inventoryId, $clusterId, $start, $end)) {

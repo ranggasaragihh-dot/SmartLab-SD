@@ -83,8 +83,17 @@ class InventoryItemsImport implements ToModel, WithStartRow
         $storage = null;
 
         // DETEKSI CPU
-        if (preg_match('/(core\s*i\d[-\d\w]*|ryzen\s*\d\s*[-\d\w]*|celeron|pentium|athlon|xeon|intel\s+[\w-]+)/i', $rawSpecs, $matches)) {
-            $cpu = trim($matches[0]); 
+        // Pola spesifik dicoba dulu: "Intel Core i5-10400" harus menjadi "Core i5-10400", bukan "Intel Core".
+        foreach ([
+            '/core\s*i\d[-\d\w]*/i',
+            '/ryzen\s*\d\s*[-\d\w]*/i',
+            '/(celeron|pentium|athlon|xeon)[\s-]*[\w-]*/i',
+            '/intel\s+[\w-]+/i',
+        ] as $cpuPattern) {
+            if (preg_match($cpuPattern, $rawSpecs, $matches)) {
+                $cpu = trim($matches[0]);
+                break;
+            }
         }
 
         // DETEKSI STORAGE (SSD/HDD)
@@ -96,8 +105,9 @@ class InventoryItemsImport implements ToModel, WithStartRow
 
         // Opsi A: Ada kata "DDR" atau "RAM" atau "DIMM"
         if (preg_match('/(\d+\s*GB)\s*(DDR\d|SODIMM|DIMM|RAM|Memory)|(DDR\d|RAM|Memory)\s*(\d+\s*GB)/i', $rawSpecs, $matches)) {
-            foreach ($matches as $m) {
-                if (stripos($m, 'GB') !== false) {
+            // Ambil grup yang hanya berisi kapasitas ("8 GB"), bukan seluruh teks cocokan ("RAM 8GB").
+            foreach (array_slice($matches, 1) as $m) {
+                if (preg_match('/^\d+\s*GB$/i', trim($m))) {
                     $ram = trim($m);
                     $ramFound = true;
                     break;
@@ -119,8 +129,8 @@ class InventoryItemsImport implements ToModel, WithStartRow
             'storage' => $storage,
         ];
 
-        return new InventoryItem([
-            'asset_code'      => $kodeAsset,     
+        // Kode aset unik: impor ulang file yang sama memperbarui data, bukan gagal karena duplikat.
+        InventoryItem::updateOrCreate(['asset_code' => $kodeAsset], [
             'item_name'       => $namaBarang,
             'brand_id'        => $brand->id,
             'category_id'     => $category->id,
@@ -133,6 +143,8 @@ class InventoryItemsImport implements ToModel, WithStartRow
             'owner_unit'      => $this->cleanText($row[10] ?? null),
             'specifications'  => $specsArray,
         ]);
+
+        return null;
     }
 
     private function cleanText($text) {

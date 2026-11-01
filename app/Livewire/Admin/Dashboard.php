@@ -3,14 +3,18 @@
 namespace App\Livewire\Admin;
 
 use Livewire\Component;
+use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use App\Models\Booking;
 use App\Models\Inventory;
+use App\Services\BookingService;
 use Carbon\Carbon;
 
 #[Layout('layouts.admin')]
 class Dashboard extends Component
 {
+    use WithPagination;
+
     public $selectedBooking = null; 
     public $showDetailSidebar = false;
 
@@ -30,6 +34,8 @@ class Dashboard extends Component
 
     public function render()
     {
+        app(BookingService::class)->synchronizeExpiredBookings();
+
         $stats = [
             'total_bookings' => Booking::count(),
             'today_bookings' => Booking::whereDate('start_time', Carbon::today())->count(),
@@ -39,8 +45,7 @@ class Dashboard extends Component
 
         $recentBookings = Booking::with(['user', 'inventory'])
             ->latest()
-            ->take(5)
-            ->get();
+            ->paginate(10);
 
         return view('livewire.admin.dashboard', [
             'stats' => $stats,

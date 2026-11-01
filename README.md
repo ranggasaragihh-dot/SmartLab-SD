@@ -28,4 +28,5 @@ Langkah-Langkah pertama kali run project
         'password' => bcrypt('admin123'),
         'nomor_induk' => 'A001',
     ])->roles()->attach(1);
-10. php artisan serve dan npm run dev
+10. Untuk pengembangan lokal di komputer, jalankan `php artisan serve` dan `npm run dev`.
+11. Untuk membuka aplikasi dari HP, laptop lain, atau melalui tunnel, jalankan `composer dev-lan`. Perintah ini membangun CSS/JS, menghapus penanda Vite development yang dapat membuat perangkat mencari asset di `localhost:5173`, lalu menjalankan aplikasi di `0.0.0.0:8000`. Arahkan tunnel ke port `8000`.

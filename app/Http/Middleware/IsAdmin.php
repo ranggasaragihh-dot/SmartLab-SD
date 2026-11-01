@@ -32,8 +32,8 @@ class IsAdmin
         // 3. PERBANDINGAN
         // Jika hasilnya FALSE (Tidak punya tiket admin)
         if (! $user->hasRole('admin')) {
-            // Tendang balik ke dashboard utama
-            return redirect('/dashboard')->with('error', 'Anda bukan Admin!');
+            // SKPL NFR_LAB SD_344: akses paksa ke endpoint admin ditolak dengan HTTP 403.
+            abort(403, 'Halaman ini khusus Administrator.');
         }
 
         return $next($request);

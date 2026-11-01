@@ -4,9 +4,8 @@ import laravel from 'laravel-vite-plugin';
 export default defineConfig({
     server: {
         host: '0.0.0.0',
-        hmr: {
-            host: 'localhost', // Ganti dengan IP Laptop Anda
-        },
+        // Izinkan halaman yang dibuka dari IP LAN (HP) memuat modul dari dev server
+        cors: true,
     },
     plugins: [
         laravel({

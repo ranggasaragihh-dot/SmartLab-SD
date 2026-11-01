@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\UsersImport;
+use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Validators\ValidationException;
 
 #[Layout('layouts.admin')]
@@ -54,21 +55,28 @@ class UserManagement extends Component
         $this->validate([
             'name'          => 'required|min:3',
             'email'         => 'required|email|unique:users,email',
-            'nomor_induk'   => 'nullable|string|max:20',
+            'nomor_induk'   => 'required|string|max:20|unique:users,nomor_induk',
             'password'      => 'required|min:6',
-            'selectedRoles' => 'required|array|min:1',
+            'selectedRoles' => 'required|array|size:1',
+            'selectedRoles.*' => 'required|exists:roles,id',
             'ta'            => 'required|boolean'
+        ], [
+            'nomor_induk.required' => 'NPM wajib diisi.',
+            'nomor_induk.unique' => 'NPM ini sudah terdaftar.',
+            'selectedRoles.size' => 'Pilih tepat satu role untuk pengguna.',
         ]);
+
+        $selectedRole = Role::findOrFail($this->selectedRoles[0]);
 
         $user = User::create([
             'name' => $this->name,
             'email' => $this->email,
             'nomor_induk' => $this->nomor_induk,
             'password' => bcrypt($this->password),
-            'ta' => $this->ta,
+            'ta' => $selectedRole->role === 'student' ? $this->ta : false,
         ]);
 
-        $user->roles()->attach($this->selectedRoles);
+        $user->roles()->sync($this->selectedRoles);
 
         $this->closeModal();
         session()->flash('message', 'User baru berhasil ditambahkan.');
@@ -81,6 +89,14 @@ class UserManagement extends Component
         $this->showImportModal = true;
     }
 
+    public function selectRole(int $roleId): void
+    {
+        $this->selectedRoles = [(string) $roleId];
+        if (Role::findOrFail($roleId)->role !== 'student') {
+            $this->ta = 0;
+        }
+    }
+
     public function import()
     {
         $this->validate([
@@ -89,7 +105,7 @@ class UserManagement extends Component
 
         try {
             set_time_limit(300);
-            Excel::import(new UsersImport, $this->importFile);
+            \Illuminate\Support\Facades\DB::transaction(fn () => Excel::import(new UsersImport, $this->importFile));
             
             $this->showImportModal = false;
             session()->flash('message', 'Import data massal berhasil!');
@@ -135,7 +151,7 @@ class UserManagement extends Component
             return;
         }
 
-        if ($user->id === Auth::id()) {
+        if ((int) $user->id === (int) Auth::id()) {
             session()->flash('error', 'Dilarang menghapus akun sendiri.');
             return;
         }
@@ -144,6 +160,27 @@ class UserManagement extends Component
         $this->closeDeleteModal();
 
         session()->flash('message', 'User berhasil dihapus.');
+    }
+
+    public function toggleActive(int $userId): void
+    {
+        $user = User::find($userId);
+        if (!$user || (int) $user->id === (int) Auth::id()) {
+            session()->flash('error', 'Akun tidak dapat diubah.');
+            return;
+        }
+
+        $user->update(['is_banned' => !$user->is_banned]);
+
+        if ($user->is_banned) {
+            // Booking yang belum dipakai dilepas agar PC bisa dipesan orang lain.
+            $user->bookings()
+                ->where('status', 'booked')
+                ->update(['status' => 'cancelled', 'cancel_reason' => 'Akun dinonaktifkan admin']);
+            session()->flash('message', "Akun {$user->name} dinonaktifkan.");
+        } else {
+            session()->flash('message', "Akun {$user->name} diaktifkan kembali.");
+        }
     }
 
     public function edit($id)
@@ -167,20 +204,45 @@ class UserManagement extends Component
     {
         $user = User::findOrFail($this->editingUserId);
 
-        if ($user->id === Auth::id()) {
-            $adminRoleId = Role::where('name', 'admin')->value('id');
-            if ($adminRoleId && !in_array($adminRoleId, $this->selectedRoles)) {
+        $this->validate([
+            'selectedRoles' => 'required|array|size:1',
+            'selectedRoles.*' => 'required|exists:roles,id',
+        ], [
+            'selectedRoles.size' => 'Pilih tepat satu role untuk pengguna.',
+        ]);
+
+        $selectedRole = Role::findOrFail($this->selectedRoles[0]);
+
+        if ((int) $user->id === (int) Auth::id()) {
+            $adminRoleId = Role::where('role', 'admin')->value('id');
+            if ($adminRoleId && !in_array((string) $adminRoleId, array_map('strval', $this->selectedRoles), true)) {
                 session()->flash('error', 'TINDAKAN DITOLAK: Anda tidak boleh menghapus akses Admin dari akun sendiri!');
                 $this->showModal = false;
                 return;
             }
         }
 
+        $this->validate([
+            'name' => 'required|min:3',
+            'email' => ['nullable', 'email', Rule::unique('users', 'email')->ignore($user->id)],
+            'nomor_induk' => [
+                'required',
+                'string',
+                'max:20',
+                Rule::unique('users', 'nomor_induk')->ignore($user->id),
+            ],
+            'password' => 'nullable|min:6',
+        ], [
+            'nomor_induk.required' => 'NPM wajib diisi.',
+            'nomor_induk.unique' => 'NPM ini sudah terdaftar.',
+            'email.unique' => 'Email ini sudah dipakai user lain.',
+        ]);
+
         $userData = [
             'name' => $this->name,
-            'email' => $this->email,
+            'email' => $this->email ?: null,
             'nomor_induk' => $this->nomor_induk,
-            'ta' => $this->ta,
+            'ta' => $selectedRole->role === 'student' ? $this->ta : false,
         ];
 
         if (!empty($this->password)) {
@@ -224,18 +286,25 @@ class UserManagement extends Component
 
     public function render()
     {
+        $allRoles = Role::all();
         $users = User::query()
             ->with('roles')
             ->when($this->search, function($query) {
                 $query->where('name', 'like', '%'.$this->search.'%')
-                      ->orWhere('email', 'like', '%'.$this->search.'%');
+                      ->orWhere('email', 'like', '%'.$this->search.'%')
+                      ->orWhere('nomor_induk', 'like', '%'.$this->search.'%');
             })
             ->latest()
             ->paginate(10);
 
+        $selectedRole = $allRoles->first(
+            fn (Role $role) => (string) $role->id === (string) ($this->selectedRoles[0] ?? '')
+        );
+
         return view('livewire.admin.manajemen-user', [
             'users' => $users,
-            'allRoles' => Role::all()
+            'allRoles' => $allRoles,
+            'isStudentRoleSelected' => $selectedRole?->role === 'student',
         ]);
     }
 }

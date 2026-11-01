@@ -6,6 +6,8 @@ use App\Models\Booking;
 use App\Models\Cluster;
 use App\Models\Inventory;
 use App\Models\User;
+use App\Services\BookingService;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
@@ -42,8 +44,7 @@ class Manager extends Component
     public $selectedBookingData;
 
     public $showClusterBookingModal = false;
-    public $clusterStartTime;
-    public $clusterEndTime;
+    public $eventConflicts = [];
 
 
     public $showCancelModal = false;
@@ -63,8 +64,12 @@ class Manager extends Component
     public function updatedUserSearch()
     {
         if (strlen($this->userSearch) > 1) {
-            $this->usersList = User::where('name', 'like', '%' . $this->userSearch . '%')
-                ->orWhere('email', 'like', '%' . $this->userSearch . '%')
+            $this->usersList = User::where('is_banned', false)
+                ->where(function ($query) {
+                    $query->where('name', 'like', '%' . $this->userSearch . '%')
+                        ->orWhere('nomor_induk', 'like', '%' . $this->userSearch . '%')
+                        ->orWhere('email', 'like', '%' . $this->userSearch . '%');
+                })
                 ->limit(5)
                 ->get();
         } else {
@@ -72,10 +77,16 @@ class Manager extends Component
         }
     }
 
-    public function selectUser($userId, $userName)
+    public function selectUser($userId)
     {
-        $this->selectedTargetUserId = $userId;
-        $this->selectedTargetUserName = $userName;
+        // Nama diambil dari database: aman untuk nama yang mengandung tanda kutip.
+        $user = User::find($userId);
+        if (!$user) {
+            return;
+        }
+
+        $this->selectedTargetUserId = $user->id;
+        $this->selectedTargetUserName = $user->name;
         $this->userSearch = ''; 
         $this->usersList = [];  
     }
@@ -101,14 +112,107 @@ class Manager extends Component
         $this->showCreateModal = true;
     }
 
-    public function openCreateRoomModal()
+    /**
+     * Buka modal "Book 1 Ruangan (Event)" (Buku Panduan 4.5).
+     */
+    public function openEventModal()
     {
         $this->bookingMode = 'room';
         $this->selectedUnitId = null;
         $this->selectedUnitName = 'FULL ROOM: ' . $this->cluster->name;
+        $this->purpose = '';
+        $this->eventConflicts = [];
 
         $this->prepareModalDefaults();
-        $this->showCreateModal = true;
+        $this->resetValidation();
+        $this->showCreateModal = false;
+        $this->showClusterBookingModal = true;
+    }
+
+    /**
+     * Simpan event ruangan penuh (SKPL UC-04 / DPPL "On Mass Booking"):
+     * 1. deteksi booking individu yang bentrok, 2. tampilkan peringatan,
+     * 3. jika admin melanjutkan, booking itu dibatalkan lalu ruangan diblokir.
+     */
+    public function storeEventBooking(bool $confirmed = false)
+    {
+        $this->validate([
+            'inputStartTime' => 'required|date_format:H:i',
+            'inputEndTime'   => 'required|date_format:H:i|after:inputStartTime',
+            'selectedTargetUserId' => 'required|exists:users,id',
+            'purpose' => 'required|string|max:100',
+        ], [
+            'selectedTargetUserId.required' => 'Wajib pilih penanggung jawab.',
+            'purpose.required' => 'Tujuan / agenda acara wajib diisi.',
+            'inputEndTime.after' => 'Jam selesai harus setelah jam mulai.',
+        ]);
+
+        $start = Carbon::parse($this->dateFilter . ' ' . $this->inputStartTime);
+        $end = Carbon::parse($this->dateFilter . ' ' . $this->inputEndTime);
+
+        if ($end->lte(now())) {
+            $this->addError('inputEndTime', 'Waktu event sudah lewat.');
+            return;
+        }
+
+        $overlappingEvent = Booking::where('cluster_id', $this->clusterId)
+            ->whereNull('inventory_id')
+            ->whereIn('status', ['booked', 'active'])
+            ->where('start_time', '<', $end)
+            ->where('end_time', '>', $start)
+            ->exists();
+        if ($overlappingEvent) {
+            $this->addError('inputStartTime', 'Sudah ada event lain di ruangan ini pada jam tersebut.');
+            return;
+        }
+
+        $conflicts = Booking::with(['user:id,name', 'inventory:id,name'])
+            ->where('cluster_id', $this->clusterId)
+            ->whereNotNull('inventory_id')
+            ->whereIn('status', ['booked', 'active'])
+            ->where('start_time', '<', $end)
+            ->where('end_time', '>', $start)
+            ->orderBy('start_time')
+            ->get();
+
+        $conflictIds = $conflicts->pluck('id')->sort()->values()->all();
+        $warnedIds = collect($this->eventConflicts)->pluck('id')->sort()->values()->all();
+
+        // Peringatan dulu; lanjut hanya jika admin mengonfirmasi daftar konflik yang sama.
+        if ($conflicts->isNotEmpty() && (!$confirmed || $conflictIds !== $warnedIds)) {
+            $this->eventConflicts = $conflicts->map(fn (Booking $booking) => [
+                'id' => $booking->id,
+                'user' => $booking->user?->name ?? '-',
+                'unit' => $booking->inventory?->name ?? '-',
+                'time' => $booking->start_time->format('H:i') . ' - ' . $booking->end_time->format('H:i'),
+                'status' => $booking->status === 'active' ? 'Sedang dipakai' : 'Belum check-in',
+            ])->all();
+            return;
+        }
+
+        DB::transaction(function () use ($conflictIds, $start, $end) {
+            if ($conflictIds) {
+                Booking::whereIn('id', $conflictIds)->update([
+                    'status' => 'cancelled',
+                    'cancel_reason' => 'Dibatalkan admin: ruangan dipakai untuk event "' . $this->purpose . '"',
+                ]);
+            }
+
+            Booking::create([
+                'user_id'      => $this->selectedTargetUserId,
+                'cluster_id'   => $this->clusterId,
+                'inventory_id' => null,
+                'start_time'   => $start,
+                'end_time'     => $end,
+                'status'       => 'booked',
+                'purpose'      => $this->purpose,
+            ]);
+        });
+
+        $cancelled = count($conflictIds);
+        $this->eventConflicts = [];
+        $this->showClusterBookingModal = false;
+        session()->flash('message', 'Reservasi event berhasil dibuat.' . ($cancelled ? " {$cancelled} booking individu dibatalkan." : ''));
     }
 
     private function prepareModalDefaults()
@@ -128,52 +232,56 @@ class Manager extends Component
         $this->resetSelectedUser();
     }
 
+    /**
+     * Booking manual satu PC oleh admin (tombol "+ Manual").
+     */
     public function storeBooking()
     {
         $this->validate([
-            'inputStartTime' => 'required',
-            'inputEndTime'   => 'required|after:inputStartTime',
-            'selectedTargetUserId' => 'required', 
+            'inputStartTime' => 'required|date_format:H:i',
+            'inputEndTime'   => 'required|date_format:H:i|after:inputStartTime',
+            'selectedTargetUserId' => 'required|exists:users,id',
+            'selectedUnitId' => 'required',
             'purpose' => 'nullable|string|max:100',
         ], [
             'selectedTargetUserId.required' => 'Wajib pilih User/Peminjam.',
+            'selectedUnitId.required' => 'Pilih unit PC terlebih dahulu.',
         ]);
+
+        $cluster = Cluster::findOrFail($this->clusterId);
+        $targetUser = User::findOrFail($this->selectedTargetUserId);
+        if (!$cluster->canBeBookedBy($targetUser)) {
+            session()->flash('error', 'Cluster ini hanya dapat dibooking untuk mahasiswa yang sudah mengambil TA.');
+            return;
+        }
 
         $startDateTime = $this->dateFilter . ' ' . $this->inputStartTime;
         $endDateTime   = $this->dateFilter . ' ' . $this->inputEndTime;
+        $unitId = $this->selectedUnitId;
 
-        $conflict = Booking::where('cluster_id', $this->clusterId)
-            ->where('status', '!=', 'cancelled')
-            ->where(function($query) {
-                if ($this->bookingMode === 'unit') {
-                    $query->where('inventory_id', $this->selectedUnitId)
-                          ->orWhereNull('inventory_id');
-                }
-            })
-            ->where(function($q) use ($startDateTime, $endDateTime) {
-                $q->whereBetween('start_time', [$startDateTime, $endDateTime])
-                  ->orWhereBetween('end_time', [$startDateTime, $endDateTime])
-                  ->orWhere(function($sub) use ($startDateTime, $endDateTime) {
-                      $sub->where('start_time', '<', $startDateTime)
-                          ->where('end_time', '>', $endDateTime);
-                  });
-            })
-            ->exists();
+        if (Carbon::parse($endDateTime)->lte(now())) {
+            $this->addError('inputEndTime', 'Waktu booking sudah lewat.');
+            return;
+        }
 
-        if ($conflict) {
+        if (!Inventory::where('cluster_id', $this->clusterId)->whereKey($unitId)->exists()) {
+            session()->flash('error', 'Unit tidak berada di cluster ini.');
+            return;
+        }
+
+        if (!app(BookingService::class)->isSlotAvailable($unitId, $this->clusterId, $startDateTime, $endDateTime)) {
             session()->flash('error', 'GAGAL: Jadwal bentrok dengan booking lain (PC atau Ruangan sudah terisi).');
             return;
         }
 
         Booking::create([
-            'user_id'      => $this->selectedTargetUserId, 
+            'user_id'      => $this->selectedTargetUserId,
             'cluster_id'   => $this->clusterId,
-            'inventory_id' => $this->selectedUnitId,
+            'inventory_id' => $unitId,
             'start_time'   => $startDateTime,
             'end_time'     => $endDateTime,
             'status'       => 'booked',
             'purpose'      => $this->purpose,
-            'description'  => $this->inputDescription ?? 'Admin Manual Booking',
         ]);
 
         $this->showCreateModal = false;
@@ -210,10 +318,12 @@ class Manager extends Component
         ]);
 
         $booking = Booking::find($this->selectedBookingId);
-        
-        if ($booking) {
+
+        if ($booking && in_array($booking->status, ['booked', 'active'])) {
             $booking->update(['status' => 'cancelled', 'cancel_reason' => $this->cancelReason,]);
             session()->flash('message', 'Booking dibatalkan.');
+        } else {
+            session()->flash('error', 'Booking ini sudah selesai atau dibatalkan.');
         }
 
         $this->showCancelModal = false; 
@@ -233,85 +343,16 @@ class Manager extends Component
     public function confirmFinish()
     {
         $booking = Booking::find($this->selectedBookingId);
-        if ($booking) {
+        if ($booking && $booking->status === 'active') {
             $booking->update([
                 'status' => 'completed',
                 'end_time' => Carbon::now(),
             ]);
             session()->flash('message', 'Sesi diselesaikan.');
+        } else {
+            session()->flash('error', 'Hanya sesi yang sudah check-in yang bisa diselesaikan. Gunakan Batalkan untuk booking yang belum check-in.');
         }
         $this->showFinishModal = false;
-    }
-
-    public function openClusterBookingModal()
-    {
-        $this->resetSelectedUser();
-        $this->clusterStartTime = '08:00';
-        $this->clusterEndTime = '10:00';
-        $this->showClusterBookingModal = true;
-        $this->showCreateModal = false;
-    }
-
-    public function bookEntireCluster()
-    {
-        $this->validate([
-            'clusterStartTime' => 'required',
-            'clusterEndTime'   => 'required|after:clusterStartTime',
-            'selectedTargetUserId' => 'required',
-        ], [
-            'selectedTargetUserId.required' => 'Wajib memilih user/mahasiswa.',
-            'clusterEndTime.after' => 'Jam selesai harus setelah jam mulai.'
-        ]);
-
-        $startDateTime = $this->dateFilter . ' ' . $this->clusterStartTime;
-        $endDateTime   = $this->dateFilter . ' ' . $this->clusterEndTime;
-
-        $units = Inventory::where('cluster_id', $this->clusterId)
-            ->where('status', 'available')
-            ->get();
-
-        if ($units->isEmpty()) {
-            session()->flash('error', 'Tidak ada unit available di cluster ini.');
-            return;
-        }
-
-        $successCount = 0;
-
-        foreach ($units as $unit) {
-            $isBooked = Booking::where('inventory_id', $unit->id)
-                ->where('status', '!=', 'cancelled')
-                ->where(function($q) use ($startDateTime, $endDateTime) {
-                    $q->whereBetween('start_time', [$startDateTime, $endDateTime])
-                    ->orWhereBetween('end_time', [$startDateTime, $endDateTime])
-                    ->orWhere(function($sub) use ($startDateTime, $endDateTime) {
-                        $sub->where('start_time', '<', $startDateTime)
-                            ->where('end_time', '>', $endDateTime);
-                    });
-                })
-                ->exists();
-
-            if (!$isBooked) {
-                Booking::create([
-                    'user_id'      => $this->selectedTargetUserId,
-                    'cluster_id'   => $this->clusterId,
-                    'inventory_id' => $unit->id,
-                    'start_time'   => $startDateTime,
-                    'end_time'     => $endDateTime,
-                    'status'       => 'booked',
-                    'description'  => 'Mass Booking (Event)',
-                    'type'         => 'event_manual'
-                ]);
-                $successCount++;
-            }
-        }
-
-        $this->showClusterBookingModal = false;
-
-        if ($successCount > 0) {
-            session()->flash('message', "Berhasil membooking $successCount unit.");
-        } else {
-            session()->flash('error', "Gagal: Semua unit penuh di jam tersebut.");
-        }
     }
 
     protected $sessions = [

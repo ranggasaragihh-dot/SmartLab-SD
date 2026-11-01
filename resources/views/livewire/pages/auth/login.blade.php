@@ -41,14 +41,14 @@
             <form wire:submit="login" class="space-y-6">
                 <div>
                     <label class="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">
-                        Nomor Induk NPM / NPP
+                        Nomor Induk NPM / NIP
                     </label>
                     
                     <input 
                         wire:model="nomor_induk" 
                         type="text" 
                         class="w-full pl-4 pr-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none bg-gray-50 focus:bg-white" 
-                        placeholder="Masukkan Nomor Induk NPM/NPP" 
+                        placeholder="Masukkan Nomor Induk NPM/NIP"
                         required 
                         autofocus
                     >
@@ -69,7 +69,7 @@
                             x-bind:type="showPassword ? 'text' : 'password'" 
                             {{-- Padding right (pr) diperlebar jadi pr-12 agar teks tidak menabrak ikon --}}
                             class="w-full pl-4 pr-12 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none bg-gray-50 focus:bg-white" 
-                            placeholder="••••••••" 
+                            placeholder="Masukkan Password"
                             required
                         >
                         
